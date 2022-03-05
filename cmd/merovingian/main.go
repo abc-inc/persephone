@@ -3,16 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/abc-inc/merovingian/cypher"
+	"os"
+	"reflect"
+	"text/template"
+	"time"
+
+	"github.com/abc-inc/merovingian/_deprecated"
 	"github.com/briandowns/spinner"
 	"github.com/c-bata/go-prompt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/db"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
-	"os"
-	"reflect"
-	"text/template"
-	"time"
 )
 
 func main() {
@@ -37,8 +38,8 @@ func main() {
 		labels = append(labels, prompt.Suggest{Text: res.Record().Values[0].(string)})
 	}
 
-	p := cypher.NewPrompt()
-	p.Register(cypher.Node, func(d prompt.Document) []prompt.Suggest {
+	p := _deprecated.NewPrompt()
+	p.Register(_deprecated.Node, func(d prompt.Document) []prompt.Suggest {
 		return labels
 	})
 	p.Run()
