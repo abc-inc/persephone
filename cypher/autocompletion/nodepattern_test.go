@@ -60,8 +60,8 @@ func TestWithFiltersYieldsLabelList(t *testing.T) {
 			To:   comp.LineCol{Line: 1, Col: 20},
 		},
 	}
-	checkCompletion(t, "MATCH (n) MATCH (a:▼y", expected, false)
-	checkCompletion(t, "MATCH (n) MATCH (a:y▼", expected, false)
+	checkCompletion(t, "MATCH (n) MATCH (a:▼y", expected, true)
+	checkCompletion(t, "MATCH (n) MATCH (a:y▼", expected, true)
 }
 
 func TestWithoutFiltersYieldsLabelListIfOnlyColonIsPresent(t *testing.T) {

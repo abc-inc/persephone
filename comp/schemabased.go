@@ -16,7 +16,7 @@ var providers = make(map[types.Type]ItemProvider)
 func init() {
 	providers[types.ProcedureOutput] = func(schema neo4j.Schema, typeData TypeData) []Item {
 		for _, p := range schema.Procs {
-			if p.Name == typeData.Name && len(p.RetItems) > 0 {
+			if p.Name == typeData.Path[0] && len(p.RetItems) > 0 {
 				its := make([]Item, len(p.RetItems))
 				for i, ri := range p.RetItems {
 					its[i] = Item{
@@ -39,12 +39,16 @@ func init() {
 		}
 		currentLevel := schema.ConCmds
 		for i := 0; i < length; i++ {
+			ok := false
 			for _, foo := range currentLevel {
 				if foo.Name == path[i] {
 					currentLevel = foo.SubCmds
-				} else {
-					return nil
+					ok = true
+					break
 				}
+			}
+			if !ok {
+				return nil
 			}
 		}
 
@@ -73,43 +77,35 @@ func NewSchemaBased(schema neo4j.Schema) *SchemaBased {
 	s.Map[types.Label] = mapItems(schema.Labels, types.Label, strF, escF, nilF)
 	s.Map[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
 	s.Map[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
-	s.Map[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName, strF, strF, nilF)
-	//s.Map[types.ProcedureName] =
-	//s.Map[types.ConsoleCommandName] =
+	s.Map[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName,
+		func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return lang.EscapeCypher(n.Name) }, func(n neo4j.Func) string { return n.Sig })
+	s.Map[types.ProcedureName] = mapItemsStruct(schema.Procs, types.ProcedureName,
+		func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return n.Sig })
+	s.Map[types.ConsoleCommandName] = mapItemsCmd(schema.ConCmds, types.ConsoleCommandName,
+		func(n neo4j.Cmd) string { return n.Name }, func(n neo4j.Cmd) string { return n.Name }, func(n neo4j.Cmd) string { return n.Desc })
 	s.Map[types.Parameter] = mapItems(schema.Params, types.Parameter, strF, strF, nilF)
 	return s
 }
 
-func (s SchemaBased) CalculateItems(ts ComplInfo, query antlr.Tree) (is []Item) {
-	typeData := TypeData{
-		Name:              "",
-		Path:              nil,
-		FilterLastElement: false,
-	}
-	for _, t := range ts.Types {
-		if p, ok := providers[t]; ok {
-			is = append(is, p(s.Schema, typeData)...)
-		}
+func (s SchemaBased) CalculateItems(t TypeData, query antlr.Tree) (is []Item) {
+	if p, ok := providers[t.Type]; ok {
+		is = append(is, p(s.Schema, t)...)
 	}
 	return is
 }
 
-func (s SchemaBased) Complete(ts []types.Type, query antlr.Tree) (is []Item) {
+func (s SchemaBased) Complete(ts []TypeData, query antlr.Tree) (is []Item) {
 	if len(ts) == 0 {
 		return nil
 	}
 
 	for _, t := range ts {
-		if items := s.Map[t]; items != nil {
+		if items := s.Map[t.Type]; items != nil {
 			is = append(is, items...)
+		} else {
+			is = append(is, s.CalculateItems(t, query)...)
 		}
 	}
-	is = append(is, s.CalculateItems(ComplInfo{
-		Element: query,
-		Query:   query,
-		Found:   false,
-		Types:   ts,
-	}, query)...)
 
 	return
 }
@@ -126,14 +122,14 @@ func strF(s interface{}) string {
 
 func escF(i interface{}) string { return lang.EscapeCypher(i.(string)) }
 
-func nilF(i interface{}) interface{} {
-	return nil
+func nilF(_ interface{}) string {
+	return ""
 }
 
 func mapItems(ns []string, typ types.Type,
 	viewFunc func(interface{}) string,
 	contFunc func(interface{}) string,
-	pfFunc func(interface{}) interface{}) (its []Item) {
+	pfFunc func(interface{}) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{
@@ -146,10 +142,26 @@ func mapItems(ns []string, typ types.Type,
 	return
 }
 
-func mapItemsStruct(ns []interface{}, typ types.Type,
-	viewFunc func(interface{}) string,
-	contFunc func(interface{}) string,
-	pfFunc func(interface{}) interface{}) (its []Item) {
+func mapItemsStruct(ns []neo4j.Func, typ types.Type,
+	viewFunc func(neo4j.Func) string,
+	contFunc func(neo4j.Func) string,
+	pfFunc func(neo4j.Func) string) (its []Item) {
+
+	for _, n := range ns {
+		its = append(its, Item{
+			Type:    typ,
+			View:    viewFunc(n),
+			Content: contFunc(n),
+			Postfix: pfFunc(n),
+		})
+	}
+	return
+}
+
+func mapItemsCmd(ns []neo4j.Cmd, typ types.Type,
+	viewFunc func(neo4j.Cmd) string,
+	contFunc func(neo4j.Cmd) string,
+	pfFunc func(cmd neo4j.Cmd) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{

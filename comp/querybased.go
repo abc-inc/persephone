@@ -15,13 +15,13 @@ func NewQueryBased(refProvs map[string]Provider) *QueryBased {
 	return &QueryBased{refProvs: refProvs}
 }
 
-func (q QueryBased) Complete(ts []types.Type, query antlr.Tree) (is []Item) {
+func (q QueryBased) Complete(ts []TypeData, query antlr.Tree) (is []Item) {
 	if query == nil {
 		return is
 	}
 
 	for _, t:=range ts {
-		if t != types.Variable {
+		if t.Type != types.Variable {
 			continue
 		}
 		ns := q.refProvs[lang.VARIABLE_CONTEXT].GetNames(query.(*parser.CypherQueryContext))
@@ -30,7 +30,6 @@ func (q QueryBased) Complete(ts []types.Type, query antlr.Tree) (is []Item) {
 				Type:    types.Variable,
 				View:    n,
 				Content: n,
-				Postfix: nil,
 			})
 		}
 	}

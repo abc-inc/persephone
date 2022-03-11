@@ -24,7 +24,7 @@ type Schema struct {
 	Labels   []string
 	RelTypes []string
 	PropKeys []string
-	Funcs    []interface{}
+	Funcs    []Func
 	Procs    []Func
 	ConCmds  []Cmd
 	Params   []string
@@ -36,7 +36,7 @@ func NewSchema() *Schema {
 		Labels:   []string{":State", ":Party", ":Body"},
 		RelTypes: []string{":REPRESENTS", ":IS_MEMBER_OF", ":ELECTED_TO"},
 		PropKeys: []string{"code", "name", "type"},
-		Funcs:    []interface{}{Func{"apoc.coll.avg", "(numbers :: LIST? OF NUMBER?) :: (FLOAT?)", nil}, Func{"apoc.coll.contains", "", nil}},
+		Funcs:    []Func{{"apoc.coll.avg", "(numbers :: LIST? OF NUMBER?) :: (FLOAT?)", nil}, {"apoc.coll.contains", "", nil}},
 		Procs:    []Func{{"apoc.algo.aStar", "", nil}},
 		ConCmds:  []Cmd{{Name: ":clear"}, {Name: ":play"}, {Name: ":help"}},
 		Params:   []string{"age", "name", "surname"},

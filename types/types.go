@@ -18,9 +18,6 @@ const (
 	Noop
 )
 
-// All is the default.
-var All = []Type{Variable, Parameter, PropertyKey, FunctionName, Keyword}
-
 func (t Type) String() string {
 	return []string{
 		"keyword", "label", "variable", "parameter", "propertyKey", "relationshipType",

@@ -44,7 +44,8 @@ func TestParametersReturnsReferenceForMultipleParameters(t *testing.T) {
 }
 
 func TestParametersReturnsReferencesForMultipleQueries(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param}")
+	es := cypher.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param};\n" +
+		"          MATCH (n) SET n.key = $param SET n.key = {param};")
 	refs := es.GetReferences(1, 45)
 
 	ref := refs[0]

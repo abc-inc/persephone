@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"github.com/abc-inc/merovingian/ast"
 	"github.com/abc-inc/merovingian/parser"
 	"github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -8,7 +9,7 @@ import (
 
 // If we are in call rule, and element is second child of call return procedure types
 func ruleCallClauseBeginning(e antlr.ParseTree) []Info {
-	parent := e.GetParent()
+	parent := ast.GetParent(e)
 	if parent == nil {
 		return nil
 	}

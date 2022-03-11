@@ -8,7 +8,7 @@ import (
 )
 
 func TestMixedTypesYieldsAnyAtTheBeginningOfAQuery(t *testing.T) {
-	checkCompletionTypes(t, "▼", false, types.All)
+	checkCompletionTypes(t, "▼", false, comp.AllTypes)
 }
 
 func TestMixedTypesYieldsFunctionNameAndVariableInExpression(t *testing.T) {
@@ -18,7 +18,7 @@ func TestMixedTypesYieldsFunctionNameAndVariableInExpression(t *testing.T) {
 func TestMixedWithoutFiltersYieldsFunctionNameAndVariableListInExpression(t *testing.T) {
 	expected := comp.Result{
 		Items: []comp.Item{
-			{Type: types.Variable, View: "fun", Content: "fun", Postfix: nil},
+			{Type: types.Variable, View: "fun", Content: "fun"},
 			{Type: types.FunctionName, View: "toFloat", Content: "toFloat", Postfix: "expression"},
 			{Type: types.FunctionName, View: "head", Content: "head", Postfix: "expression"},
 		},
@@ -34,10 +34,10 @@ func TestMixedWithoutFiltersYieldsFunctionNameAndVariableListInExpression(t *tes
 func TestMixedWithoutFiltersYieldsOnlyKeywordsAtTheStartOfAQuery(t *testing.T) {
 	expected := comp.Result{
 		Items: []comp.Item{
-			{Type: types.Parameter, View: "param1", Content: "param1", Postfix: nil},
-			{Type: types.Parameter, View: "param2", Content: "param2", Postfix: nil},
-			{Type: types.PropertyKey, View: "prop1", Content: "prop1", Postfix: nil},
-			{Type: types.PropertyKey, View: "prop2", Content: "prop2", Postfix: nil},
+			{Type: types.Parameter, View: "param1", Content: "param1"},
+			{Type: types.Parameter, View: "param2", Content: "param2"},
+			{Type: types.PropertyKey, View: "prop1", Content: "prop1"},
+			{Type: types.PropertyKey, View: "prop2", Content: "prop2"},
 			{Type: types.FunctionName, View: "toFloat", Content: "toFloat", Postfix: "expression"},
 			{Type: types.FunctionName, View: "head", Content: "head", Postfix: "expression"},
 		},
@@ -48,14 +48,13 @@ func TestMixedWithoutFiltersYieldsOnlyKeywordsAtTheStartOfAQuery(t *testing.T) {
 	}
 	expected.Items = append(expected.Items, comp.KEYWORD_ITEMS...)
 
-	checkCompletion(t, "match (fun) return ▼fun", expected, false)
-	checkCompletion(t, "match (fun) return fun▼", expected, false)
+	checkCompletion(t, "▼", expected, false)
 }
 
 func TestMixedWithFiltersYieldsFunctionNameAndVariableListInExpression(t *testing.T) {
 	expected := comp.Result{
 		Items: []comp.Item{
-			{Type: types.Variable, View: "atern", Content: "atern", Postfix: nil},
+			{Type: types.Variable, View: "atern", Content: "atern"},
 			{Type: types.FunctionName, View: "toFloat", Content: "toFloat", Postfix: "expression"},
 		},
 		Range: comp.Range{

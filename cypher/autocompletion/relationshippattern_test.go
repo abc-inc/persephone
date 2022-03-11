@@ -67,7 +67,7 @@ func TestWithFiltersYieldsRelationshipTypeList(t *testing.T) {
 	checkCompletion(t, "MATCH (a)-[a:▼l1]-", expected, true)
 }
 
-func TestWithFiltersYieldsRelationshipTypeIfOnlyColonPresent(t *testing.T) {
+func TestWithFiltersYieldsRelationshipTypeListIfOnlyColonPresent(t *testing.T) {
 	expected := comp.Result{
 		Items: []comp.Item{
 			{Type: types.RelationshipType, View: ":rel1", Content: ":rel1"},

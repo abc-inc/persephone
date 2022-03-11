@@ -53,11 +53,11 @@ func TestPropertyKeysReturnsReferencesForMultipleKeys(t *testing.T) {
 
 func TestPropertyKeysReturnsReferencesForMultipleQueries(t *testing.T) {
 	es := cypher.NewEditorSupport("MATCH (n {key: 42})\n" +
-		"SET n.key = 42\n" +
-		"RETURN n.key;\n" +
-		"MATCH (n {key: 42})\n" +
-		"SET n.key = 42\n" +
-		"RETURN n.key")
+		"          SET n.key = 42\n" +
+		"          RETURN n.key;\n" +
+		"          MATCH (n {key: 42})\n" +
+		"          SET n.key = 42\n" +
+		"          RETURN n.key")
 
 	refs := es.GetReferences(1, 10)
 

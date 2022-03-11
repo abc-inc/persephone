@@ -11,7 +11,7 @@ func TestReturnProcedureNameType(t *testing.T) {
 }
 
 func TestReturnProcedureNameTypeIfOnlyCallPresent(t *testing.T) {
-	checkCompletionTypes(t, "call▼", true, []types.Type{types.ProcedureName})
+	checkCompletionTypes(t, "call▼ ", true, []types.Type{types.ProcedureName})
 }
 
 func TestReturnOutputAtTheBeginningOfYield(t *testing.T) {

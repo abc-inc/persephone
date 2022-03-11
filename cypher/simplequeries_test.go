@@ -23,5 +23,5 @@ func TestErrorsIfErrorInLexer(t *testing.T) {
 	msg1 := "mismatched input '`' expecting {<EOF>, ';'}"
 	s := NewEditorSupport("WITH a` WITH 1;")
 	Equal(t, 1, len(s.parseErrors))
-	Equal(t, SynErr{1, 0, msg1}, s.parseErrors[0])
+	Equal(t, SynErr{1, 6, msg1}, s.parseErrors[0])
 }

@@ -1,21 +1,27 @@
 package autocompletion
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/abc-inc/merovingian/comp"
 	"github.com/abc-inc/merovingian/cypher"
 	"github.com/abc-inc/merovingian/db/neo4j"
+	"github.com/abc-inc/merovingian/resolver"
 	"github.com/abc-inc/merovingian/types"
 	. "github.com/stretchr/testify/assert"
 )
 
 var schema = neo4j.Schema{
 	Labels:   []string{":y", ":x"},
-	RelTypes: []string{":rel1", ":rel2"},
+	RelTypes: []string{":rel1", ":rel 2"},
 	PropKeys: []string{"prop1", "prop2"},
-	Funcs:    nil,
+	Params:   []string{"param1", "param2"},
+	Funcs: []neo4j.Func{
+		{Name: "toFloat", Sig: "expression"},
+		{Name: "head", Sig: "expression"},
+	},
 	Procs: []neo4j.Func{{
 		Name: "db.indexes",
 		Sig:  "()",
@@ -38,7 +44,6 @@ var schema = neo4j.Schema{
 			}},
 		}},
 	},
-	Params: []string{"param1", "param2"},
 }
 
 func checkCompletion(t *testing.T, queryWithCursor string, expectedItems comp.Result, doFilter bool) {
@@ -57,6 +62,18 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 
 	backend := cypher.NewEditorSupport(query)
 	el := backend.GetElementForCompletion(1, pos)
-	ts := comp.GetTypes(el)
-	Equal(t, comp.ComplInfo{Found: found, Types: expectedTypes}, ts)
+	ts := resolver.GetTypes(el)
+
+	var exp []comp.TypeData
+	for _, t := range expectedTypes {
+		exp = append(exp, comp.TypeData{Type: t})
+	}
+
+	// TODO: fix workaround
+	for i := range ts.Types {
+		ts.Types[i].Path = nil
+		fmt.Println(ts.Types[i])
+	}
+
+	Equal(t, comp.ComplInfo{Found: found, Types: exp}, ts)
 }

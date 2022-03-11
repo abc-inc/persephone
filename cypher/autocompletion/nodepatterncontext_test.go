@@ -12,7 +12,7 @@ func TestPropertyKeyTypesYieldsPropertyKeyWithNoFirstCharTypedInsideMapLiteral(t
 }
 
 func TestPropertyKeyTypesYieldsAllIfOnClosingCurlyBrace(t *testing.T) {
-	checkCompletionTypes(t, "MATCH ({▼});", false, types.All)
+	checkCompletionTypes(t, "MATCH ({▼});", false, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsPropertyKeyAndParameterIfInPropertiesContext(t *testing.T) {
@@ -28,23 +28,23 @@ func TestPropertyKeyTypesYieldsPropertyKeyWithFirstCharTypedInsideMapLiteralWOCl
 }
 
 func TestPropertyKeyTypesYieldsPropertyKeyWithFirstCharTypedInsideMapLiteralWithClosingCurlyBrace(t *testing.T) {
-	checkCompletionTypes(t, "WITH $param MATCH (n {p▼})", false, types.All)
+	checkCompletionTypes(t, "WITH $param MATCH (n {p▼})", false, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsAllBeforeColon(t *testing.T) {
-	checkCompletionTypes(t, "MATCH (n {key▼:})", true, types.All)
+	checkCompletionTypes(t, "MATCH (n {key▼:})", true, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsAllBeforeColonUnclosedMapLiteral(t *testing.T) {
-	checkCompletionTypes(t, "MATCH (n {key▼:", true, types.All)
+	checkCompletionTypes(t, "MATCH (n {key▼:", true, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsAllAfterColon(t *testing.T) {
-	checkCompletionTypes(t, "MATCH (n {key:▼ })", true, types.All)
+	checkCompletionTypes(t, "MATCH (n {key:▼ })", true, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsPropertyKeyWithNoFirstCharTypedAfterKeyAndWithClosingCurlyBrace(t *testing.T) {
-	checkCompletionTypes(t, "MATCH (n {key: 1, ▼});", false, types.All)
+	checkCompletionTypes(t, "MATCH (n {key: 1, ▼});", false, comp.AllTypes)
 }
 
 func TestPropertyKeyTypesYieldsPropertyKeyAfterKeyAndFirstCharTypedWOClosingCurlyBrace(t *testing.T) {

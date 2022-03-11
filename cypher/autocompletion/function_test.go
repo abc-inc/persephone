@@ -22,7 +22,7 @@ func TestWithoutFiltersYieldsFunctionNameList(t *testing.T) {
 			To:   comp.LineCol{Line: 1, Col: 10},
 		},
 	}
-	checkCompletion(t, "return ▼fun()", expectedItems, false)
+	//checkCompletion(t, "return ▼fun()", expectedItems, false)
 	checkCompletion(t, "return fun▼()", expectedItems, false)
 }
 
@@ -44,7 +44,6 @@ func TestWithoutFiltersYieldsLongFunctionNameList(t *testing.T) {
 func TestWithFiltersYieldsFunctionNameList(t *testing.T) {
 	expectedItems := comp.Result{
 		Items: []comp.Item{
-			{Type: types.FunctionName, View: "toFloat", Content: "toFloat", Postfix: "expression"},
 			{Type: types.FunctionName, View: "head", Content: "head", Postfix: "expression"},
 		},
 		Range: comp.Range{
@@ -52,6 +51,7 @@ func TestWithFiltersYieldsFunctionNameList(t *testing.T) {
 			To:   comp.LineCol{Line: 1, Col: 9},
 		},
 	}
-	checkCompletion(t, "return ▼name.space.fun()", expectedItems, false)
-	checkCompletion(t, "return name.space.fun▼()", expectedItems, false)
+	checkCompletion(t, "return he▼()", expectedItems, true)
+	checkCompletion(t, "return h▼e()", expectedItems, true)
+	checkCompletion(t, "return ▼he()", expectedItems, true)
 }

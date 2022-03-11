@@ -12,7 +12,7 @@ func Foo(q string) (is []comp.Item) {
 		Labels:   []string{"Node", "Other"},
 		RelTypes: []string{"RELATED_TO"},
 		PropKeys: nil,
-		Funcs: []interface{}{neo4j.Func{
+		Funcs: []neo4j.Func{{
 			Name:     "count",
 			Sig:      "expression :: any",
 			RetItems: nil,

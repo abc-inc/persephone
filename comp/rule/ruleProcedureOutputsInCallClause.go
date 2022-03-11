@@ -22,6 +22,6 @@ func ruleProcedureOutputsInCallClause(e antlr.ParseTree) []Info {
 	}
 	return []Info{{
 		Type: types.ProcedureOutput,
-		Path: []string{proc.(*parser.ProcedureNameContext).GetText()},
+		Path: []string{proc.(*parser.ProcedureInvocationBodyContext).GetText()},
 	}}
 }

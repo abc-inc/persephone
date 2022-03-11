@@ -26,8 +26,13 @@ func (p PosStruct) GetStop() int {
 func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
 	e := pt
 	for e != nil {
-		if reflect.TypeOf(e) == t {
+		if reflect.TypeOf(e).Elem() == t {
 			break
+		}
+		for _, c := range e.GetChildren() {
+			if reflect.TypeOf(c).Elem() == t {
+				return c
+			}
 		}
 		e = e.GetParent()
 	}
@@ -41,8 +46,13 @@ func FindAnyParent(pt antlr.Tree, types []string) antlr.Tree {
 			if t == reflect.TypeOf(el).Elem().Name() {
 				return el
 			}
+			//for _, c := range el.GetChildren() {
+			//	if t == reflect.TypeOf(c).Elem().Name() {
+			//		return c
+			//	}
+			//}
 		}
-		el = el.GetParent()
+		el = GetParent(el)
 	}
 	return el
 }
@@ -51,7 +61,7 @@ func FindChild(element antlr.Tree, typ string) antlr.Tree {
 	if element == nil {
 		return nil
 	}
-	if reflect.TypeOf(element).Name() == typ {
+	if reflect.TypeOf(element).Elem().Name() == typ {
 		return element
 	}
 	for _, c := range element.GetChildren() {

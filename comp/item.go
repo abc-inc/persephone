@@ -4,14 +4,15 @@ import (
 	"fmt"
 
 	"github.com/abc-inc/merovingian/types"
+	_ "github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
 type Item struct {
-	Type    types.Type  `json:"type"`
-	View    string      `json:"view"`
-	Content string      `json:"content"`
-	Postfix interface{} `json:"postfix"`
+	Type    types.Type `json:"type"`
+	View    string     `json:"view"`
+	Content string     `json:"content"`
+	Postfix string     `json:"postfix"`
 }
 
 func (i Item) String() string {
@@ -49,12 +50,22 @@ type ComplInfo struct {
 	Element antlr.Tree
 	Query   antlr.Tree
 	Found   bool
-	Types   []types.Type
+	Types   []TypeData
 }
 
-
 type TypeData struct {
-	Name              string
+	Type              types.Type
 	Path              []string
 	FilterLastElement bool
+}
+
+// All is the default.
+var All []TypeData
+
+var AllTypes = []types.Type{types.Variable, types.Parameter, types.PropertyKey, types.FunctionName, types.Keyword}
+
+func init() {
+	for _, t := range AllTypes {
+		All = append(All, TypeData{Type: t})
+	}
 }

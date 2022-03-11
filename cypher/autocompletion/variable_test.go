@@ -83,7 +83,7 @@ func TestVariableWithFiltersYieldsVariableListWithoutVariableUnderCursor(t *test
 	checkCompletion(t, "MATCH (var) RETURN va▼", expected, true)
 }
 
-func TestVariableWithoutFiltersYieldsVariableListUnderCursorMatches(t *testing.T) {
+func TestVariableWithFiltersYieldsVariableListUnderCursorMatches(t *testing.T) {
 	expected := comp.Result{
 		Items: []comp.Item{
 			{Type: types.Variable, View: "var", Content: "var"},
@@ -94,6 +94,5 @@ func TestVariableWithoutFiltersYieldsVariableListUnderCursorMatches(t *testing.T
 		},
 	}
 
-	checkCompletion(t, "MATCH (x); MATCH (n) MATCH (▼a", expected, true)
-	checkCompletion(t, "MATCH (x); MATCH (n) MATCH (a▼", expected, true)
+	checkCompletion(t, "MATCH (var) RETURN var▼", expected, true)
 }

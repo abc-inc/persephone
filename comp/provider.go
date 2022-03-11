@@ -37,7 +37,7 @@ func (p Provider) GetReferences(name string, query *parser.CypherQueryContext) [
 		return p.ReferencesByName[name]
 	}
 	for i, q := range p.Queries {
-		if &q == query {
+		if q == *query {
 			return p.ReferencesByQueryAndName[i][name]
 		}
 	}

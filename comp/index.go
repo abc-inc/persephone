@@ -48,5 +48,5 @@ func (i *Index) AddVariable(ctx *parser.VariableContext) {
 	if _, ok := p.(*parser.AtomContext); p != nil && ok {
 		addName = false
 	}
-	i.Add(ctx.BaseParserRuleContext, addName)
+	i.Add(ctx, addName)
 }

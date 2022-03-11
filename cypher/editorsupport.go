@@ -8,6 +8,7 @@ import (
 	"github.com/abc-inc/merovingian/db/neo4j"
 	"github.com/abc-inc/merovingian/lang"
 	"github.com/abc-inc/merovingian/parser"
+	"github.com/abc-inc/merovingian/resolver"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
@@ -100,7 +101,7 @@ func (es EditorSupport) GetReferences(line, column int) []antlr.ParserRuleContex
 func (es EditorSupport) GetCompletionInfo(line, column int) comp.ComplInfo {
 	element := es.GetElementForCompletion(line, column)
 	query := ast.FindAnyParent(element, []string{lang.QUERY_CONTEXT})
-	complInfo := comp.GetTypes(element)
+	complInfo := resolver.GetTypes(element)
 	return comp.ComplInfo{
 		Element: element,
 		Query:   query,
@@ -157,18 +158,22 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 			switch ctx := element.(type) {
 			case *antlr.BaseParserRuleContext:
 				filter = ctx.GetText()
+			case *parser.CypherConsoleCommandNameContext:
+				filter = ctx.GetText()
 			case *parser.FunctionInvocationBodyContext:
 				filter = ctx.GetText()
 			case *parser.NodeLabelContext:
 				filter = ctx.GetText()[1:]
 			case *parser.RelationshipTypeContext:
 				filter = ctx.GetText()
+			case *parser.StringLiteralContext:
+				filter = ctx.GetText()
 			case *antlr.TerminalNodeImpl:
 				filter = ctx.GetText()
 			case *parser.VariableContext:
 				filter = ctx.GetText()
 			case *antlr.ErrorNodeImpl:
-				return comp.Result{}
+				filter = ctx.GetText()
 			default:
 				panic(reflect.TypeOf(element))
 			}
