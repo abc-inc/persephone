@@ -12,6 +12,7 @@ out/
 
 ### misc
 bin/
+cypher-editor/
 dist/
 tmp/
 *.log

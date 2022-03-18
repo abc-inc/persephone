@@ -20,10 +20,6 @@ func rulePropertyLookup(e antlr.ParseTree) []Info {
 			if _, ok := lookupCtx.(*parser.PropertyOrLabelsExpressionContext); ok {
 				return []Info{{Type: types.PropertyKey}}
 			}
-			// TODO: why is this necessary? the JavaScript implementation does not need it
-			if _, ok := lookupCtx.(*parser.PropertiesContext); ok {
-				return []Info{{Type: types.PropertyKey}}
-			}
 		}
 	}
 	return nil

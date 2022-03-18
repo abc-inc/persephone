@@ -1,9 +1,9 @@
-package relational
+package playground
 
 import (
 	"context"
 
-	"github.com/abc-inc/merovingian/db"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 )
@@ -22,7 +22,7 @@ func (c Conn) Close() error {
 	return c.conn.Close()
 }
 
-func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
+func (c Conn) Exec(r ndb.Request, m ndb.RecordExtractor) (ndb.Result, error) {
 	c.logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
@@ -36,7 +36,7 @@ func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
 	}
 	defer res.Close()
 
-	recs := db.Result{}
+	recs := ndb.Result{}
 	for res.Next() {
 		valByName := map[string]interface{}{}
 		err := res.MapScan(valByName)
@@ -52,8 +52,4 @@ func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
 		recs = append(recs, rec)
 	}
 	return recs, nil
-}
-
-func (c Conn) Metadata() (es []db.Entity, err error) {
-	return nil, nil
 }

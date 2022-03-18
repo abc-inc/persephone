@@ -1,4 +1,4 @@
-package web
+package playground
 
 import (
 	_ "embed"
@@ -8,12 +8,11 @@ import (
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/formatter"
-	"github.com/abc-inc/merovingian/db"
-	"github.com/abc-inc/merovingian/server"
+	"github.com/abc-inc/merovingian/ndb"
 )
 
-func Foo(w io.Writer, s db.Connector, req db.Request) error {
-	rse := func(keys []string, rse db.ValueExtractor) db.Record {
+func Foo(w io.Writer, s ndb.Connector, req ndb.Request) error {
+	rse := func(keys []string, rse ndb.ValueExtractor) ndb.Record {
 		m := map[string]interface{}{}
 		for _, k := range keys {
 			m[k], _ = rse(k)
@@ -42,7 +41,7 @@ func Foo(w io.Writer, s db.Connector, req db.Request) error {
 	str, err := formatter.FromTemplate(tmpl).Format(jj)
 	fmt.Println(jj, str, err)
 
-	gfmt := server.NewWriter(req.Format, w)
+	gfmt := NewWriter(req.Format, w)
 	_, err = gfmt.Write(res)
 	return err
 }

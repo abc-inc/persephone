@@ -1,4 +1,4 @@
-package db
+package ndb
 
 const (
 	ParamFormat   = "f"

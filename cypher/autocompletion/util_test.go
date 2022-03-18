@@ -7,25 +7,25 @@ import (
 
 	"github.com/abc-inc/merovingian/comp"
 	"github.com/abc-inc/merovingian/cypher"
-	"github.com/abc-inc/merovingian/db/neo4j"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/abc-inc/merovingian/resolver"
 	"github.com/abc-inc/merovingian/types"
 	. "github.com/stretchr/testify/assert"
 )
 
-var schema = neo4j.Schema{
+var schema = ndb.Schema{
 	Labels:   []string{":y", ":x"},
 	RelTypes: []string{":rel1", ":rel 2"},
 	PropKeys: []string{"prop1", "prop2"},
 	Params:   []string{"param1", "param2"},
-	Funcs: []neo4j.Func{
+	Funcs: []ndb.Func{
 		{Name: "toFloat", Sig: "expression"},
 		{Name: "head", Sig: "expression"},
 	},
-	Procs: []neo4j.Func{{
+	Procs: []ndb.Func{{
 		Name: "db.indexes",
 		Sig:  "()",
-		RetItems: []neo4j.Func{
+		RetItems: []ndb.Func{
 			{Name: "description", Sig: "STRING?"},
 			{Name: "state", Sig: "STRING?"},
 			{Name: "type", Sig: "STRING?"},
@@ -33,12 +33,12 @@ var schema = neo4j.Schema{
 	},
 		{Name: "org.neo4j.graph.traverse", Sig: "expression"},
 	},
-	ConCmds: []neo4j.Cmd{
+	ConCmds: []ndb.Cmd{
 		{Name: ":clear"},
 		{Name: ":play"},
-		{Name: ":help", Desc: "helpdesc", SubCmds: []neo4j.Cmd{{Name: "match"}, {Name: "create"}}},
-		{Name: ":server", SubCmds: []neo4j.Cmd{
-			{Name: "user", SubCmds: []neo4j.Cmd{
+		{Name: ":help", Desc: "helpdesc", SubCmds: []ndb.Cmd{{Name: "match"}, {Name: "create"}}},
+		{Name: ":server", SubCmds: []ndb.Cmd{
+			{Name: "user", SubCmds: []ndb.Cmd{
 				{Name: "list", Desc: "listdesc"},
 				{Name: "add"},
 			}},
@@ -66,12 +66,13 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 
 	var exp []comp.TypeData
 	for _, t := range expectedTypes {
-		exp = append(exp, comp.TypeData{Type: t})
+		exp = append(exp, comp.TypeData{Type: t, FilterLastElement: found})
 	}
 
 	// TODO: fix workaround
 	for i := range ts.Types {
 		ts.Types[i].Path = nil
+		ts.Types[i].FilterLastElement = found
 		fmt.Println(ts.Types[i])
 	}
 

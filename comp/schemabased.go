@@ -3,18 +3,18 @@ package comp
 import (
 	"fmt"
 
-	"github.com/abc-inc/merovingian/db/neo4j"
 	"github.com/abc-inc/merovingian/lang"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
-type ItemProvider func(schema neo4j.Schema, typeData TypeData) []Item
+type ItemProvider func(schema ndb.Schema, typeData TypeData) []Item
 
 var providers = make(map[types.Type]ItemProvider)
 
 func init() {
-	providers[types.ProcedureOutput] = func(schema neo4j.Schema, typeData TypeData) []Item {
+	providers[types.ProcedureOutput] = func(schema ndb.Schema, typeData TypeData) []Item {
 		for _, p := range schema.Procs {
 			if p.Name == typeData.Path[0] && len(p.RetItems) > 0 {
 				its := make([]Item, len(p.RetItems))
@@ -31,7 +31,7 @@ func init() {
 		}
 		return nil
 	}
-	providers[types.ConsoleCommandSubCommand] = func(schema neo4j.Schema, typeData TypeData) []Item {
+	providers[types.ConsoleCommandSubCommand] = func(schema ndb.Schema, typeData TypeData) []Item {
 		filterLastElement, path := typeData.FilterLastElement, typeData.Path
 		length := len(path)
 		if filterLastElement {
@@ -66,11 +66,11 @@ func init() {
 }
 
 type SchemaBased struct {
-	Schema neo4j.Schema
+	Schema ndb.Schema
 	Cache
 }
 
-func NewSchemaBased(schema neo4j.Schema) *SchemaBased {
+func NewSchemaBased(schema ndb.Schema) *SchemaBased {
 	s := &SchemaBased{Schema: schema}
 	s.Map = make(map[types.Type][]Item)
 	s.Map[types.Keyword] = KEYWORD_ITEMS
@@ -78,11 +78,11 @@ func NewSchemaBased(schema neo4j.Schema) *SchemaBased {
 	s.Map[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
 	s.Map[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
 	s.Map[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName,
-		func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return lang.EscapeCypher(n.Name) }, func(n neo4j.Func) string { return n.Sig })
+		func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return lang.EscapeCypher(n.Name) }, func(n ndb.Func) string { return n.Sig })
 	s.Map[types.ProcedureName] = mapItemsStruct(schema.Procs, types.ProcedureName,
-		func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return n.Name }, func(n neo4j.Func) string { return n.Sig })
+		func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return n.Sig })
 	s.Map[types.ConsoleCommandName] = mapItemsCmd(schema.ConCmds, types.ConsoleCommandName,
-		func(n neo4j.Cmd) string { return n.Name }, func(n neo4j.Cmd) string { return n.Name }, func(n neo4j.Cmd) string { return n.Desc })
+		func(n ndb.Cmd) string { return n.Name }, func(n ndb.Cmd) string { return n.Name }, func(n ndb.Cmd) string { return n.Desc })
 	s.Map[types.Parameter] = mapItems(schema.Params, types.Parameter, strF, strF, nilF)
 	return s
 }
@@ -142,10 +142,10 @@ func mapItems(ns []string, typ types.Type,
 	return
 }
 
-func mapItemsStruct(ns []neo4j.Func, typ types.Type,
-	viewFunc func(neo4j.Func) string,
-	contFunc func(neo4j.Func) string,
-	pfFunc func(neo4j.Func) string) (its []Item) {
+func mapItemsStruct(ns []ndb.Func, typ types.Type,
+	viewFunc func(ndb.Func) string,
+	contFunc func(ndb.Func) string,
+	pfFunc func(ndb.Func) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{
@@ -158,10 +158,10 @@ func mapItemsStruct(ns []neo4j.Func, typ types.Type,
 	return
 }
 
-func mapItemsCmd(ns []neo4j.Cmd, typ types.Type,
-	viewFunc func(neo4j.Cmd) string,
-	contFunc func(neo4j.Cmd) string,
-	pfFunc func(cmd neo4j.Cmd) string) (its []Item) {
+func mapItemsCmd(ns []ndb.Cmd, typ types.Type,
+	viewFunc func(ndb.Cmd) string,
+	contFunc func(ndb.Cmd) string,
+	pfFunc func(cmd ndb.Cmd) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{

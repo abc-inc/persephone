@@ -1,122 +1,162 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"log"
 	"os"
-	"reflect"
-	"text/template"
-	"time"
+	"path/filepath"
+	"strings"
 
-	"github.com/abc-inc/merovingian/_deprecated"
-	"github.com/briandowns/spinner"
+	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/ndb"
+	"github.com/abc-inc/merovingian/playground"
+	"github.com/abc-inc/merovingian/types"
 	"github.com/c-bata/go-prompt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j/db"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
+	"github.com/spf13/cobra"
+
+	"github.com/spf13/viper"
 )
 
-func main() {
-	dbUri := "neo4j://localhost:7687"
-	driver, err := neo4j.NewDriver(dbUri, neo4j.BasicAuth("neo4j", "root", ""))
-	if err != nil {
-		panic(err)
-	}
-	// Handle driver lifetime based on your application lifetime requirements  driver's lifetime is usually
-	// bound by the application lifetime, which usually implies one driver instance per application
-	defer driver.Close()
+var cfgFile = filepath.Join(must(os.UserConfigDir()), "merovingian", "config.yaml")
 
-	sess := driver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-	defer sess.Close()
-	res, err := sess.Run("CALL db.labels()", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	labels := []prompt.Suggest{}
-	for res.Next() {
-		labels = append(labels, prompt.Suggest{Text: res.Record().Values[0].(string)})
-	}
-
-	p := _deprecated.NewPrompt()
-	p.Register(_deprecated.Node, func(d prompt.Document) []prompt.Suggest {
-		return labels
-	})
-	p.Run()
-
-	fmt.Println("You selected " + p.Input())
-	return
-
-	item, err := insertItem(driver)
-	if err != nil {
-		panic(err)
-	}
-	n := mapValues(item.(*db.Record))
-	json, err := json.Marshal(n)
-	fmt.Println("[" + string(json) + "]")
-	return
-
-	tmpl := template.Must(template.New("").Parse("{{index . \"r.path\"}}\t{{index . \"f.gradleVersion\"}}"))
-	err = tmpl.Execute(os.Stderr, n)
-	if err != nil {
-		panic(err)
-	}
-	return
-
-	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond) // Build our new spinner
-	s.Start()                                                    // Start the spinner
-	time.Sleep(4 * time.Millisecond)                             // Run for some time to simulate work
-	s.Stop()
-	return
-
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "merovingian",
+	Short: "",
+	Long:  ``,
+	Run:   run,
 }
 
-func mapValues(vs *neo4j.Record) (m map[string]interface{}) {
-	m = make(map[string]interface{})
-	for i, v := range vs.Values {
-		k := vs.Keys[i]
-		switch t := v.(type) {
-		case dbtype.Node:
-			for pk, pv := range t.Props {
-				m[k+"."+pk] = pv
-			}
-		case dbtype.Relationship:
-		default:
-			panic("not implemented yet: " + reflect.TypeOf(v).Name())
+var pass string
+
+func init() {
+	cobra.OnInitialize(initConfig)
+
+	rootCmd.Args = cobra.MaximumNArgs(1)
+	rootCmd.Flags().String("format", "auto", "Desired output format (default: auto).")
+	rootCmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session. Example: `-P \"number=3\"`. Can be specified multiple times.")
+	rootCmd.Flags().BoolP("version", "v", false, "Print version of merovingian and exit.")
+	rootCmd.Flags().Bool("driver-version", false, "Print version of the Neo4j Driver used and exit.")
+	rootCmd.Flags().StringP("file", "f", "", "Pass a file with cypher statements to be executed.")
+
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
+	rootCmd.PersistentFlags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (default: neo4j://localhost:7687) (env: NEO4J_ADDRESS)")
+	rootCmd.PersistentFlags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
+	rootCmd.PersistentFlags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
+	rootCmd.PersistentFlags().StringP("database", "d", "", "database to connect to (default: ). (env: NEO4J_DATABASE)")
+
+	mustNoErr(viper.BindPFlags(rootCmd.PersistentFlags()))
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	}
+	viper.SetEnvPrefix("NEO4J")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err == nil {
+		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func main() {
+	Execute()
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	cobra.CheckErr(rootCmd.Execute())
+}
+
+func run(cmd *cobra.Command, args []string) {
+	addr := viper.GetString("address")
+	user := viper.GetString("username")
+	pass := viper.GetString("password")
+	db := viper.GetString("database")
+
+	driver := must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
+	conn := ndb.NewConn(driver)
+	conn.DBName = db
+
+	ns, rs, err := conn.Metadata()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var ls, ts, pkeys []string
+	for _, e := range ns {
+		ls = append(ls, e.String())
+		for _, p := range e.Properties {
+			pkeys = append(pkeys, p)
 		}
 	}
-	return m
+	for _, r := range rs {
+		ts = append(ts, r.Type)
+		for p := range r.Properties {
+			pkeys = append(pkeys, p)
+		}
+	}
+
+	schema := ndb.Schema{
+		Labels:   ls,
+		RelTypes: ts,
+		PropKeys: pkeys,
+	}
+
+	es := cypher.NewEditorSupport("")
+	es.SetSchema(schema)
+
+	var p *prompt.Prompt
+	p = prompt.New(func(cyp string) {
+		err := playground.Foo(os.Stdout, conn, ndb.Request{Query: cyp})
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}, func(document prompt.Document) (pss []prompt.Suggest) {
+		cyp := document.TextBeforeCursor()
+		if cyp == "exit" || cyp == ":exit" {
+			return nil
+		}
+		if cyp != "" && strings.IndexRune(" );'\"", rune(cyp[len(cyp)-1])) >= 0 {
+			return nil
+		}
+
+		es.Update(cyp)
+		line, col := cypher.NewPosConv(cyp).ToRelative(len(cyp))
+		res := es.GetCompletion(line, col, true)
+		for _, i := range res.Items {
+			if cyp == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
+				continue
+			}
+			pss = append(pss, prompt.Suggest{
+				Text: i.Content,
+			})
+		}
+
+		if len(pss) == 1 && strings.HasSuffix(cyp, pss[0].Text) {
+			return nil
+		}
+
+		return
+	}, prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
+		return breakline && in == "exit"
+	}), prompt.OptionPrefix(fmt.Sprintf("%s@%s> ", user, db)),
+		prompt.OptionPrefixTextColor(prompt.Cyan),
+		prompt.OptionCompletionWordSeparator(" :(."))
+	p.Run()
 }
 
-func insertItem(driver neo4j.Driver) (interface{}, error) {
-	session := driver.NewSession(neo4j.SessionConfig{})
-	defer session.Close()
-	result, err := session.WriteTransaction(createItemFn)
+func mustNoErr(err error) {
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
-	return result, nil
 }
 
-func createItemFn(tx neo4j.Transaction) (interface{}, error) {
-	records, err := tx.Run("MATCH (r:Repository)-[r_f]-(f:File) RETURN r, r_f, f LIMIT 1", map[string]interface{}{
-		"id":   1,
-		"name": "Item 1",
-	})
-	// In face of driver native errors, make sure to return them directly.
-	// Depending on the error, the driver may try to execute the function again.
-	if err != nil {
-		return nil, err
-	}
-	record, err := records.Single()
-	if err != nil {
-		return nil, err
-	}
-	// You can also retrieve values by name, with e.g. `id, found := record.Get("n.id")`
-	return record, nil
-}
-
-type Item struct {
-	Id   int64
-	Name string
+func must[T any](a T, err error) T {
+	mustNoErr(err)
+	return a
 }

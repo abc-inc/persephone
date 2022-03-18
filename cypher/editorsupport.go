@@ -5,15 +5,15 @@ import (
 
 	"github.com/abc-inc/merovingian/ast"
 	"github.com/abc-inc/merovingian/comp"
-	"github.com/abc-inc/merovingian/db/neo4j"
 	"github.com/abc-inc/merovingian/lang"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/abc-inc/merovingian/parser"
 	"github.com/abc-inc/merovingian/resolver"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
 type EditorSupport struct {
-	schema  neo4j.Schema
+	schema  ndb.Schema
 	input   string
 	posConv PosConv
 
@@ -26,7 +26,7 @@ type EditorSupport struct {
 
 func NewEditorSupport(input string) *EditorSupport {
 	e := &EditorSupport{}
-	e.completion = *comp.NewAutoCompletion(neo4j.Schema{})
+	e.completion = *comp.NewAutoCompletion(ndb.Schema{})
 	e.Update(input)
 	return e
 }
@@ -46,7 +46,7 @@ func (es *EditorSupport) Update(input string) {
 	es.completion.UpdateReferenceProviders(es.referencesProviders)
 }
 
-func (es *EditorSupport) SetSchema(schema neo4j.Schema) {
+func (es *EditorSupport) SetSchema(schema ndb.Schema) {
 	es.schema = schema
 	es.completion.UpdateSchema(es.schema)
 }
@@ -140,7 +140,7 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 		// There are number of situations where we need to be smarter than default behavior
 		pos := ast.GetPosition(element)
 		smartReplaceRange := comp.CalculateSmartReplaceRange(element, pos.GetStart(), pos.GetStop())
-		if smartReplaceRange.FilterText != "" {
+		if smartReplaceRange != nil {
 			replFrom.Line, replFrom.Col = es.posConv.ToRelative(smartReplaceRange.Start)
 			replTo.Line, replTo.Col = es.posConv.ToRelative(smartReplaceRange.Stop + 1)
 

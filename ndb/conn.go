@@ -1,11 +1,10 @@
-package neo4j
+package ndb
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/abc-inc/merovingian/db"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog"
 )
@@ -13,11 +12,12 @@ import (
 type Conn struct {
 	logger zerolog.Logger
 	driver neo4j.Driver
+	DBName string
 }
 
 func NewConn(d neo4j.Driver) *Conn {
 	l := zerolog.New(zerolog.NewConsoleWriter())
-	return &Conn{l, d}
+	return &Conn{l, d, "neo4j"}
 }
 
 func (c Conn) Close() error {
@@ -25,10 +25,11 @@ func (c Conn) Close() error {
 }
 
 func (c Conn) Session() neo4j.Session {
-	return c.driver.NewSession(neo4j.SessionConfig{})
+	config := neo4j.SessionConfig{DatabaseName: c.DBName}
+	return c.driver.NewSession(config)
 }
 
-func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
+func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
 	c.logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
@@ -41,7 +42,7 @@ func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
 		return nil, err
 	}
 
-	recs := db.Result{}
+	recs := Result{}
 	for res.Next() {
 		getValue := func(key string) (interface{}, bool) {
 			return res.Record().Get(key)
@@ -52,16 +53,16 @@ func (c Conn) Exec(r db.Request, m db.RecordExtractor) (db.Result, error) {
 	return recs, nil
 }
 
-func (c Conn) Metadata() (es []db.Entity, err error) {
+func (c Conn) Metadata() (ns []Node, rs []Relationship, err error) {
 	// res, err := c.Session().Run("CALL db.labels()", nil)
 	res, err := c.Session().Run("CALL apoc.meta.schema", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// for res.Next() {
 	// l, _ := res.Record().Get(res.Record().Keys[0])
-	// es = append(es, db.Entity{Name: l.(string)})
+	// es = append(es, ndb.Entity{Name: l.(string)})
 	// }
 	for res.Next() {
 		m := res.Record().Values[0].(map[string]interface{})
@@ -69,7 +70,7 @@ func (c Conn) Metadata() (es []db.Entity, err error) {
 		if err != nil {
 			panic(err)
 		}
-		var nor NodeOrRel
+		var nor Placeholder
 		err = json.Unmarshal(j, &nor)
 		if err != nil {
 			panic(err)
@@ -89,40 +90,68 @@ func (c Conn) Metadata() (es []db.Entity, err error) {
 		for n := range m {
 			ps := m[n].(map[string]interface{})
 			fmt.Println(n, ps["type"], ps["labels"], ps["types"], ps["properties"])
+
+			var pkeys []string
+			for p := range ps["properties"].(map[string]interface{}) {
+				pkeys = append(pkeys, p)
+			}
+
+			if ps["type"] == "node" {
+				ns = append(ns, Node{
+					Count:         ps["count"].(int64),
+					Relationships: nil,
+					Type:          ps["type"].(string),
+					Properties:    pkeys,
+					Labels:        []string{n},
+				})
+			} else {
+				rs = append(rs, Relationship{
+					Count:      ps["count"].(int64),
+					Type:       ps["type"].(string),
+					Properties: nil,
+				})
+			}
 		}
 
-		// es = append(es, db.Entity{Name: l.(string)})
+		// es = append(es, ndb.Entity{Name: l.(string)})
 	}
-	return es, nil
+	return ns, rs, nil
+}
+
+type Placeholder interface {
 }
 
 type NodeOrRel interface {
+	String() string
 }
 
 type Node struct {
-	Count      int `json:"count"`
+	Count         int64 `json:"count"`
 	Relationships map[string]RelProperty
-	Type string `json:"type"`
-	Properties struct {
-	} `json:"properties"`
-	Labels    []string `json:"labels"`
-	NodeOrRel
+	Type          string   `json:"type"`
+	Properties    []string `json:"properties"`
+	Labels        []string `json:"labels"`
 }
 
+func (n Node) String() string {
+	return n.Labels[0]
+}
+
+var _ NodeOrRel = (*Node)(nil)
+
 type Relationship struct {
-	Count      int    `json:"count"`
-	Type       string `json:"type"`
+	Count      int64                      `json:"count"`
+	Type       string                     `json:"type"`
 	Properties map[string]NodeRelProperty `json:"properties"`
-	NodeOrRel
 }
 
 type RelProperty struct {
-	Count      int `json:"count"`
+	Count      int                        `json:"count"`
 	Properties map[string]NodeRelProperty `json:"properties"`
-	Direction string   `json:"direction"`
-	Labels    []string `json:"labels"`
-
+	Direction  string                     `json:"direction"`
+	Labels     []string                   `json:"labels"`
 }
+
 type NodeProperty struct {
 	Existence bool   `json:"existence"`
 	Type      string `json:"type"`
@@ -131,9 +160,7 @@ type NodeProperty struct {
 }
 
 type NodeRelProperty struct {
-Existence bool   `json:"existence"`
-Type      string `json:"type"`
-Array     bool   `json:"array"`
+	Existence bool   `json:"existence"`
+	Type      string `json:"type"`
+	Array     bool   `json:"array"`
 }
-
-type MetaSchema map[string]NodeOrRel

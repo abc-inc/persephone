@@ -24,7 +24,10 @@ func (p PosStruct) GetStop() int {
 }
 
 func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
-	e := pt
+	if pt == nil || reflect.TypeOf(pt).Elem() == t {
+		return pt
+	}
+	e := pt.GetParent()
 	for e != nil {
 		if reflect.TypeOf(e).Elem() == t {
 			break
@@ -100,6 +103,13 @@ func HasErrorNode(element antlr.Tree) bool {
 	if element == nil {
 		return false
 	}
-	// TODO: implement
+	if _, ok := element.(antlr.ErrorNode); ok {
+		return true
+	}
+	for _, c := range element.GetChildren() {
+		if HasErrorNode(c) {
+			return true
+		}
+	}
 	return false
 }

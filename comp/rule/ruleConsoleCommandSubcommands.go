@@ -12,14 +12,14 @@ import (
 
 // If we are in console command, and not in console command name, return path
 func ruleConsoleCommandSubcommands(e antlr.ParseTree) []Info {
-	consCmd := ast.FindParent(e.GetParent(), reflect.TypeOf(parser.CypherConsoleCommandContext{}))
+	parent := ast.GetParent(e)
+	consCmd := ast.FindParent(parent, reflect.TypeOf(parser.CypherConsoleCommandContext{}))
 	isAtTheEnd := false
 	if consCmd == nil {
 		// We are not in console command. But maybe we are on a space at the end of console command?
 		// If first child of parent contains console command
 		// and second child is our current element
 		// then we are at the space at the end of console command
-		parent := ast.GetParent(e)
 		child1 := ast.FindChild(parent.GetChild(0), lang.CONSOLE_COMMAND_CONTEXT)
 		if child1 != nil && parent.GetChildCount() > 1 && parent.GetChild(1) == e {
 			consCmd = child1

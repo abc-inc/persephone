@@ -1,4 +1,4 @@
-package neo4j
+package ndb
 
 type Cmd struct {
 	Name    string

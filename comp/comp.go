@@ -7,8 +7,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/abc-inc/merovingian/db/neo4j"
+	"github.com/abc-inc/merovingian/ast"
 	"github.com/abc-inc/merovingian/lang"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/abc-inc/merovingian/parser"
 	"github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -33,7 +34,7 @@ type AutoCompletion struct {
 	SchemaBased *SchemaBased
 }
 
-func NewAutoCompletion(schema neo4j.Schema) *AutoCompletion {
+func NewAutoCompletion(schema ndb.Schema) *AutoCompletion {
 	a := &AutoCompletion{}
 	a.UpdateSchema(schema)
 	return a
@@ -59,7 +60,7 @@ func (a AutoCompletion) GetItems(types []TypeData, query antlr.Tree, filter stri
 	return items
 }
 
-func (a *AutoCompletion) UpdateSchema(schema neo4j.Schema) {
+func (a *AutoCompletion) UpdateSchema(schema ndb.Schema) {
 	a.SchemaBased = NewSchemaBased(schema)
 }
 
@@ -74,7 +75,7 @@ func ShouldBeReplaced(element antlr.Tree) bool {
 	}
 
 	text := element.(antlr.ParseTree).GetText()
-	parent := element.GetParent()
+	parent := ast.GetParent(element)
 
 	// If element is whitespace
 	if ok, err := regexp.MatchString("^\\s+$", text); err == nil && ok {
@@ -98,7 +99,7 @@ func ShouldBeReplaced(element antlr.Tree) bool {
 		return false
 	}
 	if text == ":" && parent != nil {
-		if _, ok := parent.(parser.LiteralEntryContext); ok {
+		if _, ok := parent.(parser.ILiteralEntryContext); ok {
 			return false
 		}
 	}
@@ -109,18 +110,18 @@ func filterText(text string) string {
 	return strings.TrimPrefix(text, "$")
 }
 
-func CalculateSmartReplaceRange(element antlr.Tree, start, stop int) Filter {
+func CalculateSmartReplaceRange(element antlr.Tree, start, stop int) *Filter {
 	// If we are in relationship type or label, and we have error nodes in there.
 	// This means that we typed in just ':' and Antlr consumed other tokens in element.
 	// In this case replace only ':'.
-	_, ok1 := element.(parser.RelationshipTypeContext)
-	_, ok2 := element.(parser.NodeLabelContext)
+	_, ok1 := element.(*parser.RelationshipTypeContext)
+	_, ok2 := element.(*parser.NodeLabelContext)
 	if ok1 || ok2 {
-		//if ast.HasErrorNode(element) {
-		//	return Filter{":", start, stop}
-		//}
+		if ast.HasErrorNode(element) {
+			return &Filter{":", start, start}
+		}
 	}
-	return Filter{}
+	return nil
 }
 
 func fuzzySearch(items []Item, query string, keyEx func(Item) string) (res []Item) {
@@ -243,7 +244,7 @@ func Score(s, query string) float64 {
 }
 
 func queryIsLastPathSegment(s, query string) bool {
-	if len(s)>len(query) && s[len(s)-len(query)-1] == os.PathSeparator {
+	if len(s) > len(query) && s[len(s)-len(query)-1] == os.PathSeparator {
 		return strings.LastIndex(s, query) == len(s)-len(query)
 	}
 	return false

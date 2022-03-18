@@ -1,4 +1,4 @@
-package server
+package playground
 
 import (
 	"crypto/sha256"
@@ -10,11 +10,11 @@ import (
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/gfmt"
-	"github.com/abc-inc/merovingian/db"
+	"github.com/abc-inc/merovingian/ndb"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
-func FormatTemplate(text string, rec db.Record) (string, error) {
+func FormatTemplate(text string, rec ndb.Record) (string, error) {
 	m := mapValues(rec)
 	j, err := json.Marshal(m)
 	if err != nil {
@@ -33,7 +33,7 @@ func FormatTemplate(text string, rec db.Record) (string, error) {
 	return out.String(), err
 }
 
-func mapValues(vs db.Record) (m map[string]interface{}) {
+func mapValues(vs ndb.Record) (m map[string]interface{}) {
 	m = make(map[string]interface{})
 	for k, v := range vs {
 		switch t := v.(type) {

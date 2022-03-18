@@ -116,7 +116,7 @@ func TestPropertyKeyAutoCompletionYieldsAllAfterColonInUnclosedMapLiteral(t *tes
 	}
 	expected.Items = append(expected.Items, comp.KEYWORD_ITEMS...)
 
-	checkCompletion(t, "MATCH (n {▼", expected, true)
+	checkCompletion(t, "MATCH ({key:▼", expected, true)
 }
 
 func TestPropertyKeyAutoCompletionYieldsAllAfterColonInMapLiteral(t *testing.T) {

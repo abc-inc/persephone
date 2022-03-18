@@ -8,31 +8,33 @@ import (
 var Present = struct{}{}
 
 type Index struct {
-	Names                    map[string]interface{}
-	NamesByQuery             []map[string]interface{}
+	Names                    []string
+	NamesByQuery             [][]string
 	ReferencesByName         map[string][]antlr.ParserRuleContext
 	ReferencesByQueryAndName []map[string][]antlr.ParserRuleContext
 }
 
 func NewIndex() *Index {
 	i := &Index{}
-	i.Names = make(map[string]interface{})
-	i.NamesByQuery = make([]map[string]interface{}, 0)
+	i.Names = make([]string, 0)
+	i.NamesByQuery = make([][]string, 0)
 	i.ReferencesByName = make(map[string][]antlr.ParserRuleContext)
 	i.ReferencesByQueryAndName = make([]map[string][]antlr.ParserRuleContext, 0)
 	return i
 }
 
 func (i *Index) AddQuery() {
-	i.NamesByQuery = append(i.NamesByQuery, make(map[string]interface{}))
+	i.NamesByQuery = append(i.NamesByQuery, make([]string, 0))
 	i.ReferencesByQueryAndName = append(i.ReferencesByQueryAndName, make(map[string][]antlr.ParserRuleContext))
 }
 
 func (i *Index) Add(ctx antlr.ParserRuleContext, addName bool) {
 	idx := len(i.NamesByQuery) - 1
 	if addName {
-		i.Names[ctx.GetText()] = Present
-		i.NamesByQuery[idx][ctx.GetText()] = Present
+		if !contains(i.Names, ctx.GetText()) {
+			i.Names = append(i.Names, ctx.GetText())
+			i.NamesByQuery[idx] = append(i.NamesByQuery[idx], ctx.GetText())
+		}
 	}
 	i.ReferencesByName[ctx.GetText()] = append(i.ReferencesByName[ctx.GetText()], ctx)
 	index := i.ReferencesByQueryAndName[idx]
@@ -49,4 +51,13 @@ func (i *Index) AddVariable(ctx *parser.VariableContext) {
 		addName = false
 	}
 	i.Add(ctx, addName)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

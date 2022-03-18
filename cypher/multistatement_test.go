@@ -10,8 +10,7 @@ func TestCatchErrorInSecondStatement(t *testing.T) {
 	msg1 := "mismatched input 'POTATO' expecting {':', CYPHER, EXPLAIN, PROFILE, USING, CREATE, DROP, LOAD, WITH, OPTIONAL, MATCH, UNWIND, MERGE, SET, DETACH, DELETE, REMOVE, FOREACH, RETURN, START, CALL}"
 	cypher := `RETURN 1;
 POTATO;
-RETURN rand();
-`
+RETURN rand();`
 
 	s := NewEditorSupport(cypher)
 	Equal(t, 1, len(s.parseErrors))
@@ -25,8 +24,8 @@ func TestParseCommonParam(t *testing.T) {
 hello;
 :param x => 1;
 hello2;
-:play reco;
-`
+:play reco;`
+
 	s := NewEditorSupport(cypher)
 	Equal(t, 2, len(s.parseErrors))
 	Equal(t, SynErr{2, 0, msg1}, s.parseErrors[0])

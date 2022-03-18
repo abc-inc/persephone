@@ -118,7 +118,7 @@ func TestWithFiltersYieldsRelationshipTypeIfAfterColonWithSpace(t *testing.T) {
 		},
 		Range: comp.Range{
 			From: comp.LineCol{Line: 1, Col: 11},
-			To:   comp.LineCol{Line: 1, Col: 13},
+			To:   comp.LineCol{Line: 1, Col: 12},
 		},
 	}
 	checkCompletion(t, "MATCH (a)-[:▼ return n;", expected, true)

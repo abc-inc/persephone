@@ -1,20 +1,28 @@
 package ast
 
 import (
-	"fmt"
-
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
 func GetParent(e antlr.Tree) antlr.Tree {
 	//fmt.Println(reflect.TypeOf(e).Elem(), reflect.TypeOf(e.GetParent()).Elem())
-	e = e.GetParent()
-	if _, ok := e.(*antlr.BaseParserRuleContext); ok && e.GetParent() != nil {
-		if e.GetParent().GetChildCount() == 0 {
-			fmt.Println(e.GetParent())
+	pt := e.GetParent()
+	if _, ok := pt.(*antlr.BaseParserRuleContext); ok && pt.GetParent() != nil {
+		if pt.GetParent().GetChildCount() == 1 {
+			return pt.GetParent().GetChild(0)
 		}
-		e = e.GetParent().GetChild(0)
-		//fmt.Println(reflect.TypeOf(e).Elem(), reflect.TypeOf(p).Elem())
+		eStart := pt.(*antlr.BaseParserRuleContext).GetStart()
+		eStop := pt.(*antlr.BaseParserRuleContext).GetStop()
+		for _, c := range pt.GetParent().GetChildren() {
+			if _, ok := c.(antlr.ParserRuleContext); ok {
+				cStart := c.(antlr.ParserRuleContext).GetStart()
+				cStop := c.(antlr.ParserRuleContext).GetStop()
+				if cStart.GetStart() >= eStart.GetStart() && cStop.GetStop() <= eStop.GetStop() {
+					return c
+				}
+			}
+		}
+		pt = pt.GetParent().GetChild(0)
 	}
-	return e
+	return pt
 }
