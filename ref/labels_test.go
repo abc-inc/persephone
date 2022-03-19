@@ -1,16 +1,16 @@
-package ref
+package ref_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	. "github.com/stretchr/testify/assert"
 )
 
 func TestRefLabelsReturnsReferenceForSingleLabel(t *testing.T) {
-	e := cypher.NewEditorSupport("MATCH (n:Label)")
+	e := editor.NewEditorSupport("MATCH (n:Label)")
 	refs := e.GetReferences(1, 10)
 
 	ref := refs[0]
@@ -23,7 +23,7 @@ func TestRefLabelsReturnsReferenceForSingleLabel(t *testing.T) {
 }
 
 func TestRefLabelsReturnsReferencesForMultipleLabels(t *testing.T) {
-	e := cypher.NewEditorSupport("MATCH (n:Label) MATCH (m:Label)")
+	e := editor.NewEditorSupport("MATCH (n:Label) MATCH (m:Label)")
 	refs := e.GetReferences(1, 10)
 
 	ref := refs[0].(antlr.ParserRuleContext)
@@ -44,7 +44,7 @@ func TestRefLabelsReturnsReferencesForMultipleLabels(t *testing.T) {
 }
 
 func TestRefLabelsReturnsReferencesForMultipleQueries(t *testing.T) {
-	e := cypher.NewEditorSupport("MATCH (n:Label); MATCH (n:Label);")
+	e := editor.NewEditorSupport("MATCH (n:Label); MATCH (n:Label);")
 	refs := e.GetReferences(1, 10)
 
 	ref := refs[0].(antlr.ParserRuleContext)

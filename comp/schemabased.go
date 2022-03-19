@@ -9,12 +9,12 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
-type ItemProvider func(schema ndb.Schema, typeData TypeData) []Item
+type ItemProvider func(schema ndb.Schema, typeData types.Data) []Item
 
 var providers = make(map[types.Type]ItemProvider)
 
 func init() {
-	providers[types.ProcedureOutput] = func(schema ndb.Schema, typeData TypeData) []Item {
+	providers[types.ProcedureOutput] = func(schema ndb.Schema, typeData types.Data) []Item {
 		for _, p := range schema.Procs {
 			if p.Name == typeData.Path[0] && len(p.RetItems) > 0 {
 				its := make([]Item, len(p.RetItems))
@@ -31,7 +31,7 @@ func init() {
 		}
 		return nil
 	}
-	providers[types.ConsoleCommandSubCommand] = func(schema ndb.Schema, typeData TypeData) []Item {
+	providers[types.ConsoleCommandSubCommand] = func(schema ndb.Schema, typeData types.Data) []Item {
 		filterLastElement, path := typeData.FilterLastElement, typeData.Path
 		length := len(path)
 		if filterLastElement {
@@ -67,40 +67,40 @@ func init() {
 
 type SchemaBased struct {
 	Schema ndb.Schema
-	Cache
+	cache  map[types.Type][]Item
 }
 
 func NewSchemaBased(schema ndb.Schema) *SchemaBased {
 	s := &SchemaBased{Schema: schema}
-	s.Map = make(map[types.Type][]Item)
-	s.Map[types.Keyword] = KEYWORD_ITEMS
-	s.Map[types.Label] = mapItems(schema.Labels, types.Label, strF, escF, nilF)
-	s.Map[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
-	s.Map[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
-	s.Map[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName,
+	s.cache = make(map[types.Type][]Item)
+	s.cache[types.Keyword] = KeywordItems
+	s.cache[types.Label] = mapItems(schema.Labels, types.Label, strF, escF, nilF)
+	s.cache[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
+	s.cache[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
+	s.cache[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName,
 		func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return lang.EscapeCypher(n.Name) }, func(n ndb.Func) string { return n.Sig })
-	s.Map[types.ProcedureName] = mapItemsStruct(schema.Procs, types.ProcedureName,
+	s.cache[types.ProcedureName] = mapItemsStruct(schema.Procs, types.ProcedureName,
 		func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return n.Name }, func(n ndb.Func) string { return n.Sig })
-	s.Map[types.ConsoleCommandName] = mapItemsCmd(schema.ConCmds, types.ConsoleCommandName,
+	s.cache[types.ConsoleCommandName] = mapItemsCmd(schema.ConCmds, types.ConsoleCommandName,
 		func(n ndb.Cmd) string { return n.Name }, func(n ndb.Cmd) string { return n.Name }, func(n ndb.Cmd) string { return n.Desc })
-	s.Map[types.Parameter] = mapItems(schema.Params, types.Parameter, strF, strF, nilF)
+	s.cache[types.Parameter] = mapItems(schema.Params, types.Parameter, strF, strF, nilF)
 	return s
 }
 
-func (s SchemaBased) CalculateItems(t TypeData, query antlr.Tree) (is []Item) {
+func (s SchemaBased) CalculateItems(t types.Data, query antlr.Tree) (is []Item) {
 	if p, ok := providers[t.Type]; ok {
 		is = append(is, p(s.Schema, t)...)
 	}
 	return is
 }
 
-func (s SchemaBased) Complete(ts []TypeData, query antlr.Tree) (is []Item) {
+func (s SchemaBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
 	if len(ts) == 0 {
 		return nil
 	}
 
 	for _, t := range ts {
-		if items := s.Map[t.Type]; items != nil {
+		if items := s.cache[t.Type]; items != nil {
 			is = append(is, items...)
 		} else {
 			is = append(is, s.CalculateItems(t, query)...)

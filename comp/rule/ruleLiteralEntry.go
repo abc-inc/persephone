@@ -4,8 +4,8 @@ import (
 	"reflect"
 
 	"github.com/abc-inc/merovingian/ast"
-	"github.com/abc-inc/merovingian/comp"
 	"github.com/abc-inc/merovingian/parser"
+	"github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
@@ -24,8 +24,8 @@ func ruleLiteralEntry(e antlr.ParseTree) (is []Info) {
 		space = literalEntry.GetChild(2)
 	}
 	if doubleDots == e || space == e {
-		for _, t := range comp.All {
-			is = append(is, Info{Type: t.Type})
+		for _, t := range types.AllComp {
+			is = append(is, Info{Type: t})
 		}
 	}
 	return is

@@ -50,22 +50,5 @@ type ComplInfo struct {
 	Element antlr.Tree
 	Query   antlr.Tree
 	Found   bool
-	Types   []TypeData
-}
-
-type TypeData struct {
-	Type              types.Type
-	Path              []string
-	FilterLastElement bool
-}
-
-// All is the default.
-var All []TypeData
-
-var AllTypes = []types.Type{types.Variable, types.Parameter, types.PropertyKey, types.FunctionName, types.Keyword}
-
-func init() {
-	for _, t := range AllTypes {
-		All = append(All, TypeData{Type: t})
-	}
+	Types   []types.Data
 }

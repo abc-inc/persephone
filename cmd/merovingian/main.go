@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/abc-inc/merovingian/ndb"
 	"github.com/abc-inc/merovingian/playground"
 	"github.com/abc-inc/merovingian/types"
@@ -107,7 +107,7 @@ func run(cmd *cobra.Command, args []string) {
 		PropKeys: pkeys,
 	}
 
-	es := cypher.NewEditorSupport("")
+	es := editor.NewEditorSupport("")
 	es.SetSchema(schema)
 
 	var p *prompt.Prompt
@@ -126,7 +126,7 @@ func run(cmd *cobra.Command, args []string) {
 		}
 
 		es.Update(cyp)
-		line, col := cypher.NewPosConv(cyp).ToRelative(len(cyp))
+		line, col := editor.NewPosConv(cyp).ToRelative(len(cyp))
 		res := es.GetCompletion(line, col, true)
 		for _, i := range res.Items {
 			if cyp == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {

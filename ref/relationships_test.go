@@ -1,16 +1,16 @@
-package ref
+package ref_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/abc-inc/merovingian/lang"
 	. "github.com/stretchr/testify/assert"
 )
 
 func TestRelationshipsReturnsReferenceForRelationshipTypes(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH ()-[:TYPE]-()")
+	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-()")
 	refs := es.GetReferences(1, 13)
 
 	ref := refs[0]
@@ -23,7 +23,7 @@ func TestRelationshipsReturnsReferenceForRelationshipTypes(t *testing.T) {
 }
 
 func TestRelationshipsReturnsReferencesForMultipleRelationshipTypes(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH ()-[:TYPE]-() MATCH ()-[:TYPE]-()")
+	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-() MATCH ()-[:TYPE]-()")
 	refs := es.GetReferences(1, 13)
 
 	ref := refs[0]
@@ -44,7 +44,7 @@ func TestRelationshipsReturnsReferencesForMultipleRelationshipTypes(t *testing.T
 }
 
 func TestRelationshipsReturnsReferencesForMultipleQueries(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH ()-[:TYPE]-(); MATCH ()-[:TYPE]-()")
+	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-(); MATCH ()-[:TYPE]-()")
 	refs := es.GetReferences(1, 13)
 
 	ref := refs[0]

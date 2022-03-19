@@ -1,16 +1,16 @@
-package ref
+package ref_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/abc-inc/merovingian/lang"
 	. "github.com/stretchr/testify/assert"
 )
 
 func TestParametersReturnsReferenceForSingleParameter(t *testing.T) {
-	es := cypher.NewEditorSupport("RETURN $param;")
+	es := editor.NewEditorSupport("RETURN $param;")
 	refs := es.GetReferences(1, 10)
 
 	ref := refs[0]
@@ -23,7 +23,7 @@ func TestParametersReturnsReferenceForSingleParameter(t *testing.T) {
 }
 
 func TestParametersReturnsReferenceForMultipleParameters(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param}")
+	es := editor.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param}")
 	refs := es.GetReferences(1, 45)
 
 	ref := refs[0]
@@ -44,7 +44,7 @@ func TestParametersReturnsReferenceForMultipleParameters(t *testing.T) {
 }
 
 func TestParametersReturnsReferencesForMultipleQueries(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param};\n" +
+	es := editor.NewEditorSupport("MATCH (n) SET n.key = $param SET n.key = {param};\n" +
 		"          MATCH (n) SET n.key = $param SET n.key = {param};")
 	refs := es.GetReferences(1, 45)
 

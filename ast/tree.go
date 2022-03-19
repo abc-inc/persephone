@@ -11,15 +11,15 @@ type Pos interface {
 	GetStop() int
 }
 
-type PosStruct struct {
+type posStruct struct {
 	Start, Stop int
 }
 
-func (p PosStruct) GetStart() int {
+func (p posStruct) GetStart() int {
 	return p.Start
 }
 
-func (p PosStruct) GetStop() int {
+func (p posStruct) GetStop() int {
 	return p.Stop
 }
 
@@ -92,9 +92,9 @@ func GetPosition(el antlr.Tree) Pos {
 	}
 
 	if symbol != nil {
-		return PosStruct{symbol.GetStart(), symbol.GetStop()}
+		return posStruct{symbol.GetStart(), symbol.GetStop()}
 	} else if start != nil && stop != nil {
-		return PosStruct{start.GetStart(), stop.GetStop()}
+		return posStruct{start.GetStart(), stop.GetStop()}
 	}
 	return nil
 }

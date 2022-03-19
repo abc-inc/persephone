@@ -1,16 +1,16 @@
-package ref
+package ref_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/abc-inc/merovingian/lang"
 	. "github.com/stretchr/testify/assert"
 )
 
 func TestVariablesReturnsReferenceForSingleVariable(t *testing.T) {
-	es := cypher.NewEditorSupport("RETURN n")
+	es := editor.NewEditorSupport("RETURN n")
 	refs := es.GetReferences(1, 7)
 
 	ref := refs[0]
@@ -23,7 +23,7 @@ func TestVariablesReturnsReferenceForSingleVariable(t *testing.T) {
 }
 
 func TestVariablesReturnsReferenceForMultipleVariables(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n)-[r]->(n) RETURN n")
+	es := editor.NewEditorSupport("MATCH (n)-[r]->(n) RETURN n")
 	refs := es.GetReferences(1, 7)
 
 	ref := refs[0]
@@ -51,7 +51,7 @@ func TestVariablesReturnsReferenceForMultipleVariables(t *testing.T) {
 }
 
 func TestVariablesReturnsReferenceForMultipleQueries(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n) RETURN n; MATCH (n) RETURN n")
+	es := editor.NewEditorSupport("MATCH (n) RETURN n; MATCH (n) RETURN n")
 	refs := es.GetReferences(1, 7)
 
 	ref := refs[0]

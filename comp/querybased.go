@@ -3,24 +3,25 @@ package comp
 import (
 	"github.com/abc-inc/merovingian/lang"
 	"github.com/abc-inc/merovingian/parser"
+	"github.com/abc-inc/merovingian/ref"
 	"github.com/abc-inc/merovingian/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
 type QueryBased struct {
-	refProvs map[string]Provider
+	refProvs map[string]ref.Provider
 }
 
-func NewQueryBased(refProvs map[string]Provider) *QueryBased {
+func NewQueryBased(refProvs map[string]ref.Provider) *QueryBased {
 	return &QueryBased{refProvs: refProvs}
 }
 
-func (q QueryBased) Complete(ts []TypeData, query antlr.Tree) (is []Item) {
+func (q QueryBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
 	if query == nil {
 		return is
 	}
 
-	for _, t:=range ts {
+	for _, t := range ts {
 		if t.Type != types.Variable {
 			continue
 		}

@@ -1,16 +1,16 @@
-package ref
+package ref_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/cypher"
+	"github.com/abc-inc/merovingian/editor"
 	"github.com/abc-inc/merovingian/lang"
 	. "github.com/stretchr/testify/assert"
 )
 
 func TestPropertyKeysReturnsReferenceForSingleKey(t *testing.T) {
-	es := cypher.NewEditorSupport("RETURN n.key")
+	es := editor.NewEditorSupport("RETURN n.key")
 	refs := es.GetReferences(1, 10)
 
 	ref := refs[0]
@@ -23,7 +23,7 @@ func TestPropertyKeysReturnsReferenceForSingleKey(t *testing.T) {
 }
 
 func TestPropertyKeysReturnsReferencesForMultipleKeys(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n {key: 42}) SET n.key = 4 RETURN n.key;")
+	es := editor.NewEditorSupport("MATCH (n {key: 42}) SET n.key = 4 RETURN n.key;")
 	refs := es.GetReferences(1, 10)
 
 	ref := refs[0]
@@ -52,7 +52,7 @@ func TestPropertyKeysReturnsReferencesForMultipleKeys(t *testing.T) {
 }
 
 func TestPropertyKeysReturnsReferencesForMultipleQueries(t *testing.T) {
-	es := cypher.NewEditorSupport("MATCH (n {key: 42})\n" +
+	es := editor.NewEditorSupport("MATCH (n {key: 42})\n" +
 		"          SET n.key = 42\n" +
 		"          RETURN n.key;\n" +
 		"          MATCH (n {key: 42})\n" +
