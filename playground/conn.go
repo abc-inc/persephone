@@ -3,7 +3,7 @@ package playground
 import (
 	"context"
 
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 )
@@ -22,7 +22,7 @@ func (c Conn) Close() error {
 	return c.conn.Close()
 }
 
-func (c Conn) Exec(r ndb.Request, m ndb.RecordExtractor) (ndb.Result, error) {
+func (c Conn) Exec(r graph.Request, m graph.RecordExtractor) (graph.Result, error) {
 	c.logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
@@ -36,7 +36,7 @@ func (c Conn) Exec(r ndb.Request, m ndb.RecordExtractor) (ndb.Result, error) {
 	}
 	defer res.Close()
 
-	recs := ndb.Result{}
+	recs := graph.Result{}
 	for res.Next() {
 		valByName := map[string]interface{}{}
 		err := res.MapScan(valByName)

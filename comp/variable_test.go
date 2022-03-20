@@ -96,3 +96,21 @@ func TestVariableWithFiltersYieldsVariableListUnderCursorMatches(t *testing.T) {
 
 	checkCompletion(t, "MATCH (var) RETURN var▼", expected, true)
 }
+
+// TODO: this is an additional test
+func TestVariableWithFiltersYieldsVariableListInFunction(t*testing.T) {
+	expected := Result{
+		Items: []Item{
+			{Type: types.Variable, View: "var", Content: "var"},
+		},
+		Range: Range{
+			From: LineCol{Line: 1, Col: 27},
+			To:   LineCol{Line: 1, Col: 30},
+		},
+	}
+
+	checkCompletion(t, "MATCH (var) RETURN collect(▼v", expected, true)
+	checkCompletion(t, "MATCH (var) RETURN collect(v▼", expected, true)
+	checkCompletion(t, "MATCH (var) RETURN collect(va▼", expected, true)
+	checkCompletion(t, "MATCH (var) RETURN collect(var▼", expected, true)
+}

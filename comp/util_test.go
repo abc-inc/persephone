@@ -7,24 +7,24 @@ import (
 
 	. "github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/types"
 	. "github.com/stretchr/testify/require"
 )
 
-var schema = ndb.Schema{
+var schema = graph.Schema{
 	Labels:   []string{":y", ":x"},
 	RelTypes: []string{":rel1", ":rel 2"},
 	PropKeys: []string{"prop1", "prop2"},
 	Params:   []string{"param1", "param2"},
-	Funcs: []ndb.Func{
+	Funcs: []graph.Func{
 		{Name: "toFloat", Sig: "expression"},
 		{Name: "head", Sig: "expression"},
 	},
-	Procs: []ndb.Func{{
+	Procs: []graph.Func{{
 		Name: "db.indexes",
 		Sig:  "()",
-		RetItems: []ndb.Func{
+		RetItems: []graph.Func{
 			{Name: "description", Sig: "STRING?"},
 			{Name: "state", Sig: "STRING?"},
 			{Name: "type", Sig: "STRING?"},
@@ -32,12 +32,12 @@ var schema = ndb.Schema{
 	},
 		{Name: "org.neo4j.graph.traverse", Sig: "expression"},
 	},
-	ConCmds: []ndb.Cmd{
+	ConCmds: []graph.Cmd{
 		{Name: ":clear"},
 		{Name: ":play"},
-		{Name: ":help", Desc: "helpdesc", SubCmds: []ndb.Cmd{{Name: "match"}, {Name: "create"}}},
-		{Name: ":server", SubCmds: []ndb.Cmd{
-			{Name: "user", SubCmds: []ndb.Cmd{
+		{Name: ":help", Desc: "helpdesc", SubCmds: []graph.Cmd{{Name: "match"}, {Name: "create"}}},
+		{Name: ":server", SubCmds: []graph.Cmd{
+			{Name: "user", SubCmds: []graph.Cmd{
 				{Name: "list", Desc: "listdesc"},
 				{Name: "add"},
 			}},

@@ -6,14 +6,14 @@ import (
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
 type EditorSupport struct {
-	schema  ndb.Schema
+	schema  graph.Schema
 	Input   string
 	posConv PosConv
 
@@ -26,7 +26,7 @@ type EditorSupport struct {
 
 func NewEditorSupport(input string) *EditorSupport {
 	e := &EditorSupport{}
-	e.completion = *comp.NewAutoCompletion(ndb.Schema{})
+	e.completion = *comp.NewAutoCompletion(graph.Schema{})
 	e.Update(input)
 	return e
 }
@@ -46,7 +46,7 @@ func (es *EditorSupport) Update(input string) {
 	es.completion.UpdateReferenceProviders(es.referencesProviders)
 }
 
-func (es *EditorSupport) SetSchema(schema ndb.Schema) {
+func (es *EditorSupport) SetSchema(schema graph.Schema) {
 	es.schema = schema
 	es.completion.UpdateSchema(es.schema)
 }
@@ -161,6 +161,8 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 				filter = ctx.GetText()
 			case *parser.NodeLabelContext:
 				filter = ctx.GetText()[1:]
+			case *parser.ProcedureInvocationBodyContext:
+				filter = ctx.GetText()
 			case *parser.RelationshipTypeContext:
 				filter = ctx.GetText()
 			case *parser.StringLiteralContext:

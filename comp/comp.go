@@ -7,7 +7,7 @@ import (
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/fuzzy"
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/abc-inc/persephone/types"
@@ -33,7 +33,7 @@ type AutoCompletion struct {
 	SchemaBased *SchemaBased
 }
 
-func NewAutoCompletion(schema ndb.Schema) *AutoCompletion {
+func NewAutoCompletion(schema graph.Schema) *AutoCompletion {
 	a := &AutoCompletion{}
 	a.UpdateSchema(schema)
 	return a
@@ -59,7 +59,7 @@ func (a AutoCompletion) GetItems(types []types.Data, query antlr.Tree, filter st
 	return items
 }
 
-func (a *AutoCompletion) UpdateSchema(schema ndb.Schema) {
+func (a *AutoCompletion) UpdateSchema(schema graph.Schema) {
 	a.SchemaBased = NewSchemaBased(schema)
 }
 

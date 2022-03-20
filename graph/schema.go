@@ -1,4 +1,4 @@
-package ndb
+package graph
 
 type Cmd struct {
 	Name    string
@@ -30,7 +30,6 @@ type Schema struct {
 	Params   []string
 }
 
-// TODO see neo4jSchema
 func NewSchema() *Schema {
 	return &Schema{
 		Labels:   []string{":State", ":Party", ":Body"},
@@ -38,7 +37,8 @@ func NewSchema() *Schema {
 		PropKeys: []string{"code", "name", "type"},
 		Funcs:    []Func{{"apoc.coll.avg", "(numbers :: LIST? OF NUMBER?) :: (FLOAT?)", nil}, {"apoc.coll.contains", "", nil}},
 		Procs:    []Func{{"apoc.algo.aStar", "", nil}},
-		ConCmds:  []Cmd{{Name: ":clear"}, {Name: ":play"}, {Name: ":help"}},
-		Params:   []string{"age", "name", "surname"},
+		ConCmds: []Cmd{{Name: "clear"}, {Name: ":config"}, {Name: ":help"}, {Name: ":history"}, {Name: ":queries"},
+			{Name: ":param"}, {Name: ":params"}, {Name: "schema"}, {Name: ":server"}, {Name: ":style"}, {Name: "sysinfo"}},
+		Params: []string{"age", "name", "surname"},
 	}
 }

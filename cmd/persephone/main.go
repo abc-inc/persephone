@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
@@ -78,33 +78,40 @@ func run(cmd *cobra.Command, args []string) {
 	pass := viper.GetString("password")
 	db := viper.GetString("database")
 
+	fmt.Printf("Connecting to Neo4j database %s at %s as user %s.\n", db, addr, user)
 	driver := must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
-	conn := ndb.NewConn(driver)
+	conn := graph.NewConn(driver)
 	conn.DBName = db
 
-	ns, rs, err := conn.Metadata()
+	md, err := conn.Metadata()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	var ls, ts, pkeys []string
-	for _, e := range ns {
+	for _, e := range md.Nodes {
 		ls = append(ls, e.String())
 		for _, p := range e.Properties {
 			pkeys = append(pkeys, p)
 		}
 	}
-	for _, r := range rs {
+	if len(pkeys) == 0 {
+		pkeys = append(pkeys, md.Props...)
+	}
+
+	for _, r := range md.Rels {
 		ts = append(ts, r.Type)
 		for p := range r.Properties {
 			pkeys = append(pkeys, p)
 		}
 	}
 
-	schema := ndb.Schema{
+	schema := graph.Schema{
 		Labels:   ls,
 		RelTypes: ts,
 		PropKeys: pkeys,
+		Funcs:    md.Funcs,
+		Procs:    md.Procs,
 	}
 
 	es := editor.NewEditorSupport("")
@@ -112,7 +119,19 @@ func run(cmd *cobra.Command, args []string) {
 
 	var p *prompt.Prompt
 	p = prompt.New(func(cyp string) {
-		err := playground.Foo(os.Stdout, conn, ndb.Request{Query: cyp})
+		if cyp == "" {
+			return
+		}
+
+		lines = append(lines, cyp)
+		if !strings.HasSuffix(cyp, ";") {
+			return
+		}
+
+		cyp = strings.Join(lines, "\n")
+		lines = nil
+
+		err := playground.Foo(os.Stdout, conn, graph.Request{Query: cyp})
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -121,12 +140,16 @@ func run(cmd *cobra.Command, args []string) {
 		if cyp == "exit" || cyp == ":exit" {
 			return nil
 		}
-		if cyp != "" && strings.IndexRune(" );'\"", rune(cyp[len(cyp)-1])) >= 0 {
+		if cyp == "" || strings.IndexRune(");'\"", rune(cyp[len(cyp)-1])) >= 0 {
 			return nil
 		}
 
-		es.Update(cyp)
-		line, col := editor.NewPosConv(cyp).ToRelative(len(cyp))
+		buf := strings.Join(lines, "\n")
+		buf += "\n" + cyp
+		buf = strings.TrimPrefix(buf, "\n")
+
+		es.Update(buf)
+		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
 		res := es.GetCompletion(line, col, true)
 		for _, i := range res.Items {
 			if cyp == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
@@ -146,9 +169,15 @@ func run(cmd *cobra.Command, args []string) {
 		return breakline && in == "exit"
 	}), prompt.OptionPrefix(fmt.Sprintf("%s@%s> ", user, db)),
 		prompt.OptionPrefixTextColor(prompt.Cyan),
-		prompt.OptionCompletionWordSeparator(" :(."))
+		prompt.OptionCompletionWordSeparator(" :(."),
+		prompt.OptionLivePrefix(func() (prefix string, useLivePrefix bool) {
+			return "", len(lines) > 0
+		}),
+	)
 	p.Run()
 }
+
+var lines []string
 
 func mustNoErr(err error) {
 	if err != nil {

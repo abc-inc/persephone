@@ -10,11 +10,11 @@ import (
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/gfmt"
-	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/graph"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
-func FormatTemplate(text string, rec ndb.Record) (string, error) {
+func FormatTemplate(text string, rec graph.Record) (string, error) {
 	m := mapValues(rec)
 	j, err := json.Marshal(m)
 	if err != nil {
@@ -33,7 +33,7 @@ func FormatTemplate(text string, rec ndb.Record) (string, error) {
 	return out.String(), err
 }
 
-func mapValues(vs ndb.Record) (m map[string]interface{}) {
+func mapValues(vs graph.Record) (m map[string]interface{}) {
 	m = make(map[string]interface{})
 	for k, v := range vs {
 		switch t := v.(type) {

@@ -1,4 +1,4 @@
-package ndb
+package graph
 
 const (
 	ParamFormat   = "f"
@@ -20,7 +20,3 @@ type Result []Record
 type ValueExtractor func(key string) (interface{}, bool)
 
 type RecordExtractor func(keys []string, rse ValueExtractor) Record
-
-type Entity struct {
-	Name string
-}
