@@ -3,7 +3,7 @@ package playground
 import (
 	"context"
 
-	"github.com/abc-inc/merovingian/ndb"
+	"github.com/abc-inc/persephone/ndb"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 )

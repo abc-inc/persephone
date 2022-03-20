@@ -1,4 +1,4 @@
-module github.com/abc-inc/merovingian
+module github.com/abc-inc/persephone
 
 go 1.18
 

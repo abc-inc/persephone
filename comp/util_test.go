@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/abc-inc/merovingian/comp"
-	"github.com/abc-inc/merovingian/editor"
-	"github.com/abc-inc/merovingian/ndb"
-	"github.com/abc-inc/merovingian/types"
-	. "github.com/stretchr/testify/assert"
+	. "github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/editor"
+	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/types"
+	. "github.com/stretchr/testify/require"
 )
 
 var schema = ndb.Schema{

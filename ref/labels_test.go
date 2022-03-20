@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/editor"
+	"github.com/abc-inc/persephone/editor"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-	. "github.com/stretchr/testify/assert"
+	. "github.com/stretchr/testify/require"
 )
 
 func TestRefLabelsReturnsReferenceForSingleLabel(t *testing.T) {

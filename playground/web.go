@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/formatter"
-	"github.com/abc-inc/merovingian/ndb"
+	"github.com/abc-inc/persephone/ndb"
 )
 
 func Foo(w io.Writer, s ndb.Connector, req ndb.Request) error {

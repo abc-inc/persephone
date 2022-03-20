@@ -1,9 +1,9 @@
 package rule
 
 import (
-	"github.com/abc-inc/merovingian/ast"
-	"github.com/abc-inc/merovingian/parser"
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/ast"
+	"github.com/abc-inc/persephone/parser"
+	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
@@ -15,8 +15,7 @@ func ruleCallClauseBeginning(e antlr.ParseTree) []Info {
 	}
 
 	if _, ok := parent.(*parser.CallContext); ok {
-		secondChild := parent.GetChild(1)
-		if secondChild == e {
+		if parent.GetChildCount() > 1 && parent.GetChild(1) == e {
 			return []Info{{Type: types.ProcedureName}}
 		}
 	}

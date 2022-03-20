@@ -3,8 +3,8 @@ package comp_test
 import (
 	"testing"
 
-	. "github.com/abc-inc/merovingian/comp"
-	"github.com/abc-inc/merovingian/types"
+	. "github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/types"
 )
 
 func TestTypesYieldsConsoleCommandTypeAtTheCommandColon(t *testing.T) {

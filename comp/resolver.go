@@ -1,8 +1,8 @@
 package comp
 
 import (
-	"github.com/abc-inc/merovingian/comp/rule"
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/comp/rule"
+	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

@@ -3,7 +3,7 @@ package comp_test
 import (
 	"testing"
 
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/types"
 )
 
 func TestReturnProcedureNameType(t *testing.T) {

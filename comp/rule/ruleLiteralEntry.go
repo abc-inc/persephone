@@ -3,9 +3,9 @@ package rule
 import (
 	"reflect"
 
-	"github.com/abc-inc/merovingian/ast"
-	"github.com/abc-inc/merovingian/parser"
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/ast"
+	"github.com/abc-inc/persephone/parser"
+	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

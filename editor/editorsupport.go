@@ -3,12 +3,12 @@ package editor
 import (
 	"reflect"
 
-	"github.com/abc-inc/merovingian/ast"
-	"github.com/abc-inc/merovingian/comp"
-	"github.com/abc-inc/merovingian/lang"
-	"github.com/abc-inc/merovingian/ndb"
-	"github.com/abc-inc/merovingian/parser"
-	"github.com/abc-inc/merovingian/ref"
+	"github.com/abc-inc/persephone/ast"
+	"github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/lang"
+	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/parser"
+	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
@@ -172,6 +172,7 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 			case *antlr.ErrorNodeImpl:
 				filter = ctx.GetText()
 			default:
+				// TODO: check if more types need to be handled
 				panic(reflect.TypeOf(element))
 			}
 		}

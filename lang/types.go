@@ -3,7 +3,7 @@ package lang
 import (
 	"reflect"
 
-	"github.com/abc-inc/merovingian/parser"
+	"github.com/abc-inc/persephone/parser"
 )
 
 var VARIABLE_CONTEXT = reflect.TypeOf(parser.VariableContext{}).Name()

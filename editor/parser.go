@@ -1,9 +1,9 @@
 package editor
 
 import (
-	"github.com/abc-inc/merovingian/lang"
-	"github.com/abc-inc/merovingian/parser"
-	"github.com/abc-inc/merovingian/ref"
+	"github.com/abc-inc/persephone/lang"
+	"github.com/abc-inc/persephone/parser"
+	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

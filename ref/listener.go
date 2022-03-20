@@ -1,8 +1,8 @@
 package ref
 
 import (
-	"github.com/abc-inc/merovingian/lang"
-	"github.com/abc-inc/merovingian/parser"
+	"github.com/abc-inc/persephone/lang"
+	"github.com/abc-inc/persephone/parser"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

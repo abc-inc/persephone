@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/abc-inc/merovingian/editor"
-	"github.com/abc-inc/merovingian/lang"
-	. "github.com/stretchr/testify/assert"
+	"github.com/abc-inc/persephone/editor"
+	"github.com/abc-inc/persephone/lang"
+	. "github.com/stretchr/testify/require"
 )
 
 func TestRelationshipsReturnsReferenceForRelationshipTypes(t *testing.T) {

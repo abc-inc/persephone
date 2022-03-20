@@ -4,13 +4,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/abc-inc/merovingian/ast"
-	"github.com/abc-inc/merovingian/fuzzy"
-	"github.com/abc-inc/merovingian/lang"
-	"github.com/abc-inc/merovingian/ndb"
-	"github.com/abc-inc/merovingian/parser"
-	"github.com/abc-inc/merovingian/ref"
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/ast"
+	"github.com/abc-inc/persephone/fuzzy"
+	"github.com/abc-inc/persephone/lang"
+	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/parser"
+	"github.com/abc-inc/persephone/ref"
+	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

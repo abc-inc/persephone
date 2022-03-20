@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abc-inc/merovingian/editor"
-	"github.com/abc-inc/merovingian/ndb"
-	"github.com/abc-inc/merovingian/playground"
-	"github.com/abc-inc/merovingian/types"
+	"github.com/abc-inc/persephone/editor"
+	"github.com/abc-inc/persephone/ndb"
+	"github.com/abc-inc/persephone/playground"
+	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -18,11 +18,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile = filepath.Join(must(os.UserConfigDir()), "merovingian", "config.yaml")
+var cfgFile = filepath.Join(must(os.UserConfigDir()), "persephone", "config.yaml")
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "merovingian",
+	Use:   "persephone",
 	Short: "",
 	Long:  ``,
 	Run:   run,
@@ -36,7 +36,7 @@ func init() {
 	rootCmd.Args = cobra.MaximumNArgs(1)
 	rootCmd.Flags().String("format", "auto", "Desired output format (default: auto).")
 	rootCmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session. Example: `-P \"number=3\"`. Can be specified multiple times.")
-	rootCmd.Flags().BoolP("version", "v", false, "Print version of merovingian and exit.")
+	rootCmd.Flags().BoolP("version", "v", false, "Print version of persephone and exit.")
 	rootCmd.Flags().Bool("driver-version", false, "Print version of the Neo4j Driver used and exit.")
 	rootCmd.Flags().StringP("file", "f", "", "Pass a file with cypher statements to be executed.")
 

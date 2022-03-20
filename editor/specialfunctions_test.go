@@ -3,7 +3,7 @@ package editor_test
 import (
 	"testing"
 
-	"github.com/abc-inc/merovingian/editor"
+	"github.com/abc-inc/persephone/editor"
 	. "github.com/stretchr/testify/require"
 )
 

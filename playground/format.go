@@ -10,7 +10,7 @@ import (
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/gfmt"
-	"github.com/abc-inc/merovingian/ndb"
+	"github.com/abc-inc/persephone/ndb"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
