@@ -6,10 +6,12 @@ replace github.com/abc-inc/gutenfmt => ../gutenfmt
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
+	github.com/abc-inc/browser v1.0.0
 	github.com/abc-inc/gutenfmt v0.1.0
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba
 	github.com/briandowns/spinner v1.18.1
 	github.com/c-bata/go-prompt v0.2.5
+	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/mattn/go-isatty v0.0.14
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.1
@@ -46,6 +48,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/sys v0.0.0-20220318055525-2edf467146b5 // indirect
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
 	golang.org/x/text v0.3.7 // indirect

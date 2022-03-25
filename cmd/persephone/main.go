@@ -1,15 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
+	persephone "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	shell "github.com/abc-inc/persephone/cmd/persephone/cmd/shell"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/graph"
+	. "github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
@@ -19,12 +25,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile = filepath.Join(must(os.UserConfigDir()), "persephone", "config.yaml")
+var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use: "persephone",
-	Short: `A command line shell where you can execute Cypher against an instance of Neo4j.` +
+	Short: `A command line shell where you can execute Cypher against an instance of Neo4j. ` +
 		`By default the shell is interactive but you can use it for scripting ` +
 		`by passing cypher directly on the command line or by piping a file with cypher statements.`,
 	Long: ``,
@@ -49,7 +55,28 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
 	rootCmd.PersistentFlags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
 
-	mustNoErr(viper.BindPFlags(rootCmd.PersistentFlags()))
+	rootCmd.AddCommand(
+		browser.ClearCmd,
+		browser.ConfigCmd,
+		browser.QueriesCmd,
+		browser.SchemaCmd,
+		browser.SysinfoCmd,
+		persephone.IssueCmd,
+		shell.BeginCmd,
+		shell.CommitCmd,
+		shell.ConnectCmd,
+		shell.DisconnectCmd,
+		shell.ExitCmd,
+		shell.HelpCmd,
+		shell.HistoryCmd,
+		shell.ParamCmd,
+		shell.ParamsCmd,
+		shell.RollbackCmd,
+		shell.SourceCmd,
+		shell.UseCmd,
+	)
+
+	MustNoErr(viper.BindPFlags(rootCmd.PersistentFlags()))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -88,13 +115,13 @@ func run(cmd *cobra.Command, args []string) {
 		}
 
 		u := &survey.Input{Message: "username:", Default: "neo4j"}
-		mustNoErr(survey.AskOne(u, &user, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+		MustNoErr(survey.AskOne(u, &user, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
 		p := &survey.Password{Message: "password:"}
-		mustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+		MustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
 	}
 
 	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
-	driver := must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
+	driver := Must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
 	conn := graph.NewConn(driver)
 	conn.DBName = db
 
@@ -134,6 +161,10 @@ func run(cmd *cobra.Command, args []string) {
 
 	var p *prompt.Prompt
 	p = prompt.New(func(cyp string) {
+		if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
+			cyp = runConsCmd(cmd, cyp)
+		}
+
 		if cyp == "" {
 			return
 		}
@@ -192,15 +223,56 @@ func run(cmd *cobra.Command, args []string) {
 	p.Run()
 }
 
-var lines []string
-
-func mustNoErr(err error) {
-	if err != nil {
-		log.Fatalln(err)
+func runConsCmd(cc *cobra.Command, cyp string) string {
+	cmd, arg, _ := strings.Cut(cyp, " ")
+	switch cmd {
+	case ":begin":
+		break
+	case ":clear":
+		browser.ClearCmd.Run(cc, strings.Fields(cyp))
+		break
+	case ":config":
+		break
+	case "format":
+		break
+	case ":help":
+		shell.HelpCmd.Run(cc, strings.Fields(cyp))
+		break
+	case ":history":
+		break
+	case ":queries":
+		break
+	case ":param":
+		r := regexp.MustCompile("\\s*=>\\s*")
+		kv := r.Split(arg, 2)
+		var v map[string]interface{}
+		MustNoErr(json.Unmarshal([]byte(kv[1]), &v))
+		params[kv[0]] = v
+		break
+	case ":params":
+		j := Must(json.MarshalIndent(params, "", "  "))
+		fmt.Println(string(j))
+		break
+	case ":schema":
+		return "CALL db.indexes() YIELD name AS `Index Name`, type AS Type, uniqueness AS Uniqueness, " +
+			"entityType AS EntityType, labelsOrTypes AS LabelsOrTypes, properties AS Properties, state AS State " +
+			"ORDER BY name;"
+	case ":server":
+		break
+	case ":style":
+		break
+	case "sysinfo":
+		break
+	default:
+		break
 	}
+	return ""
 }
 
-func must[T any](a T, err error) T {
-	mustNoErr(err)
-	return a
+func historyCmd(cmd *cobra.Command, args []string) {
+	fmt.Println("history")
 }
+
+var history []string
+var lines []string
+var params map[string]interface{}
