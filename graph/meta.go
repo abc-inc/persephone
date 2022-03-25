@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"log"
 	"sort"
 )
 
@@ -60,7 +61,11 @@ func apocMetaGraph(c Conn, m Metadata) Metadata {
 }
 
 func fallback(c Conn, m Metadata) Metadata {
-	res, _ := c.Session().Run("CALL db.labels() YIELD labels RETURN labels ORDER BY labels", nil)
+	res, err := c.Session().Run("CALL db.labels() YIELD labels RETURN labels ORDER BY labels", nil)
+	if err != nil {
+		log.Println("Cannot retrieve metadata.")
+		return m
+	}
 	for res.Next() {
 		l := res.Record().Values[0].(string)
 		m.Nodes = append(m.Nodes, Node{Labels: []string{l}})

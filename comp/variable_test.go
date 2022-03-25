@@ -98,7 +98,7 @@ func TestVariableWithFiltersYieldsVariableListUnderCursorMatches(t *testing.T) {
 }
 
 // TODO: this is an additional test
-func TestVariableWithFiltersYieldsVariableListInFunction(t*testing.T) {
+func TestVariableWithFiltersYieldsVariableListInFunction(t *testing.T) {
 	expected := Result{
 		Items: []Item{
 			{Type: types.Variable, View: "var", Content: "var"},

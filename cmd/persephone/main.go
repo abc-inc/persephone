@@ -7,14 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
+	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
-
 	"github.com/spf13/viper"
 )
 
@@ -22,10 +23,12 @@ var cfgFile = filepath.Join(must(os.UserConfigDir()), "persephone", "config.yaml
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "persephone",
-	Short: "",
-	Long:  ``,
-	Run:   run,
+	Use: "persephone",
+	Short: `A command line shell where you can execute Cypher against an instance of Neo4j.` +
+		`By default the shell is interactive but you can use it for scripting ` +
+		`by passing cypher directly on the command line or by piping a file with cypher statements.`,
+	Long: ``,
+	Run:  run,
 }
 
 var pass string
@@ -44,7 +47,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (default: neo4j://localhost:7687) (env: NEO4J_ADDRESS)")
 	rootCmd.PersistentFlags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
 	rootCmd.PersistentFlags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
-	rootCmd.PersistentFlags().StringP("database", "d", "", "database to connect to (default: ). (env: NEO4J_DATABASE)")
+	rootCmd.PersistentFlags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
 
 	mustNoErr(viper.BindPFlags(rootCmd.PersistentFlags()))
 }
@@ -78,7 +81,19 @@ func run(cmd *cobra.Command, args []string) {
 	pass := viper.GetString("password")
 	db := viper.GetString("database")
 
-	fmt.Printf("Connecting to Neo4j database %s at %s as user %s.\n", db, addr, user)
+	if user == "" && isatty.IsTerminal(os.Stdin.Fd()) {
+		icons := func(set *survey.IconSet) {
+			set.Question.Text = "Enter"
+			set.Question.Format = ""
+		}
+
+		u := &survey.Input{Message: "username:", Default: "neo4j"}
+		mustNoErr(survey.AskOne(u, &user, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+		p := &survey.Password{Message: "password:"}
+		mustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+	}
+
+	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
 	driver := must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
 	conn := graph.NewConn(driver)
 	conn.DBName = db
