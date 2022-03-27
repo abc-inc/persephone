@@ -9,15 +9,19 @@ import (
 
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/persephone/internal"
 )
 
-func Foo(w io.Writer, s graph.Connector, req graph.Request) error {
+func Foo(w io.Writer, s *graph.Conn, req graph.Request) error {
 	rse := func(keys []string, rse graph.ValueExtractor) graph.Record {
-		m := map[string]interface{}{}
+		rec := graph.NewRecord()
 		for _, k := range keys {
-			m[k], _ = rse(k)
+			rec.Add(k, internal.MustOk(rse(k)))
 		}
-		return m
+		return graph.Record{
+			Keys:   []string{},
+			Values: map[string]interface{}{},
+		}
 	}
 
 	res, err := s.Exec(req, rse)

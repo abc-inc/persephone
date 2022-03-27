@@ -1,12 +1,22 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"os"
+
+	"github.com/spf13/cobra"
+)
 
 var ExitCmd = &cobra.Command{
-	Use: ":exit",
+	Use:   ":exit",
 	Short: "Exit persephone",
-	Run: exitCmd,
+	Run:   exitCmd,
 }
 
 func exitCmd(cmd *cobra.Command, args []string) {
+	for _, c := range cmd.Root().Commands() {
+		if c.Name() == ":disconnect" {
+			c.Run(cmd, args)
+			os.Exit(0)
+		}
+	}
 }

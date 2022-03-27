@@ -6,9 +6,9 @@ import (
 )
 
 var ClearCmd = &cobra.Command{
-	Use: ":clear",
+	Use:   ":clear",
 	Short: "Clear the screen",
-	Run: clearCmd,
+	Run:   clearCmd,
 }
 
 func clearCmd(cmd *cobra.Command, args []string) {

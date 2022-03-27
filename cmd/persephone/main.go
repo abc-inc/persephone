@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -20,6 +18,7 @@ import (
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
 	"github.com/mattn/go-isatty"
+	"github.com/mattn/go-shellwords"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,15 +44,15 @@ func init() {
 	rootCmd.Args = cobra.MaximumNArgs(1)
 	rootCmd.Flags().String("format", "auto", "Desired output format (default: auto).")
 	rootCmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session. Example: `-P \"number=3\"`. Can be specified multiple times.")
-	rootCmd.Flags().BoolP("version", "v", false, "Print version of persephone and exit.")
+	rootCmd.Flags().Bool("version", false, "Print version of persephone and exit.")
 	rootCmd.Flags().Bool("driver-version", false, "Print version of the Neo4j Driver used and exit.")
 	rootCmd.Flags().StringP("file", "f", "", "Pass a file with cypher statements to be executed.")
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
-	rootCmd.PersistentFlags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (default: neo4j://localhost:7687) (env: NEO4J_ADDRESS)")
-	rootCmd.PersistentFlags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
-	rootCmd.PersistentFlags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
-	rootCmd.PersistentFlags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
+	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
+	rootCmd.Flags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (default: neo4j://localhost:7687) (env: NEO4J_ADDRESS)")
+	rootCmd.Flags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
+	rootCmd.Flags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
+	rootCmd.Flags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
 
 	rootCmd.AddCommand(
 		browser.ClearCmd,
@@ -76,7 +75,7 @@ func init() {
 		shell.UseCmd,
 	)
 
-	MustNoErr(viper.BindPFlags(rootCmd.PersistentFlags()))
+	MustNoErr(viper.BindPFlags(rootCmd.Flags()))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -122,7 +121,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
 	driver := Must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
-	conn := graph.NewConn(driver)
+	conn := graph.NewConn(driver, db)
 	conn.DBName = db
 
 	md, err := conn.Metadata()
@@ -224,47 +223,12 @@ func run(cmd *cobra.Command, args []string) {
 }
 
 func runConsCmd(cc *cobra.Command, cyp string) string {
-	cmd, arg, _ := strings.Cut(cyp, " ")
-	switch cmd {
-	case ":begin":
-		break
-	case ":clear":
-		browser.ClearCmd.Run(cc, strings.Fields(cyp))
-		break
-	case ":config":
-		break
-	case "format":
-		break
-	case ":help":
-		shell.HelpCmd.Run(cc, strings.Fields(cyp))
-		break
-	case ":history":
-		break
-	case ":queries":
-		break
-	case ":param":
-		r := regexp.MustCompile("\\s*=>\\s*")
-		kv := r.Split(arg, 2)
-		var v map[string]interface{}
-		MustNoErr(json.Unmarshal([]byte(kv[1]), &v))
-		params[kv[0]] = v
-		break
-	case ":params":
-		j := Must(json.MarshalIndent(params, "", "  "))
-		fmt.Println(string(j))
-		break
-	case ":schema":
-		return "CALL db.indexes() YIELD name AS `Index Name`, type AS Type, uniqueness AS Uniqueness, " +
-			"entityType AS EntityType, labelsOrTypes AS LabelsOrTypes, properties AS Properties, state AS State " +
-			"ORDER BY name;"
-	case ":server":
-		break
-	case ":style":
-		break
-	case "sysinfo":
-		break
-	default:
-		break
+	cmd, _, _ := strings.Cut(cyp, " ")
+	for _, c := range cc.Commands() {
+		if c.Name() == cmd {
+			c.Run(cc, Must(shellwords.Parse(cyp))[1:])
+			return ""
+		}
 	}
 	return ""
 }
@@ -275,4 +239,3 @@ func historyCmd(cmd *cobra.Command, args []string) {
 
 var history []string
 var lines []string
-var params map[string]interface{}

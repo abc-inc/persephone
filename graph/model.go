@@ -1,5 +1,7 @@
 package graph
 
+import "strings"
+
 type Node struct {
 	Count         int64 `json:"count"`
 	Relationships map[string]RelProperty
@@ -9,13 +11,17 @@ type Node struct {
 }
 
 func (n Node) String() string {
-	return n.Labels[0]
+	return ":" + strings.Join(n.Labels, ":")
 }
 
 type Relationship struct {
 	Count      int64                      `json:"count"`
 	Type       string                     `json:"type"`
 	Properties map[string]NodeRelProperty `json:"properties"`
+}
+
+func (r Relationship) String() string {
+	return r.Type
 }
 
 type RelProperty struct {

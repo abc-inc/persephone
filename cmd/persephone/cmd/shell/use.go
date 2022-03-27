@@ -3,8 +3,9 @@ package cmd
 import "github.com/spf13/cobra"
 
 var UseCmd = &cobra.Command{
-	Use:   ":use",
+	Use:   ":use database",
 	Short: "Set the active database",
+	Long:  "Set the active database that transactions are executed on",
 	Run:   useCmd,
 }
 

@@ -7,28 +7,49 @@ import (
 	"github.com/rs/zerolog"
 )
 
+var defConn *Conn
+
 type Conn struct {
-	logger zerolog.Logger
-	driver neo4j.Driver
+	Logger zerolog.Logger
+	Driver neo4j.Driver
+	Tx     neo4j.Transaction
 	DBName string
+	Params map[string]interface{}
 }
 
-func NewConn(d neo4j.Driver) *Conn {
+func GetConn() *Conn {
+	if defConn == nil {
+		panic("No connection.")
+	}
+	return defConn
+}
+
+func NewConn(d neo4j.Driver, dbName string) *Conn {
 	l := zerolog.New(zerolog.NewConsoleWriter())
-	return &Conn{l, d, "neo4j"}
+	conn := &Conn{l, d, nil, dbName, make(map[string]interface{})}
+	if defConn == nil {
+		defConn = conn
+	}
+	return conn
 }
 
-func (c Conn) Close() error {
-	return c.driver.Close()
+func (c *Conn) Close() (err error) {
+	if c.Driver != nil {
+		if err = c.Driver.Close(); err == nil {
+			c.Driver, c.Tx = nil, nil
+			c.Params = make(map[string]interface{})
+		}
+	}
+	return err
 }
 
 func (c Conn) Session() neo4j.Session {
-	config := neo4j.SessionConfig{DatabaseName: c.DBName}
-	return c.driver.NewSession(config)
+	cfg := neo4j.SessionConfig{DatabaseName: c.DBName}
+	return c.Driver.NewSession(cfg)
 }
 
 func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
-	c.logger.Info().
+	c.Logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
 		Str("template", r.Template).
@@ -49,6 +70,30 @@ func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
 		recs = append(recs, row)
 	}
 	return recs, nil
+}
+
+func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) {
+	if c.Tx == nil {
+		c.Tx, err = c.Session().BeginTransaction()
+		created = true
+	}
+	return c.Tx, created, err
+}
+
+func (c *Conn) Commit() (err error) {
+	if c.Tx != nil {
+		err = c.Tx.Commit()
+		c.Tx = nil
+	}
+	return
+}
+
+func (c *Conn) Rollback() (err error) {
+	if c.Tx != nil {
+		err = c.Tx.Rollback()
+		c.Tx = nil
+	}
+	return
 }
 
 func (c Conn) Metadata() (Metadata, error) {

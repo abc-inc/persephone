@@ -35,7 +35,7 @@ func FormatTemplate(text string, rec graph.Record) (string, error) {
 
 func mapValues(vs graph.Record) (m map[string]interface{}) {
 	m = make(map[string]interface{})
-	for k, v := range vs {
+	for k, v := range vs.Values {
 		switch t := v.(type) {
 		case string:
 			m[k] = t

@@ -1,12 +1,54 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/graph"
+	. "github.com/abc-inc/persephone/internal"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/spf13/cobra"
+)
+
+type index struct {
+	Name          string   `json:"Index Name"`
+	Type          string   `json:"Type"`
+	Uniqueness    string   `json:"Uniqueness"`
+	EntityType    string   `json:"EntityType"`
+	LabelsOrTypes []string `json:"LabelsOrTypes"`
+	Properties    []string `json:"Properties"`
+	State         string   `json:"State"`
+}
+
+func (i index) String() string {
+	return i.Name
+}
 
 var SchemaCmd = &cobra.Command{
-	Use: ":schema",
+	Use:   ":schema",
 	Short: "Shows information about database schema indexes and constraints",
-	Run: schemaCmd,
+	Run:   schemaCmd,
 }
 
 func schemaCmd(cmd *cobra.Command, args []string) {
+	cyp := "CALL db.indexes() YIELD name AS `Index Name`, type AS Type, uniqueness AS Uniqueness, " +
+		"entityType AS EntityType, labelsOrTypes AS LabelsOrTypes, properties AS Properties, state AS State " +
+		"RETURN `Index Name`, Type, Uniqueness, EntityType, LabelsOrTypes, Properties, State " +
+		"ORDER BY `Index Name`;"
+
+	t := graph.NewTypedTemplate[index](graph.GetConn())
+	idxs := Must(t.Query(cyp, nil, func(rec *neo4j.Record) index {
+		ls := MustOk(rec.Get("LabelsOrTypes")).([]interface{})
+		ps := MustOk(rec.Get("Properties")).([]interface{})
+
+		return index{
+			Name:          MustOk(rec.Get("Index Name")).(string),
+			Type:          MustOk(rec.Get("Type")).(string),
+			Uniqueness:    MustOk(rec.Get("Uniqueness")).(string),
+			EntityType:    MustOk(rec.Get("Index Name")).(string),
+			LabelsOrTypes: Reslice[string](ls),
+			Properties:    Reslice[string](ps),
+			State:         MustOk(rec.Get("State")).(string),
+		}
+	}))
+
+	format.Writeln(idxs)
 }

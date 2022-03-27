@@ -1,23 +1,35 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var ConfigCmd = &cobra.Command{
-	Use: ":config",
+	Use:   ":config [name [value]]",
 	Short: "Print the config or change it.",
-	Run: configCmd,
+	Run:   configCmd,
 }
 
 func configCmd(cmd *cobra.Command, args []string) {
-	cfg := viper.AllSettings()
-	delete(cfg, "password")
-	j := internal.Must(json.MarshalIndent(cfg, "", "  "))
-	fmt.Println(string(j))
+	switch len(args) {
+	case 0:
+		cfg := viper.AllSettings()
+		delete(cfg, "config")
+		delete(cfg, "password")
+		format.Writeln(cfg)
+		break
+	case 1:
+		format.Writeln(viper.Get(args[0]))
+		break
+	case 2:
+		viper.Set(args[0], internal.Parse(args[1]))
+		break
+	default:
+		fmt.Println("error: invalid arguments")
+	}
 }

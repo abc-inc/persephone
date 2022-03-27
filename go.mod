@@ -14,6 +14,7 @@ require (
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/mattn/go-isatty v0.0.14
+	github.com/mattn/go-shellwords v1.0.12
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.1
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.4.0
