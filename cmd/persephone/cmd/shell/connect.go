@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
@@ -13,13 +14,14 @@ import (
 )
 
 var ConnectCmd = &cobra.Command{
-	Use:   ":connect",
-	Short: "Connects to a database",
-	Run:   connectCmd,
+	Use:         ":connect",
+	Short:       "Connects to a database",
+	Annotations: types.Annotate(types.Offline),
+	Run:         connectCmd,
 }
 
 func init() {
-	ConnectCmd.Flags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
+	ConnectCmd.Flags().StringP("username", "u", "", "username to connect as (default: neo4j). (env: NEO4J_USERNAME)")
 	ConnectCmd.Flags().StringP("password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
 	ConnectCmd.Flags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
 }
@@ -45,7 +47,5 @@ func connectCmd(cmd *cobra.Command, args []string) {
 	MustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
 
 	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
-	driver := Must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
-	conn := graph.NewConn(driver, db)
-	conn.DBName = db
+	_ = graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db)
 }

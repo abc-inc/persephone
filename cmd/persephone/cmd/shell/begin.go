@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
+
+var errTxActive = errors.New("there is already an open transaction")
 
 var BeginCmd = &cobra.Command{
 	Use:   ":begin",
@@ -14,8 +18,10 @@ var BeginCmd = &cobra.Command{
 }
 
 func beginCmd(cmd *cobra.Command, args []string) {
-	_, _, err := graph.GetConn().GetTransaction()
+	_, created, err := graph.GetConn().GetTransaction()
 	if err != nil {
 		format.Writeln(err)
+	} else if !created {
+		format.Writeln(errTxActive)
 	}
 }

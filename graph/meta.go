@@ -1,8 +1,9 @@
 package graph
 
 import (
-	"log"
 	"sort"
+
+	"github.com/abc-inc/persephone/format"
 )
 
 type Metadata struct {
@@ -61,9 +62,9 @@ func apocMetaGraph(c Conn, m Metadata) Metadata {
 }
 
 func fallback(c Conn, m Metadata) Metadata {
-	res, err := c.Session().Run("CALL db.labels() YIELD labels RETURN labels ORDER BY labels", nil)
+	res, err := c.Session().Run("CALL db.labels() YIELD label RETURN label ORDER BY label", nil)
 	if err != nil {
-		log.Println("Cannot retrieve metadata.")
+		format.Writeln(err)
 		return m
 	}
 	for res.Next() {
@@ -73,14 +74,14 @@ func fallback(c Conn, m Metadata) Metadata {
 
 	res, _ = c.Session().Run("CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType ORDER BY relationshipType", nil)
 	for res.Next() {
-		l := res.Record().Values[0].(string)
-		m.Nodes = append(m.Nodes, Node{Labels: []string{l}})
+		t := res.Record().Values[0].(string)
+		m.Rels = append(m.Rels, Relationship{Type: t})
 	}
 
 	res, _ = c.Session().Run("CALL db.propertyKeys() YIELD propertyKey RETURN propertyKey ORDER BY propertyKey", nil)
 	for res.Next() {
-		l := res.Record().Values[0].(string)
-		m.Props = append(m.Props, l)
+		p := res.Record().Values[0].(string)
+		m.Props = append(m.Props, p)
 	}
 
 	return m

@@ -12,7 +12,7 @@ func Parse(s string) (val interface{}) {
 	return
 }
 
-func Reslice[T any](es []interface{}) (ts []T) {
+func ReSlice[T any](es []interface{}) (ts []T) {
 	for _, e := range es {
 		ts = append(ts, e.(T))
 	}

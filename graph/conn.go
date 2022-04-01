@@ -1,32 +1,51 @@
 package graph
 
 import (
+	"errors"
 	"sort"
 
+	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog"
 )
+
+const systemDB = "system"
 
 var defConn *Conn
 
 type Conn struct {
 	Logger zerolog.Logger
 	Driver neo4j.Driver
-	Tx     neo4j.Transaction
+	user   string
+	auth   neo4j.AuthToken
 	DBName string
+	Tx     neo4j.Transaction
 	Params map[string]interface{}
 }
 
 func GetConn() *Conn {
 	if defConn == nil {
-		panic("No connection.")
+		panic("Not connected to Neo4j")
 	}
 	return defConn
 }
 
-func NewConn(d neo4j.Driver, dbName string) *Conn {
+func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Conn {
 	l := zerolog.New(zerolog.NewConsoleWriter())
-	conn := &Conn{l, d, nil, dbName, make(map[string]interface{})}
+	d := internal.Must(neo4j.NewDriver(addr, auth, func(config *neo4j.Config) {
+		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
+	}))
+
+	conn := &Conn{
+		Logger: l,
+		Driver: d,
+		user:   user,
+		auth:   auth,
+		DBName: dbName,
+		Params: make(map[string]interface{}),
+	}
+	internal.MustNoErr(conn.UseDB(dbName))
+
 	if defConn == nil {
 		defConn = conn
 	}
@@ -38,6 +57,7 @@ func (c *Conn) Close() (err error) {
 		if err = c.Driver.Close(); err == nil {
 			c.Driver, c.Tx = nil, nil
 			c.Params = make(map[string]interface{})
+			c.DBName = ""
 		}
 	}
 	return err
@@ -48,7 +68,7 @@ func (c Conn) Session() neo4j.Session {
 	return c.Driver.NewSession(cfg)
 }
 
-func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
+func (c Conn) Exec(r Request, m RecordExtractor) (Result, neo4j.ResultSummary, error) {
 	c.Logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
@@ -58,7 +78,7 @@ func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
 
 	res, err := c.Session().Run(r.Query, r.Params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	recs := Result{}
@@ -69,7 +89,9 @@ func (c Conn) Exec(r Request, m RecordExtractor) (Result, error) {
 		row := m(res.Record().Keys, getValue)
 		recs = append(recs, row)
 	}
-	return recs, nil
+
+	summary, err := res.Consume()
+	return recs, summary, err
 }
 
 func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) {
@@ -80,24 +102,49 @@ func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) 
 	return c.Tx, created, err
 }
 
-func (c *Conn) Commit() (err error) {
+func (c *Conn) Commit() (done bool, err error) {
 	if c.Tx != nil {
 		err = c.Tx.Commit()
-		c.Tx = nil
+		c.Tx, done = nil, err != nil
 	}
 	return
 }
 
-func (c *Conn) Rollback() (err error) {
+func (c *Conn) Rollback() (done bool, err error) {
 	if c.Tx != nil {
 		err = c.Tx.Rollback()
-		c.Tx = nil
+		c.Tx, done = nil, err != nil
 	}
 	return
+}
+
+func (c *Conn) UseDB(dbName string) (err error) {
+	if _, err = c.Rollback(); err != nil {
+		return err
+	}
+
+	currDBName := c.DBName
+	c.DBName = dbName
+	_, err = c.Session().ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		return tx.Run("CALL db.ping()", nil)
+	})
+	var nerr *neo4j.Neo4jError
+	if err != nil && errors.As(err, &nerr) {
+		if nerr.Title() == "CredentialsExpired" && dbName == systemDB {
+			return nil
+		}
+	} else if err != nil {
+		c.DBName = currDBName
+	}
+	return err
 }
 
 func (c Conn) Metadata() (Metadata, error) {
 	m := Metadata{}
+	if c.DBName == systemDB {
+		return m, nil
+	}
+
 	funcs, err := c.listFuncs("CALL dbms.functions() YIELD name, signature RETURN name, signature ORDER BY toLower(name)")
 	if err != nil {
 		return m, err
@@ -135,4 +182,13 @@ func (c Conn) listFuncs(cyp string) (funcs []Func, err error) {
 		funcs = append(funcs, f)
 	}
 	return
+}
+
+func (c *Conn) Username() string {
+	if c.user == "" {
+		u, err := NewTypedTemplate[string](c).QuerySingle(
+			"CALL dbms.showCurrentUser()", nil, NewSingleColumnRowMapper[string]())
+		c.user = internal.Must(u, err)
+	}
+	return c.user
 }

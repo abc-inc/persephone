@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-
+	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +14,5 @@ var ParamsCmd = &cobra.Command{
 }
 
 func paramsCmd(cmd *cobra.Command, args []string) {
-	j := internal.Must(json.MarshalIndent(graph.GetConn().Params, "", "  "))
-	fmt.Println(string(j))
+	format.Writeln(graph.GetConn().Params)
 }

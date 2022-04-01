@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"strconv"
+	"strings"
+
+	"github.com/abc-inc/persephone/event"
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
@@ -17,15 +21,30 @@ type dbInfo struct {
 	Error   string
 }
 
+func (d dbInfo) String() string {
+	return d.Address + "/" + d.Name
+}
+
 var SysinfoCmd = &cobra.Command{
 	Use:   ":sysinfo",
 	Short: "Print system information",
 	Run:   sysinfoCmd,
 }
 
+func init() {
+	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
+		sep := e.Sep
+		format.SetFormatter(dbInfo{}, func(i interface{}) (string, error) {
+			db := i.(dbInfo)
+			return strings.Join([]string{db.Name, db.Address, db.Role, db.Status,
+				strconv.FormatBool(db.Default), db.Error}, sep), nil
+		})
+	})
+}
+
 func sysinfoCmd(cmd *cobra.Command, args []string) {
 	t := graph.NewTypedTemplate[dbInfo](graph.GetConn())
-	dbs := Must(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) dbInfo {
+	dbs, _ := MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) dbInfo {
 		return dbInfo{
 			Name:    MustOk(rec.Get("name")).(string),
 			Address: MustOk(rec.Get("address")).(string),

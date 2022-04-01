@@ -3,7 +3,9 @@ package graph
 import (
 	"reflect"
 
+	"github.com/abc-inc/persephone/format"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
 const (
@@ -43,14 +45,24 @@ type RowMapper[T any] func(rec *neo4j.Record) T
 
 func NewSingleColumnRowMapper[T any]() RowMapper[T] {
 	return func(rec *neo4j.Record) T {
-		return rec.GetByIndex(0).(T)
+		return rec.Values[0].(T)
 	}
 }
 
 func NewMapRowMapper() RowMapper[map[string]interface{}] {
 	return func(rec *neo4j.Record) (m map[string]interface{}) {
+		m = make(map[string]interface{})
 		for i, k := range rec.Keys {
-			m[k] = rec.GetByIndex(i)
+			if len(rec.Keys) != 1 {
+				m[k] = rec.Values[i]
+			} else if _, ok := rec.Values[0].(dbtype.Node); ok {
+				m2 := format.MapValues(rec)
+				for k2, v2 := range m2 {
+					m[k2] = v2
+				}
+			} else {
+				m[k] = rec.Values[i]
+			}
 		}
 		return
 	}

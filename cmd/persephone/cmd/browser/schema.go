@@ -35,7 +35,7 @@ func schemaCmd(cmd *cobra.Command, args []string) {
 		"ORDER BY `Index Name`;"
 
 	t := graph.NewTypedTemplate[index](graph.GetConn())
-	idxs := Must(t.Query(cyp, nil, func(rec *neo4j.Record) index {
+	idxs, _ := MustTuple(t.Query(cyp, nil, func(rec *neo4j.Record) index {
 		ls := MustOk(rec.Get("LabelsOrTypes")).([]interface{})
 		ps := MustOk(rec.Get("Properties")).([]interface{})
 
@@ -44,8 +44,8 @@ func schemaCmd(cmd *cobra.Command, args []string) {
 			Type:          MustOk(rec.Get("Type")).(string),
 			Uniqueness:    MustOk(rec.Get("Uniqueness")).(string),
 			EntityType:    MustOk(rec.Get("Index Name")).(string),
-			LabelsOrTypes: Reslice[string](ls),
-			Properties:    Reslice[string](ps),
+			LabelsOrTypes: ReSlice[string](ls),
+			Properties:    ReSlice[string](ps),
 			State:         MustOk(rec.Get("State")).(string),
 		}
 	}))

@@ -22,3 +22,8 @@ func Must[T any](a T, err error) T {
 	MustNoErr(err)
 	return a
 }
+
+func MustTuple[A any, B any](a A, b B, err error) (A, B) {
+	MustNoErr(err)
+	return a, b
+}

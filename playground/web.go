@@ -4,38 +4,38 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
 	"text/template"
 
 	"github.com/abc-inc/gutenfmt/formatter"
+	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
+	"github.com/dustin/go-humanize/english"
 )
 
-func Foo(w io.Writer, s *graph.Conn, req graph.Request) error {
-	rse := func(keys []string, rse graph.ValueExtractor) graph.Record {
-		rec := graph.NewRecord()
-		for _, k := range keys {
-			rec.Add(k, internal.MustOk(rse(k)))
-		}
-		return graph.Record{
-			Keys:   []string{},
-			Values: map[string]interface{}{},
-		}
-	}
+func Foo(req graph.Request) error {
+	t := graph.NewTypedTemplate[map[string]interface{}](graph.GetConn())
 
-	res, err := s.Exec(req, rse)
+	sp := format.NewSpinner()
+	sp.Start()
+	list, summary, err := t.Query(req.Query, req.Params, graph.NewMapRowMapper())
+	sp.Stop()
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
-	t := `
-{{range $a := .}}
-{{index $a "id"}}: {{index $a "name"}}
-{{end}}`
-	tmpl := template.Must(template.New("main").Parse(t))
-	j, err := json.Marshal(res)
+	format.Writeln(list)
+	format.Writeln(fmt.Sprintf("\n%d %s available after %s, consumed after another %s",
+		len(list), english.PluralWord(len(list), "row", "rows"),
+		summary.ResultAvailableAfter(), summary.ResultConsumedAfter()))
+
+	return err
+
+	tStr := `
+	   {{range $a := .}}
+	   {{index $a "id"}}: {{index $a "name"}}
+	   {{end}}`
+	tmpl := template.Must(template.New("main").Parse(tStr))
+	j, err := json.Marshal(list)
 	jj := []map[string]interface{}{}
 	err = json.Unmarshal(j, &jj)
 	if err != nil {
@@ -43,9 +43,11 @@ func Foo(w io.Writer, s *graph.Conn, req graph.Request) error {
 		return err
 	}
 	str, err := formatter.FromTemplate(tmpl).Format(jj)
-	fmt.Println(jj, str, err)
+	if err != nil {
+		return err
+	}
 
-	gfmt := NewWriter(req.Format, w)
-	_, err = gfmt.Write(res)
-	return err
+	fmt.Println(jj, str, err)
+	format.Writeln(list)
+	return nil
 }

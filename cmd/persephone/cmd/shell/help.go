@@ -7,21 +7,22 @@ import (
 )
 
 var HelpCmd = &cobra.Command{
-	Use:   ":help [command]",
-	Short: "Show this help message",
-	Long:  "Show the list of available commands or help for a specific command",
-	Run:   helpCmd,
+	Use:         ":help [command]",
+	Short:       "Show this help message",
+	Long:        "Show the list of available commands or help for a specific command",
+	Annotations: map[string]string{"offline": "true"},
+	Run:         helpCmd,
 }
 
 func helpCmd(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		for _, c := range cmd.Root().Commands() {
-			if strings.TrimPrefix(c.Name(), ":") == args[0] {
-				c.Help()
+			if strings.TrimPrefix(c.Name(), ":") == strings.TrimPrefix(args[0], ":") {
+				_ = c.Help()
 				return
 			}
 		}
 	}
 
-	cmd.Usage()
+	_ = cmd.Usage()
 }

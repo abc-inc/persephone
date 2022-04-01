@@ -11,11 +11,13 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba
 	github.com/briandowns/spinner v1.18.1
 	github.com/c-bata/go-prompt v0.2.5
+	github.com/dustin/go-humanize v1.0.0
+	github.com/fatih/color v1.13.0
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
-	github.com/jmoiron/sqlx v1.3.4
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.1
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.10.1
@@ -26,7 +28,6 @@ require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

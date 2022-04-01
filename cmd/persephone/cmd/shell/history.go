@@ -1,6 +1,11 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/abc-inc/persephone/hist"
+	"github.com/spf13/cobra"
+)
 
 var HistoryCmd = &cobra.Command{
 	Use:   ":history",
@@ -18,7 +23,11 @@ func init() {
 }
 
 func historyCmd(cmd *cobra.Command, args []string) {
+	for i, e := range hist.Get().Entries() {
+		fmt.Printf("%4d  %s\n", i+1, e)
+	}
 }
 
 func historyClearCmd(cmd *cobra.Command, args []string) {
+	hist.Get().Clear()
 }

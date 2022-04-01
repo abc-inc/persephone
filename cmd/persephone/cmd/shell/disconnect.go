@@ -17,5 +17,4 @@ func disconnectCmd(cmd *cobra.Command, args []string) {
 		format.Writeln(err)
 		return
 	}
-	format.Writeln("Disconnected")
 }

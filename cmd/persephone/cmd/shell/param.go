@@ -2,25 +2,27 @@ package cmd
 
 import (
 	"encoding/json"
-	"regexp"
-	"strings"
+	"errors"
+	"fmt"
 
+	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 )
 
 var ParamCmd = &cobra.Command{
-	Use:   ":param name => value",
+	Use:   ":param name value",
 	Short: "Set the value of a query parameter",
 	Long:  "Set the specified query parameter to the value given",
+	Args:  cobra.ExactArgs(2),
 	Run:   paramCmd,
 }
 
 func paramCmd(cmd *cobra.Command, args []string) {
-	r := regexp.MustCompile("\\s*=>\\s*")
-	kv := r.Split(strings.Join(args, " "), 2)
 	var v map[string]interface{}
-	internal.MustNoErr(json.Unmarshal([]byte(kv[1]), &v))
-	graph.GetConn().Params[kv[0]] = v
+	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, args[0], args[1])), &v)
+	if err != nil {
+		format.Writeln(errors.New("failed to evaluate expression " + args[1]))
+	}
+	graph.GetConn().Params[args[0]] = v[args[0]]
 }

@@ -6,20 +6,23 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
 	persephone "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	shell "github.com/abc-inc/persephone/cmd/persephone/cmd/shell"
 	"github.com/abc-inc/persephone/editor"
+	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/persephone/hist"
 	. "github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
+	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/mattn/go-shellwords"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,11 +35,14 @@ var rootCmd = &cobra.Command{
 	Short: `A command line shell where you can execute Cypher against an instance of Neo4j. ` +
 		`By default the shell is interactive but you can use it for scripting ` +
 		`by passing cypher directly on the command line or by piping a file with cypher statements.`,
-	Long: ``,
-	Run:  run,
+	Long:             ``,
+	PersistentPreRun: connect,
+	Run:              run,
+	TraverseChildren: true,
 }
 
 var pass string
+var lines []string
 
 func init() {
 	cobra.OnInitialize(initConfig)
@@ -60,6 +66,7 @@ func init() {
 		browser.QueriesCmd,
 		browser.SchemaCmd,
 		browser.SysinfoCmd,
+		persephone.FormatCmd,
 		persephone.IssueCmd,
 		shell.BeginCmd,
 		shell.CommitCmd,
@@ -92,6 +99,14 @@ func initConfig() {
 }
 
 func main() {
+	end := Must(time.Parse("2006-01-02", "2022-04-08"))
+	if time.Now().After(end) {
+		color.Red("This early access preview of persephone is expired.")
+	} else if end.Sub(time.Now()) < 3*24*time.Hour {
+		color.Green("This early access preview of persephone will expire soon.")
+	}
+
+	log.SetFlags(0)
 	Execute()
 }
 
@@ -101,7 +116,11 @@ func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
-func run(cmd *cobra.Command, args []string) {
+func connect(cmd *cobra.Command, args []string) {
+	if offline, ok := cmd.Annotations["offline"]; ok && offline == "true" {
+		return
+	}
+
 	addr := viper.GetString("address")
 	user := viper.GetString("username")
 	pass := viper.GetString("password")
@@ -120,11 +139,13 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
-	driver := Must(neo4j.NewDriver(addr, neo4j.BasicAuth(user, pass, "")))
-	conn := graph.NewConn(driver, db)
+	auth, user := graph.Auth(user + ":" + pass)
+	conn := graph.NewConn(addr, user, auth, db)
 	conn.DBName = db
+}
 
-	md, err := conn.Metadata()
+func run(cmd *cobra.Command, args []string) {
+	md, err := graph.GetConn().Metadata()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -147,20 +168,34 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	var ccs []graph.Cmd
+	for _, c := range cmd.Root().Commands() {
+		ccs = append(ccs, graph.Cmd{
+			Name: c.Name(),
+			Desc: strings.TrimPrefix(c.Name(), ":"),
+		})
+	}
+
 	schema := graph.Schema{
 		Labels:   ls,
 		RelTypes: ts,
 		PropKeys: pkeys,
 		Funcs:    md.Funcs,
 		Procs:    md.Procs,
+		ConCmds:  ccs,
 	}
 
 	es := editor.NewEditorSupport("")
 	es.SetSchema(schema)
 
+	histPath := filepath.Join(Must(os.UserCacheDir()), "persephone", "history")
+	history := hist.Load(histPath)
+	defer func() { _ = history.Save() }()
+
 	var p *prompt.Prompt
 	p = prompt.New(func(cyp string) {
 		if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
+			history.Add(cyp)
 			cyp = runConsCmd(cmd, cyp)
 		}
 
@@ -176,9 +211,10 @@ func run(cmd *cobra.Command, args []string) {
 		cyp = strings.Join(lines, "\n")
 		lines = nil
 
-		err := playground.Foo(os.Stdout, conn, graph.Request{Query: cyp})
+		history.Add(cyp)
+		err := playground.Foo(graph.Request{Query: cyp, Params: graph.GetConn().Params})
 		if err != nil {
-			log.Fatalln(err)
+			format.Writeln(err)
 		}
 	}, func(document prompt.Document) (pss []prompt.Suggest) {
 		cyp := document.TextBeforeCursor()
@@ -209,33 +245,38 @@ func run(cmd *cobra.Command, args []string) {
 			return nil
 		}
 
+		sep := " "
+		start := res.Range.From.Col - 1
+		if start >= 0 && start < len(document.CurrentLine()) {
+			sep = document.CurrentLine()[start : start+1]
+		}
+		MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
 		return
 	}, prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
 		return breakline && in == "exit"
-	}), prompt.OptionPrefix(fmt.Sprintf("%s@%s> ", user, db)),
+	}), prompt.OptionPrefix(""),
 		prompt.OptionPrefixTextColor(prompt.Cyan),
-		prompt.OptionCompletionWordSeparator(" :(."),
+		prompt.OptionCompletionWordSeparator(" "),
+		prompt.OptionHistory(history.Entries()),
 		prompt.OptionLivePrefix(func() (prefix string, useLivePrefix bool) {
-			return "", len(lines) > 0
+			if graph.GetConn().DBName == "" {
+				return "Disconnected>", true
+			}
+			return fmt.Sprintf("%s@%s> ", graph.GetConn().Username(), graph.GetConn().DBName), len(lines) == 0
 		}),
 	)
 	p.Run()
 }
 
 func runConsCmd(cc *cobra.Command, cyp string) string {
-	cmd, _, _ := strings.Cut(cyp, " ")
-	for _, c := range cc.Commands() {
-		if c.Name() == cmd {
-			c.Run(cc, Must(shellwords.Parse(cyp))[1:])
-			return ""
-		}
+	args := Must(shellwords.Parse(cyp))
+	cc.Root().SetArgs(args)
+	if args[0] == ":param" {
+		args = strings.SplitN(cyp, " ", 3)
+		cc.Root().SetArgs(args)
+	}
+	if err := cc.Execute(); err != nil {
+		format.Writeln(err)
 	}
 	return ""
 }
-
-func historyCmd(cmd *cobra.Command, args []string) {
-	fmt.Println("history")
-}
-
-var history []string
-var lines []string

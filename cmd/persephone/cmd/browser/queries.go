@@ -17,6 +17,10 @@ type query struct {
 	StartTime  neo4j.Date
 }
 
+func (q query) String() string {
+	return q.Query
+}
+
 var QueriesCmd = &cobra.Command{
 	Use:   ":queries",
 	Short: "List your servers and clusters running queries",
@@ -25,7 +29,7 @@ var QueriesCmd = &cobra.Command{
 
 func queriesCmd(cmd *cobra.Command, args []string) {
 	t := graph.NewTypedTemplate[query](graph.GetConn())
-	qs := Must(t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
+	qs, _, err := t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
 		return query{
 			QueryId:    MustOk(rec.Get("queryId")).(string),
 			Username:   MustOk(rec.Get("username")).(string),
@@ -34,7 +38,11 @@ func queriesCmd(cmd *cobra.Command, args []string) {
 			Parameters: MustOk(rec.Get("parameters")),
 			StartTime:  MustOk(rec.Get("startTime")).(neo4j.Date),
 		}
-	}))
+	})
 
-	format.Writeln(qs)
+	if err != nil {
+		format.Writeln(err)
+	} else {
+		format.Writeln(qs)
+	}
 }

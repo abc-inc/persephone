@@ -1,18 +1,22 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var errInvalidArgs = errors.New("invalid arguments")
+
 var ConfigCmd = &cobra.Command{
-	Use:   ":config [name [value]]",
-	Short: "Print the config or change it.",
-	Run:   configCmd,
+	Use:         ":config [name [value]]",
+	Short:       "Print the config or change it.",
+	Annotations: types.Annotate(types.Offline),
+	Run:         configCmd,
 }
 
 func configCmd(cmd *cobra.Command, args []string) {
@@ -30,6 +34,6 @@ func configCmd(cmd *cobra.Command, args []string) {
 		viper.Set(args[0], internal.Parse(args[1]))
 		break
 	default:
-		fmt.Println("error: invalid arguments")
+		format.Writeln(errInvalidArgs)
 	}
 }
