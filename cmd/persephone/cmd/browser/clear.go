@@ -10,10 +10,10 @@ var ClearCmd = &cobra.Command{
 	Use:         ":clear",
 	Short:       "Clear the screen",
 	Annotations: types.Annotate(types.Offline),
-	Run:         clearCmd,
+	Run:         func(cmd *cobra.Command, args []string) { Clear() },
 }
 
-func clearCmd(cmd *cobra.Command, args []string) {
+func Clear() {
 	screen.Clear()
 	screen.MoveTopLeft()
 }

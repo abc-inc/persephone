@@ -10,9 +10,9 @@ var ParamsCmd = &cobra.Command{
 	Use:   ":params [parameter]",
 	Short: "Print all currently set query parameters and their values",
 	Long:  "Print a table of all currently set query parameters or the value for the given parameter",
-	Run:   paramsCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Params() },
 }
 
-func paramsCmd(cmd *cobra.Command, args []string) {
+func Params() {
 	format.Writeln(graph.GetConn().Params)
 }

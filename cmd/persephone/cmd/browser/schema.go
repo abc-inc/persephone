@@ -24,11 +24,11 @@ func (i index) String() string {
 
 var SchemaCmd = &cobra.Command{
 	Use:   ":schema",
-	Short: "Shows information about database schema indexes and constraints",
-	Run:   schemaCmd,
+	Short: "Show information about database schema indexes and constraints",
+	Run:   func(cmd *cobra.Command, args []string) { Schema() },
 }
 
-func schemaCmd(cmd *cobra.Command, args []string) {
+func Schema() {
 	cyp := "CALL db.indexes() YIELD name AS `Index Name`, type AS Type, uniqueness AS Uniqueness, " +
 		"entityType AS EntityType, labelsOrTypes AS LabelsOrTypes, properties AS Properties, state AS State " +
 		"RETURN `Index Name`, Type, Uniqueness, EntityType, LabelsOrTypes, Properties, State " +

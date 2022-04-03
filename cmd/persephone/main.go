@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
 	persephone "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	shell "github.com/abc-inc/persephone/cmd/persephone/cmd/shell"
+	"github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/hist"
 	. "github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
@@ -27,6 +27,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+type CmplFunc func(str string) comp.Result
+
+var cmplByConsCmd map[string]CmplFunc = make(map[string]CmplFunc)
+
 var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
 
 // rootCmd represents the base command when called without any subcommands
@@ -34,14 +38,13 @@ var rootCmd = &cobra.Command{
 	Use: "persephone",
 	Short: `A command line shell where you can execute Cypher against an instance of Neo4j. ` +
 		`By default the shell is interactive but you can use it for scripting ` +
-		`by passing cypher directly on the command line or by piping a file with cypher statements.`,
+		`by passing Cypher directly on the command line or by piping a file with Cypher statements.`,
 	Long:             ``,
 	PersistentPreRun: connect,
 	Run:              run,
 	TraverseChildren: true,
 }
 
-var pass string
 var lines []string
 
 func init() {
@@ -57,10 +60,11 @@ func init() {
 	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
 	rootCmd.Flags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (default: neo4j://localhost:7687) (env: NEO4J_ADDRESS)")
 	rootCmd.Flags().StringP("username", "u", "", "username to connect as (default: ). (env: NEO4J_USERNAME)")
-	rootCmd.Flags().StringVarP(&pass, "password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
+	rootCmd.Flags().StringP("password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
 	rootCmd.Flags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
 
 	rootCmd.AddCommand(
+		browser.ChangePassCmd,
 		browser.ClearCmd,
 		browser.ConfigCmd,
 		browser.QueriesCmd,
@@ -80,9 +84,15 @@ func init() {
 		shell.RollbackCmd,
 		shell.SourceCmd,
 		shell.UseCmd,
+		VersionCmd,
 	)
 
-	MustNoErr(viper.BindPFlags(rootCmd.Flags()))
+	MustNoErr(viper.BindPFlag("address", rootCmd.Flag("address")))
+	MustNoErr(viper.BindPFlag("database", rootCmd.Flag("database")))
+	MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
+	MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
+
+	cmplByConsCmd[shell.SourceCmd.Name()] = console.PathCmpl
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -107,44 +117,48 @@ func main() {
 	}
 
 	log.SetFlags(0)
-	Execute()
-}
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
 func connect(cmd *cobra.Command, args []string) {
+	fmt.Println("CONNECT ", cmd.Name(), args)
 	if offline, ok := cmd.Annotations["offline"]; ok && offline == "true" {
 		return
 	}
-
-	addr := viper.GetString("address")
-	user := viper.GetString("username")
-	pass := viper.GetString("password")
-	db := viper.GetString("database")
-
-	if user == "" && isatty.IsTerminal(os.Stdin.Fd()) {
-		icons := func(set *survey.IconSet) {
-			set.Question.Text = "Enter"
-			set.Question.Format = ""
-		}
-
-		u := &survey.Input{Message: "username:", Default: "neo4j"}
-		MustNoErr(survey.AskOne(u, &user, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
-		p := &survey.Password{Message: "password:"}
-		MustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+	if graph.IsConnected() {
+		return
 	}
 
-	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
-	auth, user := graph.Auth(user + ":" + pass)
-	conn := graph.NewConn(addr, user, auth, db)
+	format.Change(viper.GetString("format"))
+
+	addr := viper.GetString("address")
+	u := viper.GetString("username")
+	p := viper.GetString("password")
+	db := viper.GetString("database")
+
+	if u == "" && isatty.IsTerminal(os.Stdin.Fd()) {
+		u = console.Input("username:", "neo4j")
+		p = console.Pwd("password:")
+	}
+
+	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, u)
+	auth, u := graph.Auth(u + ":" + p)
+	conn := graph.NewConn(addr, u, auth, db)
 	conn.DBName = db
+
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		consCmdCol := color.New(color.FgCyan).Sprint
+		fmt.Printf("Type %s for a list of available commands or %s to exit the shell.\n"+
+			"Note that Cypher queries must end with a semicolon.\n", consCmdCol(":help"), consCmdCol(":exit"))
+	}
 }
 
 func run(cmd *cobra.Command, args []string) {
+	if Must(cmd.Flags().GetBool("version")) {
+		versionCmd(cmd, args)
+		return
+	}
+
 	md, err := graph.GetConn().Metadata()
 	if err != nil {
 		log.Fatalln(err)
@@ -189,7 +203,7 @@ func run(cmd *cobra.Command, args []string) {
 	es.SetSchema(schema)
 
 	histPath := filepath.Join(Must(os.UserCacheDir()), "persephone", "history")
-	history := hist.Load(histPath)
+	history := console.Load(histPath)
 	defer func() { _ = history.Save() }()
 
 	var p *prompt.Prompt
@@ -231,18 +245,31 @@ func run(cmd *cobra.Command, args []string) {
 
 		es.Update(buf)
 		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
-		res := es.GetCompletion(line, col, true)
+		var res comp.Result
+
+		parts := strings.SplitN(cyp, " ", 2)
+		if cmpl, ok := cmplByConsCmd[parts[0]]; ok && len(parts) > 1 {
+			res = cmpl(parts[1])
+			start := strings.LastIndex(cyp, "/") + 1
+			if start == 0 {
+				start = len(parts[0]) + 1
+			}
+			res.Range = comp.Range{
+				From: comp.LineCol{Line: 0, Col: start},
+				To:   comp.LineCol{Line: 0, Col: len(cyp)},
+			}
+		} else {
+			res = es.GetCompletion(line, col, true)
+		}
 		for _, i := range res.Items {
 			if cyp == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
 				continue
 			}
-			pss = append(pss, prompt.Suggest{
-				Text: i.Content,
-			})
-		}
-
-		if len(pss) == 1 && strings.HasSuffix(cyp, pss[0].Text) {
-			return nil
+			if i.View == strings.Trim(i.Content, "`") {
+				pss = append(pss, prompt.Suggest{Text: i.View})
+			} else {
+				pss = append(pss, prompt.Suggest{Text: i.View, Description: i.Content})
+			}
 		}
 
 		sep := " "

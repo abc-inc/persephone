@@ -10,16 +10,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const ghIssuesUrl = "https://github.com/abc-inc/persephone/issues"
+
 var IssueCmd = &cobra.Command{
 	Use:         ":issue",
 	Short:       "Report an issue on GitHub",
 	Annotations: types.Annotate(types.Offline),
-	Run:         issueCmd,
+	Run:         func(cmd *cobra.Command, args []string) { Issue() },
 }
 
-func issueCmd(cmd *cobra.Command, args []string) {
-	var url = "https://github.com/abc-inc/persephone/issues"
-	if !browser.Open(url) {
-		internal.Must(fmt.Fprintln(os.Stderr, "Please report issues to "+url))
+func Issue() {
+	if !browser.Open(ghIssuesUrl) {
+		internal.Must(fmt.Fprintln(os.Stderr, "Please report issues to "+ghIssuesUrl))
 	}
 }

@@ -13,11 +13,11 @@ var errNoTxRollback = errors.New("there is no open transaction to rollback")
 var RollbackCmd = &cobra.Command{
 	Use:   ":rollback",
 	Short: "Rollback the currently open transaction",
-	Long:  "Roll back and closes the currently open transaction",
-	Run:   rollbackCmd,
+	Long:  "Rollback and close the currently open transaction",
+	Run:   func(cmd *cobra.Command, args []string) { Rollback() },
 }
 
-func rollbackCmd(cmd *cobra.Command, args []string) {
+func Rollback() {
 	if ok, err := graph.GetConn().Rollback(); err != nil {
 		format.Writeln(err)
 	} else if !ok {

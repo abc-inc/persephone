@@ -28,7 +28,7 @@ func (d dbInfo) String() string {
 var SysinfoCmd = &cobra.Command{
 	Use:   ":sysinfo",
 	Short: "Print system information",
-	Run:   sysinfoCmd,
+	Run:   func(cmd *cobra.Command, args []string) { SysInfo() },
 }
 
 func init() {
@@ -42,7 +42,7 @@ func init() {
 	})
 }
 
-func sysinfoCmd(cmd *cobra.Command, args []string) {
+func SysInfo() {
 	t := graph.NewTypedTemplate[dbInfo](graph.GetConn())
 	dbs, _ := MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) dbInfo {
 		return dbInfo{

@@ -14,10 +14,10 @@ var CommitCmd = &cobra.Command{
 	Use:   ":commit",
 	Short: "Commit the currently open transaction",
 	Long:  "Commit and close the currently open transaction",
-	Run:   commitCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Commit() },
 }
 
-func commitCmd(cmd *cobra.Command, args []string) {
+func Commit() {
 	if ok, err := graph.GetConn().Commit(); err != nil {
 		format.Writeln(err)
 	} else if !ok {

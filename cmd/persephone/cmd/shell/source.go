@@ -13,14 +13,13 @@ import (
 
 var SourceCmd = &cobra.Command{
 	Use:   ":source [filename]",
-	Short: "Interactively executes cypher statements from a file",
-	Long:  "Executes Cypher statements from a file",
+	Short: "Execute Cypher statements from a file",
 	Args:  cobra.ExactArgs(1),
-	Run:   sourceCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Source(args[0]) },
 }
 
-func sourceCmd(cmd *cobra.Command, args []string) {
-	f, err := os.Open(args[0])
+func Source(path string) {
+	f, err := os.Open(path)
 	if err != nil {
 		format.Writeln(err)
 		return

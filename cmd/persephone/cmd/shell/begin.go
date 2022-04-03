@@ -14,10 +14,10 @@ var BeginCmd = &cobra.Command{
 	Use:   ":begin",
 	Short: "Open a transaction",
 	Long:  "Start a transaction which will remain open until :commit or :rollback is called",
-	Run:   beginCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Begin() },
 }
 
-func beginCmd(cmd *cobra.Command, args []string) {
+func Begin() {
 	_, created, err := graph.GetConn().GetTransaction()
 	if err != nil {
 		format.Writeln(err)

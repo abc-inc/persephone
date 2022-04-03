@@ -15,14 +15,14 @@ var ParamCmd = &cobra.Command{
 	Short: "Set the value of a query parameter",
 	Long:  "Set the specified query parameter to the value given",
 	Args:  cobra.ExactArgs(2),
-	Run:   paramCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Param(args[0], args[1]) },
 }
 
-func paramCmd(cmd *cobra.Command, args []string) {
-	var v map[string]interface{}
-	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, args[0], args[1])), &v)
+func Param(key, val string) {
+	var m map[string]interface{}
+	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, key, val)), &m)
 	if err != nil {
-		format.Writeln(errors.New("failed to evaluate expression " + args[1]))
+		format.Writeln(errors.New("failed to evaluate expression " + val))
 	}
-	graph.GetConn().Params[args[0]] = v[args[0]]
+	graph.GetConn().Params[key] = m[key]
 }

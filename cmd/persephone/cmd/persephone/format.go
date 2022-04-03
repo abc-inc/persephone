@@ -12,9 +12,9 @@ var FormatCmd = &cobra.Command{
 	ValidArgs:   []string{"csv", "json", "jsonc", "table", "text", "tsv", "yaml", "yamlc"},
 	Args:        cobra.ExactValidArgs(1),
 	Annotations: types.Annotate(types.Offline),
-	Run:         formatCmd,
+	Run:         func(cmd *cobra.Command, args []string) { Format(args[0]) },
 }
 
-func formatCmd(cmd *cobra.Command, args []string) {
-	format.Change(args[0])
+func Format(f string) {
+	format.Change(f)
 }

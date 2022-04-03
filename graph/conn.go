@@ -23,6 +23,10 @@ type Conn struct {
 	Params map[string]interface{}
 }
 
+func IsConnected() bool {
+	return defConn != nil && defConn.DBName != ""
+}
+
 func GetConn() *Conn {
 	if defConn == nil {
 		panic("Not connected to Neo4j")

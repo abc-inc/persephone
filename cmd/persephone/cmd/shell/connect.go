@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
-	. "github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/persephone/internal"
+	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,7 +17,7 @@ import (
 
 var ConnectCmd = &cobra.Command{
 	Use:         ":connect",
-	Short:       "Connects to a database",
+	Short:       "Connect to a database",
 	Annotations: types.Annotate(types.Offline),
 	Run:         connectCmd,
 }
@@ -27,24 +29,28 @@ func init() {
 }
 
 func connectCmd(cmd *cobra.Command, args []string) {
+	u := internal.Must(cmd.Flags().GetString("username"))
+	p := internal.Must(cmd.Flags().GetString("password"))
+	Connect(u, p)
+}
+
+func Connect(user, pass string) {
 	if graph.GetConn() != nil && graph.GetConn().Driver != nil {
 		format.Writeln("Already connected")
 		return
 	}
 
-	icons := func(set *survey.IconSet) {
-		set.Question.Text = "Enter"
-		set.Question.Format = ""
-	}
-
-	var user, pass string
 	addr := viper.GetString("address")
 	db := viper.GetString("database")
 
-	u := &survey.Input{Message: "username:", Default: "neo4j"}
-	MustNoErr(survey.AskOne(u, &user, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
-	p := &survey.Password{Message: "password:"}
-	MustNoErr(survey.AskOne(p, &pass, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		if user == "" {
+			user, pass = console.Input("username:", "neo4j"), ""
+		}
+		if pass == "" {
+			pass = console.Pwd("password:")
+		}
+	}
 
 	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
 	_ = graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db)

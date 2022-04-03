@@ -1,4 +1,4 @@
-package hist
+package console
 
 import (
 	"bufio"

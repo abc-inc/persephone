@@ -24,10 +24,10 @@ func (q query) String() string {
 var QueriesCmd = &cobra.Command{
 	Use:   ":queries",
 	Short: "List your servers and clusters running queries",
-	Run:   queriesCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Queries() },
 }
 
-func queriesCmd(cmd *cobra.Command, args []string) {
+func Queries() {
 	t := graph.NewTypedTemplate[query](graph.GetConn())
 	qs, _, err := t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
 		return query{

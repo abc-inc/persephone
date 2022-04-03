@@ -8,13 +8,12 @@ import (
 
 var DisconnectCmd = &cobra.Command{
 	Use:   ":disconnect",
-	Short: "Disconnects from database",
-	Run:   disconnectCmd,
+	Short: "Disconnect from database",
+	Run:   func(cmd *cobra.Command, args []string) { Disconnect() },
 }
 
-func disconnectCmd(cmd *cobra.Command, args []string) {
+func Disconnect() {
 	if err := graph.GetConn().Close(); err != nil {
 		format.Writeln(err)
-		return
 	}
 }

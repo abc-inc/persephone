@@ -10,11 +10,11 @@ var UseCmd = &cobra.Command{
 	Use:   ":use database",
 	Short: "Set the active database",
 	Long:  "Set the active database that transactions are executed on",
-	Run:   useCmd,
+	Run:   func(cmd *cobra.Command, args []string) { Use(args[0]) },
 }
 
-func useCmd(cmd *cobra.Command, args []string) {
-	if err := graph.GetConn().UseDB(args[0]); err != nil {
+func Use(dbName string) {
+	if err := graph.GetConn().UseDB(dbName); err != nil {
 		format.Writeln(err)
 	}
 }
