@@ -6,8 +6,8 @@ import (
 
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/fuzzy"
-	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/abc-inc/persephone/types"

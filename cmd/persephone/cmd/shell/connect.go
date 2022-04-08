@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/mattn/go-isatty"
@@ -18,7 +17,7 @@ import (
 var ConnectCmd = &cobra.Command{
 	Use:         ":connect",
 	Short:       "Connect to a database",
-	Annotations: types.Annotate(types.Offline),
+	Annotations: cmd.Annotate(cmd.Offline),
 	Run:         connectCmd,
 }
 
@@ -36,7 +35,7 @@ func connectCmd(cmd *cobra.Command, args []string) {
 
 func Connect(user, pass string) {
 	if graph.GetConn() != nil && graph.GetConn().Driver != nil {
-		format.Writeln("Already connected")
+		console.Writeln("Already connected")
 		return
 	}
 

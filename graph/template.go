@@ -3,7 +3,6 @@ package graph
 import (
 	"errors"
 
-	"github.com/abc-inc/persephone/format"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
@@ -36,9 +35,7 @@ func (t TypedTemplate[T]) Query(cyp string, args map[string]interface{}, rm RowM
 		return nil, summary, err
 	} else if created {
 		defer func(tx neo4j.Transaction) {
-			if _, err := t.conn.Commit(); err != nil {
-				format.Writeln(errTxRollback)
-			}
+			_, _ = t.conn.Rollback()
 		}(tx)
 	}
 
@@ -53,9 +50,7 @@ func (t TypedTemplate[T]) Query(cyp string, args map[string]interface{}, rm RowM
 	summary, _ = res.Consume()
 
 	if created {
-		if _, err := t.conn.Commit(); err != nil {
-			format.Writeln(errTxCommit)
-		}
+		_, err = t.conn.Commit()
 	}
 	return list, summary, err
 }
@@ -66,9 +61,7 @@ func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, r
 		return val, err
 	} else if created {
 		defer func(conn *Conn) {
-			if _, err := conn.Rollback(); err != nil {
-				format.Writeln(errTxRollback)
-			}
+			_, _ = conn.Rollback()
 		}(t.conn)
 	}
 
@@ -83,9 +76,7 @@ func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, r
 	}
 
 	if created {
-		if _, err := t.conn.Commit(); err != nil {
-			format.Writeln(errTxCommit)
-		}
+		_, err = t.conn.Commit()
 	}
 	return val, nil
 }

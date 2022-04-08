@@ -5,7 +5,6 @@ import (
 
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/event"
-	"github.com/abc-inc/persephone/format"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +29,7 @@ func init() {
 
 	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
 		sep := e.Sep
-		format.SetFormatter(entry{}, func(i interface{}) (string, error) {
+		console.SetFormatter(entry{}, func(i interface{}) (string, error) {
 			e := i.(entry)
 			return fmt.Sprintf("%d%s%s", e.Pos+1, sep, e.Stmt), nil
 		})
@@ -42,7 +41,7 @@ func History() {
 	for i, e := range console.Get().Entries() {
 		es = append(es, entry{i, e})
 	}
-	format.Writeln(es)
+	console.Writeln(es)
 }
 
 func HistoryClear() {

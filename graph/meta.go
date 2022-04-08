@@ -1,10 +1,6 @@
 package graph
 
-import (
-	"sort"
-
-	"github.com/abc-inc/persephone/format"
-)
+import "sort"
 
 type Metadata struct {
 	Nodes []Node
@@ -61,11 +57,10 @@ func apocMetaGraph(c Conn, m Metadata) Metadata {
 	return m
 }
 
-func fallback(c Conn, m Metadata) Metadata {
+func fallback(c Conn, m Metadata) (Metadata, error) {
 	res, err := c.Session().Run("CALL db.labels() YIELD label RETURN label ORDER BY label", nil)
 	if err != nil {
-		format.Writeln(err)
-		return m
+		return m, err
 	}
 	for res.Next() {
 		l := res.Record().Values[0].(string)
@@ -84,5 +79,5 @@ func fallback(c Conn, m Metadata) Metadata {
 		m.Props = append(m.Props, p)
 	}
 
-	return m
+	return m, nil
 }

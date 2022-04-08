@@ -3,8 +3,8 @@ package cmd
 import (
 	"errors"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,20 +15,20 @@ var errInvalidArgs = errors.New("invalid arguments")
 var ConfigCmd = &cobra.Command{
 	Use:         ":config [name [value]]",
 	Short:       "Get and set config options",
-	Annotations: types.Annotate(types.Offline),
+	Annotations: cmd.Annotate(cmd.Offline),
 	Run:         configCmd,
 }
 
 func configCmd(cmd *cobra.Command, args []string) {
 	switch len(args) {
 	case 0:
-		format.Writeln(ListConfig())
+		console.Writeln(ListConfig())
 	case 1:
-		format.Writeln(GetConfig(args[0]))
+		console.Writeln(GetConfig(args[0]))
 	case 2:
 		SetConfig(args[0], args[1])
 	default:
-		format.Writeln(errInvalidArgs)
+		console.Writeln(errInvalidArgs)
 	}
 }
 

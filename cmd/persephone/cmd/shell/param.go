@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +22,7 @@ func Param(key, val string) {
 	var m map[string]interface{}
 	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, key, val)), &m)
 	if err != nil {
-		format.Writeln(errors.New("failed to evaluate expression " + val))
+		console.Writeln(errors.New("failed to evaluate expression " + val))
 	}
 	graph.GetConn().Params[key] = m[key]
 }

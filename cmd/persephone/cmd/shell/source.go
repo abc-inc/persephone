@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ var SourceCmd = &cobra.Command{
 func Source(path string) {
 	f, err := os.Open(path)
 	if err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 		return
 	}
 
@@ -31,7 +31,7 @@ func Source(path string) {
 
 	tx, created, err := graph.GetConn().GetTransaction()
 	if err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 		return
 	} else if created {
 		defer func(tx neo4j.Transaction) {
@@ -39,19 +39,20 @@ func Source(path string) {
 		}(tx)
 	}
 
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		if strings.HasPrefix(s.Text(), ":") {
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		if strings.HasPrefix(sc.Text(), ":") {
 			continue
 		}
 
-		format.Writeln(s.Text())
-		if result, err := tx.Run(s.Text(), nil); err != nil {
-			format.Writeln(err)
+		console.Writeln(sc.Text())
+		if result, err := tx.Run(sc.Text(), nil); err != nil {
+			console.Writeln(err)
 			return
-		} else if _, err := result.Consume(); err != nil {
-			format.Writeln(err)
-			return
+		} else {
+			for result.Next() {
+				console.Writeln(result.Record())
+			}
 		}
 	}
 

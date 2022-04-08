@@ -72,11 +72,10 @@ func (c Conn) Session() neo4j.Session {
 	return c.Driver.NewSession(cfg)
 }
 
-func (c Conn) Exec(r Request, m RecordExtractor) (Result, neo4j.ResultSummary, error) {
+func (c Conn) Exec(r Request, m RecordExtractor) ([]*neo4j.Record, neo4j.ResultSummary, error) {
 	c.Logger.Info().
 		Str("query", r.Query).
 		Str("format", r.Format).
-		Str("template", r.Template).
 		Interface("params", r.Params).
 		Msg("Executing query")
 
@@ -85,7 +84,7 @@ func (c Conn) Exec(r Request, m RecordExtractor) (Result, neo4j.ResultSummary, e
 		return nil, nil, err
 	}
 
-	recs := Result{}
+	var recs []*neo4j.Record
 	for res.Next() {
 		getValue := func(key string) (interface{}, bool) {
 			return res.Record().Get(key)
@@ -167,7 +166,7 @@ func (c Conn) Metadata() (Metadata, error) {
 
 	hasApoc := idx < len(m.Procs) && m.Procs[idx].Name == "apoc.meta.schema"
 	if !hasApoc {
-		return fallback(c, m), nil
+		return fallback(c, m)
 	}
 	return apocMetaGraph(c, m), nil
 }

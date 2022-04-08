@@ -1,6 +1,34 @@
 package graph
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j/db"
+)
+
+type Result db.Record
+
+func (r *Result) Add(key string, val interface{}) {
+	r.Keys = append(r.Keys, key)
+	r.Values = append(r.Values, val)
+}
+
+func (r *Result) Index(key string) int {
+	for i, k := range r.Keys {
+		if k == key {
+			return i
+		}
+	}
+	return -1
+}
+
+func (r *Result) Value(key string) (interface{}, bool) {
+	idx := r.Index(key)
+	if idx < 0 {
+		return nil, false
+	}
+	return r.Values[idx], true
+}
 
 type Node struct {
 	Count         int64 `json:"count"`

@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/event"
-	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -34,7 +34,7 @@ var SysinfoCmd = &cobra.Command{
 func init() {
 	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
 		sep := e.Sep
-		format.SetFormatter(dbInfo{}, func(i interface{}) (string, error) {
+		console.SetFormatter(dbInfo{}, func(i interface{}) (string, error) {
 			db := i.(dbInfo)
 			return strings.Join([]string{db.Name, db.Address, db.Role, db.Status,
 				strconv.FormatBool(db.Default), db.Error}, sep), nil
@@ -55,5 +55,5 @@ func SysInfo() {
 		}
 	}))
 
-	format.Writeln(dbs)
+	console.Writeln(dbs)
 }

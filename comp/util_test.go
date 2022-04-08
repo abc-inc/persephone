@@ -75,5 +75,5 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 		fmt.Println(ts.Types[i])
 	}
 
-	Equal(t, ComplInfo{Found: found, Types: exp}, ts)
+	Equal(t, Info{Found: found, Types: exp}, ts)
 }

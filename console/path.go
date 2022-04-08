@@ -2,15 +2,36 @@ package console
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/fuzzy"
 )
 
-func PathCmpl(path string) comp.Result {
+func FileComp(dir string, info func(info os.FileInfo) string) CompFunc {
+	return func(name string) (its []Item) {
+		des, err := os.ReadDir(dir)
+		if err != nil {
+			return nil
+		}
+		des = fuzzy.Search[os.DirEntry](des, name, func(e os.DirEntry) string {
+			return e.Name()
+		})
+		for _, de := range des {
+			var det string
+			if fi, err := de.Info(); err == nil {
+				det = info(fi)
+			}
+			its = append(its, Item{View: de.Name(), Content: det})
+		}
+		return
+	}
+}
+
+func PathComp(path string) []Item {
 	if path == "" {
 		path = "./"
 	}
@@ -24,7 +45,7 @@ func PathCmpl(path string) comp.Result {
 	return findFromPrefix(path, lastSepIdx)
 }
 
-func findFromPrefix(path string, lastSepIdx int) (r comp.Result) {
+func findFromPrefix(path string, lastSepIdx int) (is []Item) {
 	var filter string
 	if lastSepIdx != len(path)-1 || !isDir(path) {
 		// path does not end with /
@@ -47,12 +68,16 @@ func findFromPrefix(path string, lastSepIdx int) (r comp.Result) {
 		var det string
 		if !de.IsDir() {
 			if fi, err := de.Info(); err == nil {
-				det = fmt.Sprintf("%8d %s", fi.Size(), fi.ModTime().Format(time.Stamp))
+				det = fileDetails(fi)
 			}
 		}
-		r.Items = append(r.Items, comp.Item{View: de.Name(), Content: det})
+		is = append(is, Item{View: de.Name(), Content: det})
 	}
 	return
+}
+
+func fileDetails(fi fs.FileInfo) string {
+	return fmt.Sprintf("%8d %s", fi.Size(), fi.ModTime().Format(time.Stamp))
 }
 
 func isDir(path string) bool {

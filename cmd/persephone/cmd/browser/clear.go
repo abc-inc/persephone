@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/inancgumus/screen"
 	"github.com/spf13/cobra"
 )
@@ -9,7 +9,7 @@ import (
 var ClearCmd = &cobra.Command{
 	Use:         ":clear",
 	Short:       "Clear the screen",
-	Annotations: types.Annotate(types.Offline),
+	Annotations: cmd.Annotate(cmd.Offline),
 	Run:         func(cmd *cobra.Command, args []string) { Clear() },
 }
 

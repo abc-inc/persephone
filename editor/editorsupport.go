@@ -5,8 +5,8 @@ import (
 
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/comp"
-	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -98,15 +98,15 @@ func (es EditorSupport) GetReferences(line, column int) []antlr.ParserRuleContex
 	return es.referencesProviders[typ].GetReferences(text, query.(*parser.CypherQueryContext))
 }
 
-func (es EditorSupport) GetCompletionInfo(line, column int) comp.ComplInfo {
+func (es EditorSupport) GetCompletionInfo(line, column int) comp.Info {
 	element := es.GetElementForCompletion(line, column)
 	query := ast.FindAnyParent(element, []string{lang.QUERY_CONTEXT})
-	complInfo := comp.GetTypes(element)
-	return comp.ComplInfo{
+	info := comp.GetTypes(element)
+	return comp.Info{
 		Element: element,
 		Query:   query,
-		Found:   complInfo.Found,
-		Types:   complInfo.Types,
+		Found:   info.Found,
+		Types:   info.Types,
 	}
 }
 

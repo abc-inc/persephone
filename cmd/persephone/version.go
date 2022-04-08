@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/types"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +13,7 @@ var VersionCmd = &cobra.Command{
 	Use:         ":version",
 	Aliases:     []string{"version"},
 	Short:       "Print version information and exit.",
-	Annotations: types.Annotate(types.Offline),
+	Annotations: cmd.Annotate(cmd.Offline),
 	Run:         versionCmd,
 }
 

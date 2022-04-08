@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/pkg/errors"
 )
@@ -26,9 +25,9 @@ func Get() *History {
 func Load(path string) *History {
 	history = History{path: path}
 	if histFile, err := os.Open(path); err == nil {
-		s := bufio.NewScanner(histFile)
-		for s.Scan() {
-			history.entries = append(history.entries, s.Text())
+		sc := bufio.NewScanner(histFile)
+		for sc.Scan() {
+			history.entries = append(history.entries, sc.Text())
 		}
 		internal.MustNoErr(histFile.Close())
 	}
@@ -44,13 +43,13 @@ func (h *History) Add(cyp string) {
 
 func (h History) Save() error {
 	if err := os.MkdirAll(filepath.Dir(h.path), 0700); err != nil {
-		format.Writeln(errors.WithMessage(err, "cannot write history file"))
+		Writeln(errors.WithMessage(err, "cannot write history file"))
 		return nil
 	}
 
 	histFile, err := os.OpenFile(h.path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
-		format.Writeln(errors.WithMessagef(err, "cannot write history file"))
+		Writeln(errors.WithMessagef(err, "cannot write history file"))
 		return nil
 	}
 

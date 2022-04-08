@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -50,5 +50,5 @@ func Schema() {
 		}
 	}))
 
-	format.Writeln(idxs)
+	console.Writeln(idxs)
 }

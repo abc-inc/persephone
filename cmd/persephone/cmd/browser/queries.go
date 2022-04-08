@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -41,8 +41,8 @@ func Queries() {
 	})
 
 	if err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	} else {
-		format.Writeln(qs)
+		console.Writeln(qs)
 	}
 }

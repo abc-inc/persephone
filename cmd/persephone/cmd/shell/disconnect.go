@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +14,6 @@ var DisconnectCmd = &cobra.Command{
 
 func Disconnect() {
 	if err := graph.GetConn().Close(); err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	}
 }

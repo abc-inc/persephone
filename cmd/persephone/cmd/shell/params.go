@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
@@ -14,5 +14,5 @@ var ParamsCmd = &cobra.Command{
 }
 
 func Params() {
-	format.Writeln(graph.GetConn().Params)
+	console.Writeln(graph.GetConn().Params)
 }

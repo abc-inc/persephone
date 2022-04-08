@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
@@ -19,8 +19,8 @@ var CommitCmd = &cobra.Command{
 
 func Commit() {
 	if ok, err := graph.GetConn().Commit(); err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	} else if !ok {
-		format.Writeln(errNoTxCommit)
+		console.Writeln(errNoTxCommit)
 	}
 }

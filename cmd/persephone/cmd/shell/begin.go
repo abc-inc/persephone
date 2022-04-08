@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +20,8 @@ var BeginCmd = &cobra.Command{
 func Begin() {
 	_, created, err := graph.GetConn().GetTransaction()
 	if err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	} else if !created {
-		format.Writeln(errTxActive)
+		console.Writeln(errTxActive)
 	}
 }

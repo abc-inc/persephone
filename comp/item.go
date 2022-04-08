@@ -46,7 +46,7 @@ type Result struct {
 	Range Range
 }
 
-type ComplInfo struct {
+type Info struct {
 	Element antlr.Tree
 	Query   antlr.Tree
 	Found   bool

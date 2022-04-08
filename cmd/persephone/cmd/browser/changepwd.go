@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/format"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/fatih/color"
@@ -20,10 +19,10 @@ var errPwdEmpty = errors.New("current and new password must be provided")
 var errPwdMismatch = errors.New("the two entered passwords must be the same")
 
 var ChangePassCmd = &cobra.Command{
-	Use:     ":change-password",
-	Short:   "Change the user password",
-	Run:     changePassCmd,
-	Hidden:  true,
+	Use:    ":change-password",
+	Short:  "Change the user password",
+	Run:    changePassCmd,
+	Hidden: true,
 }
 
 func init() {
@@ -49,11 +48,11 @@ func ChangePass(p, newP1, newP2 string) {
 	}
 
 	if p == "" || newP1 == "" {
-		format.Writeln(errPwdEmpty)
+		console.Writeln(errPwdEmpty)
 		return
 	}
 	if newP1 != newP2 {
-		format.Writeln(errPwdMismatch)
+		console.Writeln(errPwdMismatch)
 		return
 	}
 
@@ -61,8 +60,8 @@ func ChangePass(p, newP1, newP2 string) {
 		return tx.Run(cypSetPass, map[string]interface{}{"old": p, "new": newP1})
 	})
 	if err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	} else {
-		format.Writeln(color.GreenString("password changed successfully"))
+		console.Writeln(color.GreenString("password changed successfully"))
 	}
 }

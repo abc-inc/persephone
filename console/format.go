@@ -1,4 +1,4 @@
-package format
+package console
 
 import (
 	"errors"
@@ -14,25 +14,23 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
+var fmtName string
 var w gfmt.Writer
 
-func init() {
-	if isatty.IsTerminal(os.Stdout.Fd()) && isatty.IsTerminal(os.Stdin.Fd()) {
-		Change("table")
-	} else {
-		Change("")
-	}
-}
-
-func Change(f string) {
+func ChangeFmt(f string) {
 	sepsByType := map[string]string{"csv": ",", "text": " ", "tsv": "\t"}
 
 	switch f {
 	case "":
 		w = gfmt.NewAutoJSON(os.Stdout)
+	case "auto":
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			ChangeFmt("table")
+		} else {
+			ChangeFmt("")
+		}
 	case "csv":
 		w = gfmt.NewText(os.Stdout)
 		w.(*gfmt.Text).Sep = sepsByType[f]
@@ -57,7 +55,12 @@ func Change(f string) {
 		return
 	}
 
+	fmtName = f
 	event.Publish(event.FormatEvent{Format: f, Sep: sepsByType[f]})
+}
+
+func FormatName() string {
+	return fmtName
 }
 
 func Writeln(i interface{}) {
@@ -82,26 +85,8 @@ func Writeln(i interface{}) {
 
 func SetFormatter(i interface{}, f formatter.Func) {
 	if t, ok := w.(*gfmt.Text); ok {
-		t.Formatter.SetFormatterFunc(reflect.TypeOf(i).Name(), f)
+		t.Formatter.SetFormatterFunc(reflect.TypeOf(i).String(), f)
+	} else if t, ok := w.(*gfmt.Tab); ok {
+		t.Formatter.SetFormatterFunc(reflect.TypeOf(i).String(), f)
 	}
-}
-
-func MapValues(vs *neo4j.Record) (m map[string]interface{}) {
-	m = make(map[string]interface{})
-	for i, v := range vs.Values {
-		k := vs.Keys[i]
-		switch t := v.(type) {
-		case dbtype.Node:
-			for pk, pv := range t.Props {
-				m[k+"."+pk] = pv
-			}
-		case dbtype.Relationship:
-			for pk, pv := range t.Props {
-				m[k+"."+pk] = pv
-			}
-		default:
-			panic("not implemented yet: " + reflect.TypeOf(v).Name())
-		}
-	}
-	return m
 }

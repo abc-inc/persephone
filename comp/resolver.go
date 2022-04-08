@@ -15,10 +15,10 @@ func evaluateRules(element antlr.ParseTree) []rule.Info {
 	return nil
 }
 
-func GetTypes(element antlr.Tree) ComplInfo {
+func GetTypes(element antlr.Tree) Info {
 	// If element is nil, then no types
 	if element == nil {
-		return ComplInfo{
+		return Info{
 			Found: false,
 			Types: types.AllCompData,
 		}
@@ -30,14 +30,14 @@ func GetTypes(element antlr.Tree) ComplInfo {
 		for i, it := range infos {
 			ts[i] = types.Data{Type: it.Type, Path: it.Path, FilterLastElement: it.Found}
 		}
-		return ComplInfo{
+		return Info{
 			Found: true,
 			Types: ts,
 		}
 	}
 
 	// If no types found, then no types
-	return ComplInfo{
+	return Info{
 		Found: false,
 		Types: types.AllCompData,
 	}

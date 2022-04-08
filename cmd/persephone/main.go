@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
@@ -14,22 +18,21 @@ import (
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/format"
+	"github.com/abc-inc/persephone/event"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
-	"github.com/abc-inc/persephone/playground"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
+	"github.com/dustin/go-humanize/english"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/mattn/go-shellwords"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-type CmplFunc func(str string) comp.Result
-
-var cmplByConsCmd map[string]CmplFunc = make(map[string]CmplFunc)
+var compByConsCmd = make(map[string]console.CompFunc)
 
 var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
 
@@ -72,6 +75,7 @@ func init() {
 		browser.SysinfoCmd,
 		persephone.FormatCmd,
 		persephone.IssueCmd,
+		persephone.TemplateCmd,
 		shell.BeginCmd,
 		shell.CommitCmd,
 		shell.ConnectCmd,
@@ -92,7 +96,58 @@ func init() {
 	MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
 	MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
 
-	cmplByConsCmd[shell.SourceCmd.Name()] = console.PathCmpl
+	compByConsCmd[shell.SourceCmd.Name()] = console.PathComp
+	compByConsCmd[persephone.TemplateCmd.Name()] = func(str string) (its []console.Item) {
+		for n, t := range console.Tmpls {
+			its = append(its, console.Item{View: n, Content: t.Root.String()})
+		}
+		return
+	}
+
+	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
+		switch e.Format {
+		case "csv":
+			barbar(",")
+		case "table":
+			barbar("\t")
+		case "text":
+			barbar(e.Sep)
+		case "tsv":
+			barbar("\t")
+		}
+	})
+}
+
+var Sep string
+
+func barbar(sep string) {
+	Sep = sep
+	if true {
+		return
+	}
+	console.SetFormatter([]graph.Result{}, func(i interface{}) (string, error) {
+		fmt.Println("FORMATTING ", i)
+		rset := i.([]graph.Result)
+		if len(rset) == 0 {
+			return "", nil
+		}
+		s := strings.Builder{}
+		tw := tabwriter.NewWriter(&s, 4, 4, 1, ' ', 0)
+		for _, k := range rset[0].Keys {
+			_, _ = tw.Write([]byte(k))
+			_, _ = tw.Write([]byte(sep))
+		}
+		_, _ = tw.Write([]byte("\n"))
+		for _, res := range rset {
+			for _, v := range res.Values {
+				_, _ = tw.Write([]byte(fmt.Sprint(v)))
+				_, _ = tw.Write([]byte(sep))
+			}
+			_, _ = tw.Write([]byte("\n"))
+		}
+		_ = tw.Flush()
+		return s.String(), nil
+	})
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -121,7 +176,6 @@ func main() {
 }
 
 func connect(cmd *cobra.Command, args []string) {
-	fmt.Println("CONNECT ", cmd.Name(), args)
 	if offline, ok := cmd.Annotations["offline"]; ok && offline == "true" {
 		return
 	}
@@ -129,7 +183,7 @@ func connect(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	format.Change(viper.GetString("format"))
+	console.ChangeFmt(viper.GetString("format"))
 
 	addr := viper.GetString("address")
 	u := viper.GetString("username")
@@ -156,6 +210,30 @@ func connect(cmd *cobra.Command, args []string) {
 func run(cmd *cobra.Command, args []string) {
 	if Must(cmd.Flags().GetBool("version")) {
 		versionCmd(cmd, args)
+		return
+	}
+
+	if cmd == cmd.Root() && len(args) > 0 && !strings.HasPrefix(args[0], ":") {
+		err := Print(graph.Request{
+			Query:  strings.Join(args, " "),
+			Params: graph.GetConn().Params,
+		})
+		if err != nil {
+			console.Writeln(err)
+		}
+		return
+	}
+	if cmd == cmd.Root() && !isatty.IsTerminal(os.Stdin.Fd()) {
+		sc := bufio.NewScanner(os.Stdin)
+		for sc.Scan() {
+			err := Print(graph.Request{
+				Query:  sc.Text(),
+				Params: graph.GetConn().Params,
+			})
+			if err != nil {
+				console.Writeln(err)
+			}
+		}
 		return
 	}
 
@@ -226,9 +304,12 @@ func run(cmd *cobra.Command, args []string) {
 		lines = nil
 
 		history.Add(cyp)
-		err := playground.Foo(graph.Request{Query: cyp, Params: graph.GetConn().Params})
+		err := Print(graph.Request{
+			Query:  cyp,
+			Params: graph.GetConn().Params,
+		})
 		if err != nil {
-			format.Writeln(err)
+			console.Writeln(err)
 		}
 	}, func(document prompt.Document) (pss []prompt.Suggest) {
 		cyp := document.TextBeforeCursor()
@@ -248,8 +329,12 @@ func run(cmd *cobra.Command, args []string) {
 		var res comp.Result
 
 		parts := strings.SplitN(cyp, " ", 2)
-		if cmpl, ok := cmplByConsCmd[parts[0]]; ok && len(parts) > 1 {
-			res = cmpl(parts[1])
+		if cmdComp, ok := compByConsCmd[parts[0]]; ok && len(parts) > 1 {
+			res = comp.Result{}
+			for _, it := range cmdComp(parts[1]) {
+				res.Items = append(res.Items, comp.Item{View: it.View, Content: it.Content})
+			}
+
 			start := strings.LastIndex(cyp, "/") + 1
 			if start == 0 {
 				start = len(parts[0]) + 1
@@ -303,7 +388,95 @@ func runConsCmd(cc *cobra.Command, cyp string) string {
 		cc.Root().SetArgs(args)
 	}
 	if err := cc.Execute(); err != nil {
-		format.Writeln(err)
+		console.Writeln(err)
 	}
 	return ""
+}
+
+func Print(req graph.Request) error {
+	const sumMsg = "\n%d %s, ready to start consuming query after %s, results consumed after another %s\n"
+
+	console.Writeln("Executing " + color.YellowString(req.Query))
+	sp := console.NewSpinner()
+	sp.Start()
+
+	var (
+		rs      []graph.Result
+		summary neo4j.ResultSummary
+		err     error
+	)
+	t := graph.NewTypedTemplate[graph.Result](graph.GetConn())
+	rs, summary, err = t.Query(req.Query, req.Params, graph.NewResultRowMapper())
+	sp.Stop()
+	if err != nil {
+		return err
+	}
+	result := []graph.Result{}
+	for i, r := range rs {
+		result = append(result, graph.Result{})
+		for j, v := range r.Values {
+			if props, ok := v.(map[string]interface{}); ok && (console.FormatName() == "yamlc" || console.FormatName() == "yaml" || console.FormatName() == "jsonc" || console.FormatName() == "jsonc" || console.FormatName() == "csv" || console.FormatName() == "text" || console.FormatName() == "tsv" || console.FormatName() == "table") {
+				if l, ok := props["@label"]; ok && console.Tmpls[l.(string)+".tmpl"] != nil {
+					tmpl := console.Tmpls[l.(string)+".tmpl"]
+					b := &strings.Builder{}
+					if err := tmpl.Execute(b, props); err != nil {
+						return err
+					}
+					result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
+				} else if l, ok := props["@type"]; ok && console.Tmpls[l.(string)+".tmpl"] != nil {
+					tmpl := console.Tmpls[l.(string)+".tmpl"]
+					b := &strings.Builder{}
+					if err := tmpl.Execute(b, props); err != nil {
+						return err
+					}
+					result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
+				} else if console.FormatName() == "json" || console.FormatName() == "jsonc" || console.FormatName() == "yaml" || console.FormatName() == "yamlc" {
+					result[i].Add(r.Keys[j], props)
+				} else {
+					bs, err := json.Marshal(props)
+					if err != nil {
+						return err
+					}
+					if console.FormatName() == "csv" {
+						b := &strings.Builder{}
+						w := csv.NewWriter(b)
+						_ = w.Write([]string{string(bs)})
+						w.Flush()
+						result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
+					} else {
+						result[i].Add(r.Keys[j], string(bs))
+					}
+				}
+			} else {
+				result[i].Add(r.Keys[j], v)
+			}
+		}
+	}
+
+	if console.FormatName() == "table" {
+		console.Writeln(console.WriteTable(result))
+	} else if console.FormatName() == "csv" || console.FormatName() == "text" || console.FormatName() == "tsv" {
+		console.Writeln(console.WriteText(result, Sep, "\t\n"))
+	} else if strings.HasPrefix(console.FormatName(), "json") || strings.HasPrefix(console.FormatName(), "yaml") {
+		ms := []map[string]interface{}{}
+		for _, r := range result {
+			m := map[string]interface{}{}
+			ms = append(ms, m)
+			for i, k := range r.Keys {
+				m[k] = r.Values[i]
+				if props, ok := m[k].(map[string]any); ok {
+					delete(props, "@label")
+					delete(props, "@labels")
+				}
+			}
+		}
+		console.Writeln(ms)
+	} else {
+		console.Writeln(result)
+	}
+	_, _ = fmt.Fprintf(os.Stderr, sumMsg,
+		len(rs), english.PluralWord(len(rs), "row", "rows"),
+		summary.ResultAvailableAfter(), summary.ResultConsumedAfter())
+
+	return nil
 }
