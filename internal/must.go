@@ -1,19 +1,18 @@
 package internal
 
 import (
-	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 func MustNoErr(err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 }
 
 func MustOk[T any](a T, ok bool) T {
 	if !ok {
-		panic(fmt.Sprintf("Invalid state: %v is not ok\n", a))
+		log.Fatal().Msgf("Invalid state: %v is not ok", a)
 	}
 	return a
 }

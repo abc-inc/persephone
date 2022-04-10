@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -19,10 +19,13 @@ var ParamCmd = &cobra.Command{
 }
 
 func Param(key, val string) {
+	key = strings.Trim(key, `"`)
 	var m map[string]interface{}
 	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, key, val)), &m)
 	if err != nil {
-		console.Writeln(errors.New("failed to evaluate expression " + val))
+		log.Err(err).Msg("Failed to parse parameter")
+		log.Info().Msg("The value must be a valid JSON string, number, object, etc.")
+		return
 	}
 	graph.GetConn().Params[key] = m[key]
 }

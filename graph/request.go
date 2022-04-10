@@ -10,7 +10,6 @@ import (
 
 type Request struct {
 	Query  string
-	Format string
 	Params map[string]interface{}
 }
 
@@ -62,6 +61,16 @@ func NewResultRowMapper() RowMapper[Result] {
 			}
 		}
 		return
+	}
+}
+
+func NewRawResultRowMapper() RowMapper[map[string]interface{}] {
+	return func(rec *neo4j.Record) map[string]interface{} {
+		m := make(map[string]interface{})
+		for i, k := range rec.Keys {
+			m[k] = rec.Values[i]
+		}
+		return m
 	}
 }
 

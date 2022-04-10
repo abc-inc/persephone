@@ -8,6 +8,7 @@ import (
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -45,8 +46,8 @@ func Source(path string) {
 			continue
 		}
 
-		console.Writeln(sc.Text())
-		if result, err := tx.Run(sc.Text(), nil); err != nil {
+		log.Debug().Str("statement", sc.Text()).Fields(graph.GetConn().Params).Msg("Executing")
+		if result, err := tx.Run(sc.Text(), graph.GetConn().Params); err != nil {
 			console.Writeln(err)
 			return
 		} else {

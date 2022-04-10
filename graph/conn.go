@@ -6,7 +6,7 @@ import (
 
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const systemDB = "system"
@@ -14,7 +14,6 @@ const systemDB = "system"
 var defConn *Conn
 
 type Conn struct {
-	Logger zerolog.Logger
 	Driver neo4j.Driver
 	user   string
 	auth   neo4j.AuthToken
@@ -35,13 +34,11 @@ func GetConn() *Conn {
 }
 
 func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Conn {
-	l := zerolog.New(zerolog.NewConsoleWriter())
 	d := internal.Must(neo4j.NewDriver(addr, auth, func(config *neo4j.Config) {
 		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
 	}))
 
 	conn := &Conn{
-		Logger: l,
 		Driver: d,
 		user:   user,
 		auth:   auth,
@@ -73,11 +70,10 @@ func (c Conn) Session() neo4j.Session {
 }
 
 func (c Conn) Exec(r Request, m RecordExtractor) ([]*neo4j.Record, neo4j.ResultSummary, error) {
-	c.Logger.Info().
+	log.Info().
 		Str("query", r.Query).
-		Str("format", r.Format).
 		Interface("params", r.Params).
-		Msg("Executing query")
+		Msg("Executing")
 
 	res, err := c.Session().Run(r.Query, r.Params)
 	if err != nil {

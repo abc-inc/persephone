@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -51,6 +51,7 @@ func Connect(user, pass string) {
 		}
 	}
 
-	fmt.Printf("Connecting to Neo4j database '%s' at '%s' as user '%s'.\n", db, addr, user)
+	log.Info().Str("db", db).Str("addr", addr).Str("user", user).
+		Msg("Connecting to Neo4j database")
 	_ = graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db)
 }

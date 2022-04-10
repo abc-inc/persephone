@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/abc-inc/browser"
 	"github.com/abc-inc/persephone/console"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func templateCmd(cmd *cobra.Command, args []string) {
 func Template(args ...string) {
 	if len(args) == 1 {
 		if t, ok := console.Tmpls[args[0]]; !ok {
-			console.Writeln(fmt.Errorf("template %s does not exist", args[0]))
+			log.Error().Str("name", args[0]).Msg("template does not exist")
 		} else {
 			console.Writeln(t.Root.String())
 		}

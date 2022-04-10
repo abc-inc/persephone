@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -62,6 +63,6 @@ func ChangePass(p, newP1, newP2 string) {
 	if err != nil {
 		console.Writeln(err)
 	} else {
-		console.Writeln(color.GreenString("password changed successfully"))
+		log.Info().Msg(color.GreenString("Password changed successfully"))
 	}
 }

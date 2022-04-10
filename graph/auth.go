@@ -23,7 +23,7 @@ func Auth(auth string) (neo4j.AuthToken, string) {
 	typ, cred, _ := strings.Cut(auth, ":")
 	switch typ {
 	case "": // no credentials at all
-		return neo4j.NoAuth(), ""
+		fallthrough
 	case schemeNone.String():
 		return neo4j.NoAuth(), ""
 	case schemeBasic.String():

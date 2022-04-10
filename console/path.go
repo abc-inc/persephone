@@ -17,7 +17,7 @@ func FileComp(dir string, info func(info os.FileInfo) string) CompFunc {
 		if err != nil {
 			return nil
 		}
-		des = fuzzy.Search[os.DirEntry](des, name, func(e os.DirEntry) string {
+		des = fuzzy.Search(des, name, func(e os.DirEntry) string {
 			return e.Name()
 		})
 		for _, de := range des {

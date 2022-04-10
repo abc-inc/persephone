@@ -13,6 +13,7 @@ import (
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog/log"
 )
 
 const TmplExt = ".tmpl"
@@ -48,7 +49,11 @@ func SetTemplate(name, text string) (tmpl *template.Template, err error) {
 	}
 	Tmpls[name] = tmpl
 	if strings.HasSuffix(name, TmplExt) {
-		Writeln("Saving template '" + name + "'")
+		if err = os.MkdirAll(TmplDir, 0750); err != nil {
+			log.Err(err).Msg("Cannot save template")
+			return
+		}
+		log.Info().Str("name", name).Msg("Saving template")
 		err = os.WriteFile(filepath.Join(TmplDir, name), []byte(text), 0644)
 	}
 	return

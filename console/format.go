@@ -1,9 +1,6 @@
 package console
 
 import (
-	"errors"
-	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"unicode"
@@ -14,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog/log"
 )
 
 var fmtName string
@@ -38,6 +36,10 @@ func ChangeFmt(f string) {
 		w = gfmt.NewJSON(os.Stdout)
 	case "jsonc":
 		w = gfmt.NewPrettyJSON(os.Stdout)
+	case "raw":
+		w = gfmt.NewJSON(os.Stdout)
+	case "rawc":
+		w = gfmt.NewPrettyJSON(os.Stdout)
 	case "table":
 		w = gfmt.NewTab(os.Stdout)
 	case "text":
@@ -51,7 +53,7 @@ func ChangeFmt(f string) {
 	case "yamlc":
 		w = gfmt.NewPrettyYAML(os.Stdout)
 	default:
-		Writeln(errors.New(fmt.Sprintf("unsupported format '%s'", f)))
+		log.Error().Str("format", f).Msg("Unsupported format")
 		return
 	}
 
@@ -78,7 +80,7 @@ func Writeln(i interface{}) {
 
 	_, err := w.Write(i)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 	_, _ = w.Write("\n")
 }
