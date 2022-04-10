@@ -1,4 +1,4 @@
-package console
+package repl
 
 type Item struct {
 	View    string `json:"view"`

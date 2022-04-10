@@ -14,6 +14,7 @@ import (
 	shell "github.com/abc-inc/persephone/cmd/persephone/cmd/shell"
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/console"
+	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
@@ -22,14 +23,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/mattn/go-shellwords"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var compByConsCmd = make(map[string]console.CompFunc)
+var compByConsCmd = make(map[string]repl.CompFunc)
 
 var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
 
@@ -104,11 +104,11 @@ func init() {
 	MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
 	MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
 
-	compByConsCmd[shell.SourceCmd.Name()] = console.PathComp
+	compByConsCmd[shell.SourceCmd.Name()] = repl.PathComp
 	compByConsCmd[persephone.TemplateCmd.Name()] =
-		func(str string) (its []console.Item) {
+		func(str string) (its []repl.Item) {
 			for n, t := range console.Tmpls {
-				its = append(its, console.Item{View: n, Content: t.Root.String()})
+				its = append(its, repl.Item{View: n, Content: t.Root.String()})
 			}
 			return
 		}
@@ -252,13 +252,18 @@ func run(cmd *cobra.Command, args []string) {
 	es.SetSchema(schema)
 
 	histPath := filepath.Join(Must(os.UserCacheDir()), "persephone", "history")
-	history := console.Load(histPath)
-	defer func() { _ = history.Save() }()
+	hist := repl.GetHistory()
+	hist.Load(histPath)
+	defer func() {
+		if err := hist.Save(histPath); err != nil {
+			console.Writeln(err)
+		}
+	}()
 
 	var p *prompt.Prompt
 	p = prompt.New(func(cyp string) {
 		if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
-			history.Add(cyp)
+			hist.Add(cyp)
 			cyp = runConsCmd(cmd, cyp)
 		}
 
@@ -274,7 +279,7 @@ func run(cmd *cobra.Command, args []string) {
 		cyp = strings.Join(lines, "\n")
 		lines = nil
 
-		history.Add(cyp)
+		hist.Add(cyp)
 		err := query(graph.Request{
 			Query:  cyp,
 			Params: graph.GetConn().Params,
@@ -344,7 +349,7 @@ func run(cmd *cobra.Command, args []string) {
 	}), prompt.OptionPrefix(""),
 		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionCompletionWordSeparator(" "),
-		prompt.OptionHistory(history.Entries()),
+		prompt.OptionHistory(hist.Entries()),
 		prompt.OptionLivePrefix(func() (prefix string, useLivePrefix bool) {
 			if graph.GetConn().DBName == "" {
 				return "Disconnected>", true

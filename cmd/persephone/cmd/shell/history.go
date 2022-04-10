@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abc-inc/persephone/console"
+	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/event"
 	"github.com/spf13/cobra"
 )
@@ -38,12 +39,12 @@ func init() {
 
 func History() {
 	var es []entry
-	for i, e := range console.Get().Entries() {
+	for i, e := range repl.GetHistory().Entries() {
 		es = append(es, entry{i, e})
 	}
 	console.Writeln(es)
 }
 
 func HistoryClear() {
-	console.Get().Clear()
+	repl.GetHistory().Clear()
 }

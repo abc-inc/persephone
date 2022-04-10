@@ -4,8 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
+	"github.com/abc-inc/persephone/console/repl"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,7 +27,9 @@ func Exit() {
 		}
 	}()
 
-	console.Get().Save()
+	path := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
+	repl.GetHistory().Save(path)
+
 	if f := viper.GetViper().ConfigFileUsed(); f != "" {
 		os.MkdirAll(filepath.Dir(f), 0700)
 		if err := viper.WriteConfig(); err != nil {

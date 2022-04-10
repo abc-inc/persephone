@@ -4,6 +4,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func First[A any, B any](a A, b B) A {
+	return a
+}
+
+func Second[A any, B any](a A, b B) B {
+	return b
+}
+
 func MustNoErr(err error) {
 	if err != nil {
 		log.Fatal().Err(err).Send()

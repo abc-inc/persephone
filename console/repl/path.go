@@ -1,4 +1,4 @@
-package console
+package repl
 
 import (
 	"fmt"
@@ -11,7 +11,11 @@ import (
 	"github.com/abc-inc/persephone/fuzzy"
 )
 
-func FileComp(dir string, info func(info os.FileInfo) string) CompFunc {
+func FileCompFor(dir string, infoFunc func(info os.FileInfo) string) CompFunc {
+	if infoFunc == nil {
+		infoFunc = func(info os.FileInfo) string { return "" }
+	}
+
 	return func(name string) (its []Item) {
 		des, err := os.ReadDir(dir)
 		if err != nil {
@@ -20,12 +24,11 @@ func FileComp(dir string, info func(info os.FileInfo) string) CompFunc {
 		des = fuzzy.Search(des, name, func(e os.DirEntry) string {
 			return e.Name()
 		})
+
 		for _, de := range des {
-			var det string
 			if fi, err := de.Info(); err == nil {
-				det = info(fi)
+				its = append(its, Item{View: de.Name(), Content: infoFunc(fi)})
 			}
-			its = append(its, Item{View: de.Name(), Content: det})
 		}
 		return
 	}
