@@ -50,5 +50,5 @@ func Schema() {
 		}
 	}))
 
-	console.Writeln(idxs)
+	console.Write(idxs)
 }

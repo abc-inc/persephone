@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type dbInfo struct {
+type DBInfo struct {
 	Name    string
 	Address string
 	Role    string
@@ -21,7 +21,7 @@ type dbInfo struct {
 	Error   string
 }
 
-func (d dbInfo) String() string {
+func (d DBInfo) String() string {
 	return d.Address + "/" + d.Name
 }
 
@@ -34,8 +34,8 @@ var SysinfoCmd = &cobra.Command{
 func init() {
 	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
 		sep := e.Sep
-		console.SetFormatter(dbInfo{}, func(i interface{}) (string, error) {
-			db := i.(dbInfo)
+		console.SetFormatter(DBInfo{}, func(i interface{}) (string, error) {
+			db := i.(DBInfo)
 			return strings.Join([]string{db.Name, db.Address, db.Role, db.Status,
 				strconv.FormatBool(db.Default), db.Error}, sep), nil
 		})
@@ -43,9 +43,13 @@ func init() {
 }
 
 func SysInfo() {
-	t := graph.NewTypedTemplate[dbInfo](graph.GetConn())
-	dbs, _ := MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) dbInfo {
-		return dbInfo{
+	console.Write(ListDBs())
+}
+
+func ListDBs() []DBInfo {
+	t := graph.NewTypedTemplate[DBInfo](graph.GetConn())
+	dbs, _ := MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) DBInfo {
+		return DBInfo{
 			Name:    MustOk(rec.Get("name")).(string),
 			Address: MustOk(rec.Get("address")).(string),
 			Role:    MustOk(rec.Get("role")).(string),
@@ -54,6 +58,5 @@ func SysInfo() {
 			Error:   MustOk(rec.Get("error")).(string),
 		}
 	}))
-
-	console.Writeln(dbs)
+	return dbs
 }

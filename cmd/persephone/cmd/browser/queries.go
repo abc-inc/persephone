@@ -41,8 +41,8 @@ func Queries() {
 	})
 
 	if err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	} else {
-		console.Writeln(qs)
+		console.Write(qs)
 	}
 }

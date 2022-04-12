@@ -7,53 +7,112 @@ import (
 
 	"github.com/abc-inc/browser"
 	"github.com/abc-inc/persephone/console"
-	"github.com/rs/zerolog/log"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 )
 
 var errTmplOpen = errors.New("cannot open template")
+var errTmplNotFound = errors.New("template does not exist")
 
 var TemplateCmd = &cobra.Command{
 	Use:         ":template",
 	Short:       "Define a template",
 	Args:        cobra.MinimumNArgs(1),
 	Annotations: Annotate(Offline),
-	Run:         func(cmd *cobra.Command, args []string) { templateCmd(cmd, args) },
+}
+
+var TemplateEditCmd = &cobra.Command{
+	Use:         "edit",
+	Short:       "Open a template in the default editor",
+	Args:        cobra.ExactArgs(1),
+	Annotations: Annotate(Offline),
+	Run: func(cmd *cobra.Command, args []string) {
+		console.WriteErr(TemplateEdit(args[0]))
+	},
+}
+
+var TemplateGetCmd = &cobra.Command{
+	Use:         "get",
+	Short:       "Print the templates",
+	Args:        cobra.ExactArgs(1),
+	Annotations: Annotate(Offline),
+	Run: func(cmd *cobra.Command, args []string) {
+		console.WriteErr(TemplateGet(args[0]))
+	},
+}
+
+var TemplateListCmd = &cobra.Command{
+	Use:         "list",
+	Short:       "List all templates",
+	Args:        cobra.ExactArgs(0),
+	Annotations: Annotate(Offline),
+	Run: func(cmd *cobra.Command, args []string) {
+		TemplateList()
+	},
+}
+
+var TemplateSetCmd = &cobra.Command{
+	Use:         "set",
+	Short:       "Define a template for the current session",
+	Args:        cobra.MinimumNArgs(2),
+	Annotations: Annotate(Offline),
+	Run: func(cmd *cobra.Command, args []string) {
+		console.WriteErr(TemplateSet(args[0], strings.Join(args[1:], " ")))
+	},
+}
+
+var TemplateWriteCmd = &cobra.Command{
+	Use:         "write",
+	Short:       "Define a template and save it",
+	Args:        cobra.MinimumNArgs(2),
+	Annotations: Annotate(Offline),
+	Run: func(cmd *cobra.Command, args []string) {
+		console.WriteErr(TemplateWrite(args[0], strings.Join(args[1:], " ")))
+	},
 }
 
 func init() {
 	TemplateCmd.Flags().StringP("template", "t", "", "template")
-
-	TemplateCmd.AddCommand(&cobra.Command{
-		Use:   "edit",
-		Short: "Open the template in the default editor",
-		Args:  cobra.ExactArgs(1),
-		Run:   func(cmd *cobra.Command, args []string) { TemplateEdit(args[0]) },
-	})
+	TemplateCmd.AddCommand(
+		TemplateEditCmd,
+		TemplateGetCmd,
+		TemplateListCmd,
+		TemplateSetCmd,
+		TemplateWriteCmd,
+	)
 }
 
-func templateCmd(cmd *cobra.Command, args []string) {
-	Template(args...)
-}
-
-func Template(args ...string) {
-	if len(args) == 1 {
-		if t, ok := console.Tmpls[args[0]]; !ok {
-			log.Error().Str("name", args[0]).Msg("template does not exist")
-		} else {
-			console.Writeln(t.Root.String())
-		}
-		return
-	}
-
-	text := strings.Join(args[1:], " ")
-	if _, err := console.SetTemplate(args[0], text); err != nil {
-		console.Writeln(err)
-	}
-}
-
-func TemplateEdit(path string) {
+func TemplateEdit(path string) error {
 	if !browser.Open(filepath.Join(console.TmplDir, filepath.Base(path))) {
-		console.Writeln(errTmplOpen)
+		return errTmplOpen
 	}
+	return nil
+}
+
+func TemplateGet(path string) error {
+	if t := console.GetTmplMgr().Get(path); t != nil {
+		console.Write(t.Root.String())
+		return nil
+	}
+	return errTmplNotFound
+}
+
+func TemplateList() {
+	ts := []console.NamedTemplate{}
+	for p, t := range console.GetTmplMgr().TmplsByPath {
+		b := filepath.Base(p)
+		n := strings.TrimSuffix(b, console.TmplExt)
+		t := console.NamedTemplate{n, t.Root.String(), b != p}
+		ts = append(ts, t)
+	}
+	console.Write(ts)
+}
+
+func TemplateSet(name, text string) error {
+	return internal.Second(console.GetTmplMgr().Set(filepath.Base(name), text))
+}
+
+func TemplateWrite(name, text string) error {
+	p := filepath.Join(console.TmplDir, filepath.Base(name))
+	return internal.Second(console.GetTmplMgr().Set(p, text))
 }

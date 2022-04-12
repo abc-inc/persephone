@@ -35,7 +35,7 @@ func connectCmd(cmd *cobra.Command, args []string) {
 
 func Connect(user, pass string) {
 	if graph.GetConn() != nil && graph.GetConn().Driver != nil {
-		console.Writeln("Already connected")
+		console.Write("Already connected")
 		return
 	}
 

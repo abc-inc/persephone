@@ -33,7 +33,7 @@ func Exit() {
 	if f := viper.GetViper().ConfigFileUsed(); f != "" {
 		os.MkdirAll(filepath.Dir(f), 0700)
 		if err := viper.WriteConfig(); err != nil {
-			console.Writeln(err)
+			console.WriteErr(err)
 		}
 	}
 

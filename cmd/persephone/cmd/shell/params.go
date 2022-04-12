@@ -14,5 +14,5 @@ var ParamsCmd = &cobra.Command{
 }
 
 func Params() {
-	console.Writeln(graph.GetConn().Params)
+	console.Write(graph.GetConn().Params)
 }

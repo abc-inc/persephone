@@ -19,8 +19,8 @@ var RollbackCmd = &cobra.Command{
 
 func Rollback() {
 	if ok, err := graph.GetConn().Rollback(); err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	} else if !ok {
-		console.Writeln(errNoTxRollback)
+		console.WriteErr(errNoTxRollback)
 	}
 }

@@ -7,30 +7,88 @@ import (
 	"reflect"
 	"strings"
 	"text/tabwriter"
+	"text/template"
+	"unicode"
 
 	"github.com/abc-inc/gutenfmt/formatter"
+	"github.com/abc-inc/gutenfmt/gfmt"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
 	"github.com/dustin/go-humanize/english"
+	"github.com/fatih/color"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog/log"
 )
 
-func WriteResult(rs []graph.Result, sum neo4j.ResultSummary) error {
-	result, err := process(rs)
+func Query(req graph.Request) error {
+	log.Debug().Str("statement", req.Query).Fields(req.Params).Msg("Executing")
+
+	if FormatName() == "raw" || FormatName() == "rawc" {
+		return queryRaw(req)
+	}
+	return queryResult(req)
+}
+
+func queryRaw(req graph.Request) error {
+	sp := NewSpinner()
+	sp.Start()
+
+	t := graph.NewTypedTemplate[map[string]interface{}](graph.GetConn())
+	ms, sum, err := t.Query(req.Query, req.Params, graph.NewRawResultRowMapper())
+
+	sp.Stop()
+	if err == nil {
+		Write(ms)
+		writeSummary(len(ms), sum)
+	}
+	return err
+}
+
+func queryResult(req graph.Request) error {
+	sp := NewSpinner()
+	sp.Start()
+
+	t := graph.NewTypedTemplate[graph.Result](graph.GetConn())
+	rs, sum, err := t.Query(req.Query, graph.GetConn().Params, graph.NewResultRowMapper())
+
+	sp.Stop()
+	if err == nil {
+		err = WriteResult(rs)
+		writeSummary(len(rs), sum)
+	}
+	return err
+}
+
+func Write(i interface{}) {
+	if _, err := w.Write(i); err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	fmt.Println()
+}
+
+func WriteErr(err error) {
+	if err == nil {
+		return
+	}
+
+	msg := err.Error()
+	r := []rune(msg[0:1])
+	r[0] = unicode.ToUpper(r[0])
+	color.Red(string(r) + msg[1:])
+}
+
+func WriteResult(rs []graph.Result) error {
+	result, err := collectProps(rs)
 	if err != nil {
 		return err
 	}
 
-	if FormatName() == "table" {
-		Writeln(WriteTable(result))
-	} else if FormatName() == "csv" {
-		Writeln(WriteText(result, ",", "\n"))
-	} else if FormatName() == "text" {
-		Writeln(WriteText(result, ";", "\n"))
-	} else if FormatName() == "tsv" {
-		Writeln(WriteText(result, "\t", "\t\n"))
-	} else if strings.HasPrefix(FormatName(), "json") || strings.HasPrefix(FormatName(), "yaml") {
+	var txt string
+	switch wr := w.(type) {
+	case gfmt.Tab:
+		txt, err = writeTable(result)
+	case gfmt.Text:
+		txt, err = writeText(result, wr.Sep, wr.Delim)
+	default: // json and yaml
 		ms := []map[string]interface{}{}
 		for _, r := range result {
 			m := map[string]interface{}{}
@@ -38,98 +96,113 @@ func WriteResult(rs []graph.Result, sum neo4j.ResultSummary) error {
 			for i, k := range r.Keys {
 				m[k] = r.Values[i]
 				if props, ok := m[k].(map[string]any); ok {
-					delete(props, "@label")
-					delete(props, "@labels")
+					delete(props, graph.Label)
+					delete(props, graph.Labels)
+					delete(props, graph.Type)
 				}
 			}
 		}
-		Writeln(ms)
-	} else {
-		Writeln(result)
+		Write(ms)
 	}
 
-	return nil
+	if txt != "" {
+		Write(txt)
+	}
+	return err
 }
 
-func WriteSummary(n int, sum neo4j.ResultSummary) {
+func writeSummary(n int, sum neo4j.ResultSummary) {
 	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s\n"
 	log.Info().Msgf(sumMsg,
 		n, english.PluralWord(n, "row", "rows"),
 		sum.ResultAvailableAfter(), sum.ResultConsumedAfter())
 }
 
-func process(rs []graph.Result) ([]graph.Result, error) {
+func collectProps(rs []graph.Result) ([]graph.Result, error) {
+	tm := GetTmplMgr()
 	result := []graph.Result{}
 	for i, r := range rs {
 		result = append(result, graph.Result{})
 		for j, v := range r.Values {
-			if props, ok := v.(map[string]interface{}); ok {
-				if l, ok := props["@label"]; ok && Tmpls[l.(string)+".tmpl"] != nil {
-					tmpl := Tmpls[l.(string)+".tmpl"]
-					b := &strings.Builder{}
-					if err := tmpl.Execute(b, props); err != nil {
-						return result, err
-					}
-					result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
-				} else if l, ok := props["@type"]; ok && Tmpls[l.(string)+".tmpl"] != nil {
-					tmpl := Tmpls[l.(string)+".tmpl"]
-					b := &strings.Builder{}
-					if err := tmpl.Execute(b, props); err != nil {
-						return result, err
-					}
-					result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
-				} else if FormatName() == "json" || FormatName() == "jsonc" || FormatName() == "yaml" || FormatName() == "yamlc" {
-					result[i].Add(r.Keys[j], props)
-				} else {
-					bs, err := json.Marshal(props)
-					if err != nil {
-						return result, err
-					}
-					if FormatName() == "csv" {
-						b := &strings.Builder{}
-						w := csv.NewWriter(b)
-						_ = w.Write([]string{string(bs)})
-						w.Flush()
-						result[i].Add(r.Keys[j], strings.TrimSuffix(b.String(), "\n"))
-					} else {
-						result[i].Add(r.Keys[j], string(bs))
-					}
-				}
-			} else {
+			props, ok := v.(map[string]interface{})
+			if !ok {
 				result[i].Add(r.Keys[j], v)
+				continue
+			}
+
+			if l, ok := props[graph.Label]; ok && tm.Get(l.(string)) != nil {
+				str, err := apply(tm.Get(l.(string)), props)
+				if err != nil {
+					return result, err
+				}
+				result[i].Add(r.Keys[j], str)
+			} else if t, ok := props[graph.Type]; ok && tm.Get(t.(string)) != nil {
+				str, err := apply(tm.Get(t.(string)), props)
+				if err != nil {
+					return result, err
+				}
+				result[i].Add(r.Keys[j], str)
+			} else if strings.HasPrefix(FormatName(), "json") || strings.HasPrefix(FormatName(), "yaml") {
+				result[i].Add(r.Keys[j], props)
+			} else {
+				str, err := toJson(props)
+				if err != nil {
+					return result, err
+				}
+				result[i].Add(r.Keys[j], str)
 			}
 		}
 	}
 	return result, nil
 }
 
-func WriteTable(i interface{}) string {
+func apply(t *template.Template, props map[string]interface{}) (string, error) {
+	b := &strings.Builder{}
+	if err := t.Execute(b, props); err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(b.String(), "\n"), nil
+}
+
+func toJson(props map[string]interface{}) (txt string, err error) {
+	bs, err := json.Marshal(props)
+	if err != nil {
+		return
+	}
+	txt = string(bs)
+	if FormatName() == "csv" {
+		b := &strings.Builder{}
+		w := csv.NewWriter(b)
+		_ = w.Write([]string{txt})
+		w.Flush()
+		txt = strings.TrimSuffix(b.String(), "\n")
+	}
+	return
+}
+
+func writeTable(rs []graph.Result) (string, error) {
 	b := &strings.Builder{}
 	tw := tabwriter.NewWriter(b, 4, 4, 1, ' ', 0)
-	internal.Must(writeMapSlice(tw, reflect.ValueOf(i)))
-	return b.String()
+	_, err := writeMapSlice(tw, rs)
+	return b.String(), err
 }
 
-func WriteText(i interface{}, Sep, Delim string) string {
-	f := fromStructSlice(Sep, Delim, i.([]graph.Result))
-	s, err := f.Format(i)
-	if err != nil {
-		return ""
-	}
-	return s
+func writeText(rs []graph.Result, Sep, Delim string) (string, error) {
+	f := fromStructSlice(Sep, Delim, rs)
+	return f.Format(rs)
 }
 
-func writeMapSlice(tw *tabwriter.Writer, v reflect.Value) (int, error) {
-	f := fromStructSlice("\t", "\t\n", v.Interface().([]graph.Result))
-	return formatter.FormatTab(tw, f, v.Interface())
+func writeMapSlice(tw *tabwriter.Writer, rs []graph.Result) (int, error) {
+	f := fromStructSlice("\t", "\t\n", rs)
+	return formatter.FormatTab(tw, f, rs)
 }
 
-func fromStructSlice(sep, delim string, typ []graph.Result) formatter.Formatter {
-	if len(typ) == 0 {
+func fromStructSlice(sep, delim string, rs []graph.Result) formatter.Formatter {
+	if len(rs) == 0 {
 		return formatter.NoopFormatter()
 	}
 
-	fs := typ[0].Keys
+	fs := rs[0].Keys
 
 	return formatter.Func(func(i interface{}) (string, error) {
 		rs := i.([]graph.Result)

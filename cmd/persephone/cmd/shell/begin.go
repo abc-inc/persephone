@@ -20,8 +20,8 @@ var BeginCmd = &cobra.Command{
 func Begin() {
 	_, created, err := graph.GetConn().GetTransaction()
 	if err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	} else if !created {
-		console.Writeln(errTxActive)
+		console.WriteErr(errTxActive)
 	}
 }

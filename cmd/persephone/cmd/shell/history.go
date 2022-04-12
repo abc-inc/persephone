@@ -42,7 +42,7 @@ func History() {
 	for i, e := range repl.GetHistory().Entries() {
 		es = append(es, entry{i, e})
 	}
-	console.Writeln(es)
+	console.Write(es)
 }
 
 func HistoryClear() {

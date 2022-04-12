@@ -6,7 +6,6 @@ import (
 
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/rs/zerolog/log"
 )
 
 const systemDB = "system"
@@ -67,30 +66,6 @@ func (c *Conn) Close() (err error) {
 func (c Conn) Session() neo4j.Session {
 	cfg := neo4j.SessionConfig{DatabaseName: c.DBName}
 	return c.Driver.NewSession(cfg)
-}
-
-func (c Conn) Exec(r Request, m RecordExtractor) ([]*neo4j.Record, neo4j.ResultSummary, error) {
-	log.Info().
-		Str("query", r.Query).
-		Interface("params", r.Params).
-		Msg("Executing")
-
-	res, err := c.Session().Run(r.Query, r.Params)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var recs []*neo4j.Record
-	for res.Next() {
-		getValue := func(key string) (interface{}, bool) {
-			return res.Record().Get(key)
-		}
-		row := m(res.Record().Keys, getValue)
-		recs = append(recs, row)
-	}
-
-	summary, err := res.Consume()
-	return recs, summary, err
 }
 
 func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) {

@@ -19,8 +19,8 @@ var CommitCmd = &cobra.Command{
 
 func Commit() {
 	if ok, err := graph.GetConn().Commit(); err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	} else if !ok {
-		console.Writeln(errNoTxCommit)
+		console.WriteErr(errNoTxCommit)
 	}
 }

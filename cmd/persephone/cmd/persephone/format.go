@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/abc-inc/persephone/console"
+	"github.com/abc-inc/persephone/console/repl"
 	"github.com/spf13/cobra"
 )
 
@@ -16,4 +19,13 @@ var FormatCmd = &cobra.Command{
 
 func Format(f string) {
 	console.ChangeFmt(f)
+}
+
+func FormatComp(s string) (its []repl.Item) {
+	for _, f := range FormatCmd.ValidArgs {
+		if strings.HasPrefix(f, s) {
+			its = append(its, repl.Item{View: f})
+		}
+	}
+	return
 }

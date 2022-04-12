@@ -14,6 +14,6 @@ var DisconnectCmd = &cobra.Command{
 
 func Disconnect() {
 	if err := graph.GetConn().Close(); err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	}
 }

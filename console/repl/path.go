@@ -7,32 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/abc-inc/persephone/fuzzy"
 )
-
-func FileCompFor(dir string, infoFunc func(info os.FileInfo) string) CompFunc {
-	if infoFunc == nil {
-		infoFunc = func(info os.FileInfo) string { return "" }
-	}
-
-	return func(name string) (its []Item) {
-		des, err := os.ReadDir(dir)
-		if err != nil {
-			return nil
-		}
-		des = fuzzy.Search(des, name, func(e os.DirEntry) string {
-			return e.Name()
-		})
-
-		for _, de := range des {
-			if fi, err := de.Info(); err == nil {
-				its = append(its, Item{View: de.Name(), Content: infoFunc(fi)})
-			}
-		}
-		return
-	}
-}
 
 func PathComp(path string) []Item {
 	if path == "" {

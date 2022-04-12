@@ -6,7 +6,6 @@ import (
 
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -20,27 +19,19 @@ var errPwdEmpty = errors.New("current and new password must be provided")
 var errPwdMismatch = errors.New("the two entered passwords must be the same")
 
 var ChangePassCmd = &cobra.Command{
-	Use:    ":change-password",
-	Short:  "Change the user password",
-	Run:    changePassCmd,
-	Hidden: true,
-}
-
-func init() {
-	ChangePassCmd.Flags().StringP("new-password", "n", "", "new password to connect with")
-	ChangePassCmd.Flags().StringP("password", "p", "", "current password")
+	Use:   ":change-password",
+	Short: "Change the user password",
+	Run:   changePassCmd,
 }
 
 func changePassCmd(cmd *cobra.Command, args []string) {
-	p := internal.Must(cmd.Flags().GetString("password"))
-	newP := internal.Must(cmd.Flags().GetString("new-password"))
-	ChangePass(p, newP, newP)
+	ChangePass("", "", "")
 }
 
 func ChangePass(p, newP1, newP2 string) {
 	if isatty.IsTerminal(os.Stdin.Fd()) {
 		if p == "" {
-			p = console.Pwd("password:")
+			p = console.Pwd("old password:")
 		}
 		if newP1 == "" {
 			newP1 = console.Pwd("new password:")
@@ -49,11 +40,11 @@ func ChangePass(p, newP1, newP2 string) {
 	}
 
 	if p == "" || newP1 == "" {
-		console.Writeln(errPwdEmpty)
+		console.WriteErr(errPwdEmpty)
 		return
 	}
 	if newP1 != newP2 {
-		console.Writeln(errPwdMismatch)
+		console.WriteErr(errPwdMismatch)
 		return
 	}
 
@@ -61,7 +52,7 @@ func ChangePass(p, newP1, newP2 string) {
 		return tx.Run(cypSetPass, map[string]interface{}{"old": p, "new": newP1})
 	})
 	if err != nil {
-		console.Writeln(err)
+		console.WriteErr(err)
 	} else {
 		log.Info().Msg(color.GreenString("Password changed successfully"))
 	}

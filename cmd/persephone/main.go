@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
 	persephone "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
@@ -29,8 +28,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+var p *prompt.Prompt
+var es = editor.NewEditorSupport("")
 var compByConsCmd = make(map[string]repl.CompFunc)
-
 var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
 
 // rootCmd represents the base command when called without any subcommands
@@ -70,7 +70,6 @@ func init() {
 	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
 	rootCmd.Flags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (env: NEO4J_ADDRESS)")
 	rootCmd.Flags().StringP("username", "u", "", "username to connect as. (env: NEO4J_USERNAME)")
-	rootCmd.Flags().StringP("password", "p", "", "password to connect with. (env: NEO4J_PASSWORD)")
 	rootCmd.Flags().StringP("database", "d", "neo4j", "database to connect to. (env: NEO4J_DATABASE)")
 
 	rootCmd.AddCommand(
@@ -104,14 +103,34 @@ func init() {
 	MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
 	MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
 
-	compByConsCmd[shell.SourceCmd.Name()] = repl.PathComp
-	compByConsCmd[persephone.TemplateCmd.Name()] =
-		func(str string) (its []repl.Item) {
-			for n, t := range console.Tmpls {
-				its = append(its, repl.Item{View: n, Content: t.Root.String()})
+	if err := console.GetTmplMgr().Load(); err != nil {
+		console.WriteErr(err)
+	}
+
+	var tmplComp = func(s string) (its []repl.Item) {
+		fmt.Println("tmplMgr", s, console.GetTmplMgr().TmplsByPath)
+		for n := range console.GetTmplMgr().TmplsByPath {
+			if strings.HasPrefix(n, s) {
+				its = append(its, repl.Item{View: strings.TrimSuffix(n, console.TmplExt)})
 			}
-			return
 		}
+		return
+	}
+
+	compByConsCmd[persephone.FQCmdName(persephone.FormatCmd)] = persephone.FormatComp
+
+	compByConsCmd[persephone.FQCmdName(shell.HistoryCmd)] = repl.SubCmdComp(shell.HistoryCmd)
+
+	compByConsCmd[persephone.FQCmdName(shell.SourceCmd)] = repl.PathComp
+
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateCmd)] = repl.SubCmdComp(persephone.TemplateCmd)
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateEditCmd)] = tmplComp
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateGetCmd)] = tmplComp
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateListCmd)] = repl.NoComp
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateSetCmd)] = tmplComp
+	compByConsCmd[persephone.FQCmdName(persephone.TemplateWriteCmd)] = tmplComp
+
+	compByConsCmd[persephone.FQCmdName(shell.UseCmd)] = shell.UseCompFunc()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -128,13 +147,6 @@ func initConfig() {
 }
 
 func main() {
-	end := Must(time.Parse("2006-01-02", "2022-04-08"))
-	if time.Now().After(end) {
-		color.Red("This early access preview of persephone is expired.")
-	} else if end.Sub(time.Now()) < 3*24*time.Hour {
-		color.Green("This early access preview of persephone will expire soon.")
-	}
-
 	cobra.CheckErr(rootCmd.Execute())
 }
 
@@ -143,7 +155,7 @@ func connect(cmd *cobra.Command, args []string) {
 		return
 	}
 	for _, f := range []string{"driver-version", "help", "version"} {
-		if Must(cmd.Root().Flags().GetBool(f)) {
+		if f, err := cmd.Root().Flags().GetBool(f); err == nil && f {
 			return
 		}
 	}
@@ -160,6 +172,8 @@ func connect(cmd *cobra.Command, args []string) {
 
 	if u == "" && isatty.IsTerminal(os.Stdin.Fd()) {
 		u = console.Input("username:", "neo4j")
+	}
+	if p == "" && isatty.IsTerminal(os.Stdin.Fd()) {
 		p = console.Pwd("password:")
 	}
 
@@ -193,16 +207,16 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	if cmd == cmd.Root() && len(args) > 0 && !strings.HasPrefix(args[0], ":") {
-		if err := query(graph.Request{strings.Join(args, " "), graph.GetConn().Params}); err != nil {
-			console.Writeln(err)
+		if err := console.Query(graph.Request{strings.Join(args, " "), graph.GetConn().Params}); err != nil {
+			console.WriteErr(err)
 		}
 		return
 	}
 	if cmd == cmd.Root() && !isatty.IsTerminal(os.Stdin.Fd()) {
 		sc := bufio.NewScanner(os.Stdin)
 		for sc.Scan() {
-			if err := query(graph.Request{sc.Text(), graph.GetConn().Params}); err != nil {
-				console.Writeln(err)
+			if err := console.Query(graph.Request{sc.Text(), graph.GetConn().Params}); err != nil {
+				console.WriteErr(err)
 			}
 		}
 		return
@@ -248,105 +262,22 @@ func run(cmd *cobra.Command, args []string) {
 		ConCmds:  ccs,
 	}
 
-	es := editor.NewEditorSupport("")
 	es.SetSchema(schema)
 
 	histPath := filepath.Join(Must(os.UserCacheDir()), "persephone", "history")
 	hist := repl.GetHistory()
-	hist.Load(histPath)
+	_ = hist.Load(histPath)
 	defer func() {
 		if err := hist.Save(histPath); err != nil {
-			console.Writeln(err)
+			console.WriteErr(err)
 		}
 	}()
 
-	var p *prompt.Prompt
-	p = prompt.New(func(cyp string) {
-		if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
-			hist.Add(cyp)
-			cyp = runConsCmd(cmd, cyp)
-		}
-
-		if cyp == "" {
-			return
-		}
-
-		lines = append(lines, cyp)
-		if !strings.HasSuffix(cyp, ";") {
-			return
-		}
-
-		cyp = strings.Join(lines, "\n")
-		lines = nil
-
-		hist.Add(cyp)
-		err := query(graph.Request{
-			Query:  cyp,
-			Params: graph.GetConn().Params,
-		})
-		if err != nil {
-			console.Writeln(err)
-		}
-	}, func(document prompt.Document) (pss []prompt.Suggest) {
-		cyp := document.TextBeforeCursor()
-		if cyp == "exit" || cyp == ":exit" {
-			return nil
-		}
-		if cyp == "" || strings.IndexRune(");'\"", rune(cyp[len(cyp)-1])) >= 0 {
-			return nil
-		}
-
-		buf := strings.Join(lines, "\n")
-		buf += "\n" + cyp
-		buf = strings.TrimPrefix(buf, "\n")
-
-		es.Update(buf)
-		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
-		var res comp.Result
-
-		parts := strings.SplitN(cyp, " ", 2)
-		if cmdComp, ok := compByConsCmd[parts[0]]; ok && len(parts) > 1 {
-			res = comp.Result{}
-			for _, p := range cmdComp(parts[1]) {
-				it := comp.Item{View: p.View, Content: p.Content}
-				res.Items = append(res.Items, it)
-			}
-
-			start := strings.LastIndex(cyp, "/") + 1
-			if start == 0 {
-				start = len(parts[0]) + 1
-			}
-			res.Range = comp.Range{
-				From: comp.LineCol{Line: 0, Col: start},
-				To:   comp.LineCol{Line: 0, Col: len(cyp)},
-			}
-		} else {
-			res = es.GetCompletion(line, col, true)
-		}
-		for _, i := range res.Items {
-			if cyp == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
-				continue
-			}
-			if strings.HasPrefix(i.View, "apoc.") && !strings.Contains(cyp, "apoc.") {
-				continue
-			}
-			if i.View == strings.Trim(i.Content, "`") {
-				pss = append(pss, prompt.Suggest{Text: i.View})
-			} else {
-				pss = append(pss, prompt.Suggest{Text: i.View, Description: i.Content})
-			}
-		}
-
-		sep := " "
-		start := res.Range.From.Col - 1
-		if start >= 0 && start < len(document.CurrentLine()) {
-			sep = document.CurrentLine()[start : start+1]
-		}
-		MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
-		return
-	}, prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
-		return breakline && in == "exit"
-	}), prompt.OptionPrefix(""),
+	p = prompt.New(func(cyp string) { executor(cyp, cmd) },
+		completer,
+		prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
+			return breakline && in == "exit"
+		}), prompt.OptionPrefix(""),
 		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionCompletionWordSeparator(" "),
 		prompt.OptionHistory(hist.Entries()),
@@ -360,54 +291,118 @@ func run(cmd *cobra.Command, args []string) {
 	p.Run()
 }
 
-func runConsCmd(cc *cobra.Command, cyp string) string {
-	args := Must(shellwords.Parse(cyp))
-	cc.Root().SetArgs(args)
-	if args[0] == ":param" {
-		args = strings.SplitN(cyp, " ", 3)
-		cc.Root().SetArgs(args)
+func executor(cyp string, cmd *cobra.Command) {
+	hist := repl.GetHistory()
+	if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
+		hist.Add(cyp)
+		cyp = runConsCmd(cmd, cyp)
 	}
-	if err := cc.Execute(); err != nil {
-		console.Writeln(err)
+
+	if cyp == "" {
+		return
+	}
+
+	lines = append(lines, cyp)
+	if !strings.HasSuffix(cyp, ";") {
+		return
+	}
+
+	cyp = strings.Join(lines, "\n")
+	lines = nil
+
+	hist.Add(cyp)
+	err := console.Query(graph.Request{Query: cyp, Params: graph.GetConn().Params})
+	if err != nil {
+		console.WriteErr(err)
+	}
+}
+
+func completer(document prompt.Document) (ss []prompt.Suggest) {
+	stmt := strings.TrimLeft(document.TextBeforeCursor(), " ")
+	if stmt == "exit" || stmt == ":exit" {
+		return nil
+	}
+	if stmt == "" || strings.IndexRune(");'\"", rune(stmt[len(stmt)-1])) >= 0 {
+		return nil
+	}
+
+	buf := strings.Join(lines, "\n")
+	buf += "\n" + stmt
+	buf = strings.TrimPrefix(buf, "\n")
+
+	var res comp.Result
+	if strings.HasPrefix(stmt, ":") && strings.IndexByte(stmt, ' ') > 0 {
+		res = compConsCmd(stmt)
+	} else {
+		es.Update(buf)
+		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
+		res = es.GetCompletion(line, col, true)
+	}
+
+	for _, i := range res.Items {
+		if stmt == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
+			continue
+		}
+		if strings.HasPrefix(i.View, "apoc.") && !strings.Contains(stmt, "apoc.") {
+			continue
+		}
+		if i.View == strings.Trim(i.Content, "`") {
+			ss = append(ss, prompt.Suggest{Text: i.View})
+		} else {
+			ss = append(ss, prompt.Suggest{Text: i.View, Description: i.Content})
+		}
+	}
+
+	sep := " "
+	start := res.Range.From.Col - 1
+	if start >= 0 && start < len(document.CurrentLine()) {
+		sep = document.CurrentLine()[start : start+1]
+	}
+	MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
+	return ss
+}
+
+func compConsCmd(stmt string) (res comp.Result) {
+	args, parts := "", strings.SplitN(stmt, " ", 3)
+	var cmdComp repl.CompFunc
+	for i := len(parts) - 1; i >= 0; i-- {
+		if cmdComp = compByConsCmd[strings.Join(parts[:i], " ")]; cmdComp != nil {
+			if len(parts) > i {
+				args = strings.Join(parts[i:], " ")
+			}
+			parts = parts[:i]
+			break
+		}
+	}
+
+	if cmdComp != nil {
+		fmt.Println("completing ", cmdComp)
+		for _, p := range cmdComp(args) {
+			it := comp.Item{View: p.View, Content: p.Content}
+			res.Items = append(res.Items, it)
+		}
+
+		start := strings.LastIndex(stmt, "/") + 1
+		if start == 0 {
+			start = len(parts[0]) + 1
+		}
+		res.Range = comp.Range{
+			From: comp.LineCol{Line: 0, Col: start},
+			To:   comp.LineCol{Line: 0, Col: len(stmt)},
+		}
+	}
+	return
+}
+
+func runConsCmd(cmd *cobra.Command, stmt string) string {
+	args := Must(shellwords.Parse(stmt))
+	cmd.Root().SetArgs(args)
+	if args[0] == ":param" {
+		args = strings.SplitN(stmt, " ", 3)
+		cmd.Root().SetArgs(args)
+	}
+	if err := cmd.Execute(); err != nil {
+		console.WriteErr(err)
 	}
 	return ""
-}
-
-func query(req graph.Request) error {
-	log.Debug().Str("statement", req.Query).Fields(req.Params).Msg("Executing")
-
-	if console.FormatName() == "raw" || console.FormatName() == "rawc" {
-		return queryRaw(req)
-	}
-	return queryResult(req)
-}
-
-func queryRaw(req graph.Request) error {
-	sp := console.NewSpinner()
-	sp.Start()
-
-	t := graph.NewTypedTemplate[map[string]interface{}](graph.GetConn())
-	ms, sum, err := t.Query(req.Query, req.Params, graph.NewRawResultRowMapper())
-
-	sp.Stop()
-	if err == nil {
-		console.Writeln(ms)
-		console.WriteSummary(len(ms), sum)
-	}
-	return err
-}
-
-func queryResult(req graph.Request) error {
-	sp := console.NewSpinner()
-	sp.Start()
-
-	t := graph.NewTypedTemplate[graph.Result](graph.GetConn())
-	rs, sum, err := t.Query(req.Query, req.Params, graph.NewResultRowMapper())
-
-	sp.Stop()
-	if err == nil {
-		err = console.WriteResult(rs, sum)
-		console.WriteSummary(len(rs), sum)
-	}
-	return err
 }

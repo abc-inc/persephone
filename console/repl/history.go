@@ -2,7 +2,6 @@ package repl
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -26,10 +25,10 @@ func NewHistory() *History {
 }
 
 func GetHistory() *History {
-	if hist == nil {
-		return NewHistory()
+	if hist != nil {
+		return hist
 	}
-	return hist
+	return NewHistory()
 }
 
 func (h *History) Load(path string) error {
@@ -44,7 +43,6 @@ func (h *History) Load(path string) error {
 	for sc.Scan() {
 		h.entries = append(h.entries, sc.Text())
 	}
-	fmt.Println("LOAD ", path, h.entries)
 	return nil
 }
 

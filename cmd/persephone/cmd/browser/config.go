@@ -22,13 +22,13 @@ var ConfigCmd = &cobra.Command{
 func configCmd(cmd *cobra.Command, args []string) {
 	switch len(args) {
 	case 0:
-		console.Writeln(ListConfig())
+		console.Write(ListConfig())
 	case 1:
-		console.Writeln(GetConfig(args[0]))
+		console.Write(GetConfig(args[0]))
 	case 2:
 		SetConfig(args[0], args[1])
 	default:
-		console.Writeln(errInvalidArgs)
+		console.WriteErr(errInvalidArgs)
 	}
 }
 

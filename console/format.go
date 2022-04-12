@@ -3,14 +3,11 @@ package console
 import (
 	"os"
 	"reflect"
-	"unicode"
 
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
 	"github.com/abc-inc/persephone/event"
-	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog/log"
 )
 
@@ -63,26 +60,6 @@ func ChangeFmt(f string) {
 
 func FormatName() string {
 	return fmtName
-}
-
-func Writeln(i interface{}) {
-	switch err := i.(type) {
-	case *neo4j.Neo4jError:
-		color.Red(err.Msg)
-		return
-	case error:
-		msg := err.Error()
-		r := []rune(msg[0:1])
-		r[0] = unicode.ToUpper(r[0])
-		color.Red(string(r) + msg[1:])
-		return
-	}
-
-	_, err := w.Write(i)
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-	_, _ = w.Write("\n")
 }
 
 func SetFormatter(i interface{}, f formatter.Func) {

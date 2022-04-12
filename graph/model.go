@@ -6,6 +6,15 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/db"
 )
 
+const (
+	Id      = "@id"
+	Label   = "@label"
+	Labels  = "@labels"
+	Type    = "@type"
+	StartId = "@startId"
+	EndId   = "endId"
+)
+
 type Result db.Record
 
 func (r *Result) Add(key string, val interface{}) {
