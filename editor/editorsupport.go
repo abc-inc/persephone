@@ -166,30 +166,10 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 
 	if filter == "" {
 		if doFilter && found && shouldBeReplaced {
-			switch ctx := element.(type) {
-			case *antlr.BaseParserRuleContext:
-				filter = ctx.GetText()
-			case *parser.CypherConsoleCommandNameContext:
-				filter = ctx.GetText()
-			case *parser.FunctionInvocationBodyContext:
-				filter = ctx.GetText()
-			case *parser.NodeLabelContext:
-				filter = ctx.GetText()[1:]
-			case *parser.ProcedureInvocationBodyContext:
-				filter = ctx.GetText()
-			case *parser.RelationshipTypeContext:
-				filter = ctx.GetText()
-			case *parser.StringLiteralContext:
-				filter = ctx.GetText()
-			case *antlr.TerminalNodeImpl:
-				filter = ctx.GetText()
-			case *parser.VariableContext:
-				filter = ctx.GetText()
-			case *antlr.ErrorNodeImpl:
-				filter = ctx.GetText()
-			default:
-				// TODO: check if more types need to be handled
-				panic(reflect.TypeOf(element))
+			if e, ok := element.(interface{ GetText() string }); ok {
+				filter = e.GetText()
+			} else {
+				panic(reflect.TypeOf(element).String() + " does not have text")
 			}
 		}
 	}

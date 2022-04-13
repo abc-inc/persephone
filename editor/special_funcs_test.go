@@ -26,8 +26,7 @@ func TestSpecialFunctions(t *testing.T) {
 		name   string
 		cypher string
 	}{
-		{name: "extract", cypher: "RETURN extract(n IN nodes(p) | n.age) AS extracted;"},
-		{name: "reduce", cypher: "RETURN reduce(totalAge = 0, n IN nodes(p)| totalAge + n.age) AS reduction"},
+		{name: "reduce", cypher: "RETURN reduce(totalAge = 0, n IN [p] | totalAge + n.age) AS reduction"},
 		{name: "shortestPath", cypher: "RETURN shortestPath( ( f)-[]-( t) );"},
 		{name: "allShortestPaths", cypher: "RETURN allShortestPaths((f)-[]-(t));"},
 		{name: "exists", cypher: "RETURN n.prop AS prop1, exists((n)-[:SOMETHING]->()) AS something;"},

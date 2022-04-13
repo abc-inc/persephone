@@ -26,7 +26,7 @@ func Test(t *testing.T) {
 		name   string
 		cypher string
 	}{
-		{name: "param command with arg and other command", cypher: ":play http://something.com; :play;\n"},
+		{name: "param command with arg and other command", cypher: ":play http://something.com; :play;"},
 		{name: "param command with url", cypher: ":play http://something.com/something.html;"},
 		{name: "param command with function", cypher: ":param num => rand();"},
 		{name: "param command with int", cypher: ":param myInt => 1;"},

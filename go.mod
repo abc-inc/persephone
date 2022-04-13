@@ -8,7 +8,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/abc-inc/browser v1.0.0
 	github.com/abc-inc/gutenfmt v0.1.0
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220411234842-3e3fecf10672
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba
 	github.com/briandowns/spinner v1.18.1
 	github.com/c-bata/go-prompt v0.2.5
 	github.com/dustin/go-humanize v1.0.0

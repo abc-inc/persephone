@@ -27,11 +27,11 @@ func TestCorrectASTForSimpleQuery(t *testing.T) {
 }
 
 func TestErrorsForIncorrectQuery(t *testing.T) {
-	msg1 := "mismatched input 'POTATO' expecting {':', CYPHER, EXPLAIN, PROFILE, USING, CREATE, DROP, LOAD, WITH, OPTIONAL, MATCH, UNWIND, MERGE, SET, DETACH, DELETE, REMOVE, FOREACH, RETURN, START, CALL, SP}"
+	msg1 := "mismatched input 'POTATO' expecting {':', CYPHER, EXPLAIN, PROFILE, USING, CREATE, DROP, LOAD, WITH, OPTIONAL, MATCH, UNWIND, MERGE, SET, DETACH, DELETE, REMOVE, FOREACH, RETURN, START, CALL, CATALOG, SHOW, STOP, ALTER, GRANT, DENY, REVOKE, SP}"
 	s := editor.NewEditorSupport("POTATO")
 	Equal(t, 1, len(s.ParseErrors))
 	Equal(t, editor.SynErr{1, 0, msg1}, s.ParseErrors[0])
-	Equal(t, "", s.ParseTree)
+	Equal(t, "POTATO<EOF>", s.ParseTree.GetText())
 }
 
 func TestErrorsIfErrorInLexer(t *testing.T) {
