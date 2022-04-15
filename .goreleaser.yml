@@ -6,6 +6,7 @@ archives:
 
 builds:
   - id: "default"
+    main: ./cmd/persephone/
     flags:
       - -trimpath
     goos:

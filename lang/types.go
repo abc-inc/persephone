@@ -17,7 +17,7 @@ package lang
 import (
 	"reflect"
 
-	"github.com/abc-inc/persephone/parser"
+	"github.com/gschauer/cypher2go/v4/parser"
 )
 
 var VARIABLE_CONTEXT = reflect.TypeOf(parser.VariableContext{}).Name()

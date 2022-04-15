@@ -21,9 +21,9 @@ import (
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/gschauer/cypher2go/v4/parser"
 )
 
 type EditorSupport struct {

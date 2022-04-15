@@ -19,9 +19,9 @@ import (
 
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/gschauer/cypher2go/v4/parser"
 )
 
 // If we are in console command, and not in console command name, return path

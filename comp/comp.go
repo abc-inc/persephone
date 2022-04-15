@@ -18,14 +18,14 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/abc-inc/go-fuzzaldrin-plus"
 	"github.com/abc-inc/persephone/ast"
-	"github.com/abc-inc/persephone/fuzzy"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/parser"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/gschauer/cypher2go/v4/parser"
 )
 
 var KeywordItems []Item
@@ -65,10 +65,10 @@ func (a AutoCompletion) GetItems(types []types.Data, query antlr.Tree, filter st
 	}
 
 	if len(filteredText) > 0 {
-		return fuzzy.Search(items, filteredText, func(i Item) string { return i.View })
+		return fuzzaldrin.Filter(items, filteredText, func(i Item) string { return i.View })
 	}
 	if len(text) > 0 {
-		return fuzzy.Search(items, text, func(i Item) string { return i.View })
+		return fuzzaldrin.Filter(items, text, func(i Item) string { return i.View })
 	}
 	return items
 }

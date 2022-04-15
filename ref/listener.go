@@ -16,8 +16,8 @@ package ref
 
 import (
 	"github.com/abc-inc/persephone/lang"
-	"github.com/abc-inc/persephone/parser"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/gschauer/cypher2go/v4/parser"
 )
 
 type RefListener struct {
