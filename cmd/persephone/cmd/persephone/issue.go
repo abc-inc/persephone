@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const ghIssuesUrl = "https://github.com/abc-inc/persephone/issues"
+const ghIssuesURL = "https://github.com/abc-inc/persephone/issues"
 
 var IssueCmd = &cobra.Command{
 	Use:         ":issue",
@@ -33,7 +33,7 @@ var IssueCmd = &cobra.Command{
 }
 
 func Issue() {
-	if !browser.Open(ghIssuesUrl) {
-		internal.Must(fmt.Fprintln(os.Stderr, "Please report issues to "+ghIssuesUrl))
+	if !browser.Open(ghIssuesURL) {
+		internal.Must(fmt.Fprintln(os.Stderr, "Please report issues to "+ghIssuesURL))
 	}
 }

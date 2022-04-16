@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/abc-inc/persephone/types"
-	_ "github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

@@ -259,12 +259,9 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	var ccs []graph.Cmd
-	for _, c := range cmd.Root().Commands() {
-		ccs = append(ccs, graph.Cmd{
-			Name: c.Name(),
-			Desc: strings.TrimPrefix(c.Name(), ":"),
-		})
+	ccs := make([]graph.Cmd, len(cmd.Root().Commands()))
+	for i, c := range cmd.Root().Commands() {
+		ccs[i] = graph.Cmd{Name: c.Name(), Desc: strings.TrimPrefix(c.Name(), ":")}
 	}
 
 	schema := graph.Schema{

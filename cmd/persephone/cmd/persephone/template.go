@@ -116,7 +116,7 @@ func TemplateList() {
 	for p, t := range console.GetTmplMgr().TmplsByPath {
 		b := filepath.Base(p)
 		n := strings.TrimSuffix(b, console.TmplExt)
-		t := console.NamedTemplate{n, t.Root.String(), b != p}
+		t := console.NamedTemplate{Name: n, Tmpl: t.Root.String(), Persistent: b != p}
 		ts = append(ts, t)
 	}
 	console.Write(ts)

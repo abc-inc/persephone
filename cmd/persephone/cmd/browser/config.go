@@ -17,7 +17,7 @@ package cmd
 import (
 	"errors"
 
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"

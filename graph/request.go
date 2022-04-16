@@ -64,7 +64,7 @@ func mapNode(n neo4j.Node) map[string]interface{} {
 	for pk, pv := range n.Props {
 		m[pk] = pv
 	}
-	m[Id] = n.Id
+	m[ID] = n.Id
 	m[Labels] = n.Labels
 	m[Label] = n.Labels[0]
 	return m
@@ -75,9 +75,9 @@ func mapRel(r neo4j.Relationship) map[string]interface{} {
 	for pk, pv := range r.Props {
 		n[pk] = pv
 	}
-	n[Id] = r.Id
-	n[StartId] = r.StartId
-	n[EndId] = r.EndId
+	n[ID] = r.Id
+	n[StartID] = r.StartId
+	n[EndID] = r.EndId
 	n[Type] = r.Type
 	return n
 }

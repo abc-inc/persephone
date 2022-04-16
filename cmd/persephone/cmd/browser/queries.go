@@ -15,6 +15,9 @@
 package cmd
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	. "github.com/abc-inc/persephone/internal"
@@ -23,12 +26,12 @@ import (
 )
 
 type query struct {
-	QueryId    string
-	Username   string
-	MetaData   interface{}
-	Query      string
-	Parameters interface{}
-	StartTime  neo4j.Date
+	DBURI   string        `json:"Database URI"`
+	User    string        `json:"User"`
+	Query   string        `json:"Query"`
+	Params  interface{}   `json:"Params"`
+	Meta    interface{}   `json:"Meta"`
+	Elapsed time.Duration `json:"Elapsed time"`
 }
 
 func (q query) String() string {
@@ -45,12 +48,12 @@ func Queries() {
 	t := graph.NewTypedTemplate[query](graph.GetConn())
 	qs, _, err := t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
 		return query{
-			QueryId:    MustOk(rec.Get("queryId")).(string),
-			Username:   MustOk(rec.Get("username")).(string),
-			MetaData:   MustOk(rec.Get("metaData")),
-			Query:      MustOk(rec.Get("query")).(string),
-			Parameters: MustOk(rec.Get("parameters")),
-			StartTime:  MustOk(rec.Get("startTime")).(neo4j.Date),
+			DBURI:   "neo4j://" + MustOk(rec.Get("requestUri")).(string),
+			User:    MustOk(rec.Get("username")).(string),
+			Meta:    MustOk(rec.Get("metaData")),
+			Query:   MustOk(rec.Get("query")).(string),
+			Params:  string(Must(json.Marshal(MustOk(rec.Get("parameters"))))),
+			Elapsed: time.Duration(MustOk(rec.Get("elapsedTimeMillis")).(int64)),
 		}
 	})
 

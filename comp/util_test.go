@@ -77,9 +77,9 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 	el := es.GetElementForCompletion(1, pos)
 	ts := GetTypes(el)
 
-	var exp []types.Data
-	for _, t := range expectedTypes {
-		exp = append(exp, types.Data{Type: t, FilterLastElement: found})
+	exp := make([]types.Data, len(expectedTypes))
+	for i, t := range expectedTypes {
+		exp[i] = types.Data{Type: t, FilterLastElement: found}
 	}
 
 	// TODO: fix workaround

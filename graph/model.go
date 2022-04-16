@@ -21,12 +21,12 @@ import (
 )
 
 const (
-	Id      = "@id"
+	ID      = "@id"
 	Label   = "@label"
 	Labels  = "@labels"
 	Type    = "@type"
-	StartId = "@startId"
-	EndId   = "endId"
+	StartID = "@startId"
+	EndID   = "@endId"
 )
 
 type Result db.Record

@@ -42,11 +42,14 @@ func Exit() {
 	}()
 
 	path := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
-	repl.GetHistory().Save(path)
+	if err := repl.GetHistory().Save(path); err != nil {
+		console.WriteErr(err)
+	}
 
 	if f := viper.GetViper().ConfigFileUsed(); f != "" {
-		os.MkdirAll(filepath.Dir(f), 0700)
-		if err := viper.WriteConfig(); err != nil {
+		if err := os.MkdirAll(filepath.Dir(f), 0700); err != nil {
+			console.WriteErr(err)
+		} else if err := viper.WriteConfig(); err != nil {
 			console.WriteErr(err)
 		}
 	}

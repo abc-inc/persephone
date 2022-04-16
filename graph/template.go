@@ -22,8 +22,6 @@ import (
 
 var errEmpty = errors.New("empty")
 var errMultiple = errors.New("multiple")
-var errTxCommit = errors.New("cannot commit transaction - maybe it timed out?")
-var errTxRollback = errors.New("cannot rollback transaction - maybe it timed out?")
 
 type Template struct {
 	conn *Conn
@@ -80,7 +78,9 @@ func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, r
 	}
 
 	res, err := tx.Run(cyp, args)
-	if !res.Next() {
+	if err != nil {
+		return val, err
+	} else if !res.Next() {
 		return val, errEmpty
 	}
 
@@ -92,5 +92,5 @@ func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, r
 	if created {
 		_, err = t.conn.Commit()
 	}
-	return val, nil
+	return val, err
 }

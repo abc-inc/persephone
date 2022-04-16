@@ -38,12 +38,12 @@ var childToParent = map[string]types.Type{
 }
 
 func ruleSpecificParent(e antlr.ParseTree) []Info {
-	var xx []string
-	for k := range childToParent {
-		xx = append(xx, k)
+	var ctxNames []string
+	for name := range childToParent {
+		ctxNames = append(ctxNames, name)
 	}
 
-	parent := ast.FindAnyParent(e, xx)
+	parent := ast.FindAnyParent(e, ctxNames)
 	if parent != nil {
 		if t, ok := childToParent[reflect.TypeOf(parent).Elem().Name()]; !ok {
 			panic(t)

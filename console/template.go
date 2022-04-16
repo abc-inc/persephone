@@ -74,7 +74,7 @@ func (tm *TmplMgr) Get(path string) (t *template.Template) {
 	}
 	var ok bool
 	if t, ok = tm.TmplsByPath[path]; !ok {
-		t, ok = tm.TmplsByPath[filepath.Join(TmplDir, path)]
+		t, _ = tm.TmplsByPath[filepath.Join(TmplDir, path)]
 	}
 	return
 }
@@ -92,7 +92,7 @@ func (tm *TmplMgr) Set(path, text string) (t *template.Template, err error) {
 			return
 		}
 		log.Info().Str("name", path).Msg("Saving template")
-		err = os.WriteFile(path, []byte(text), 0644)
+		err = os.WriteFile(path, []byte(text), 0600)
 	}
 	return
 }

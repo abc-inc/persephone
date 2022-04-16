@@ -36,7 +36,7 @@ func (pc PosConv) ToAbsolute(line, column int) int {
 }
 
 func (pc PosConv) ToRelative(abs int) (int, int) {
-	for i := len(pc.newLines) - 1; i >= 0; i -= 1 {
+	for i := len(pc.newLines) - 1; i >= 0; i-- {
 		column := abs - pc.newLines[i]
 		if column >= 1 {
 			return i + 2, column - 1

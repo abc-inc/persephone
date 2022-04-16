@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/inancgumus/screen"
 	"github.com/spf13/cobra"
 )

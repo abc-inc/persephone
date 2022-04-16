@@ -159,7 +159,7 @@ func collectProps(rs []graph.Result) ([]graph.Result, error) {
 			} else if strings.HasPrefix(FormatName(), "json") || strings.HasPrefix(FormatName(), "yaml") {
 				result[i].Add(r.Keys[j], props)
 			} else {
-				str, err := toJson(props)
+				str, err := toJSON(props)
 				if err != nil {
 					return result, err
 				}
@@ -178,7 +178,7 @@ func apply(t *template.Template, props map[string]interface{}) (string, error) {
 	return strings.TrimSuffix(b.String(), "\n"), nil
 }
 
-func toJson(props map[string]interface{}) (txt string, err error) {
+func toJSON(props map[string]interface{}) (txt string, err error) {
 	bs, err := json.Marshal(props)
 	if err != nil {
 		return
@@ -201,17 +201,17 @@ func writeTable(rs []graph.Result) (string, error) {
 	return b.String(), err
 }
 
-func writeText(rs []graph.Result, Sep, Delim string) (string, error) {
-	f := fromStructSlice(Sep, Delim, rs)
+func writeText(rs []graph.Result, sep, delim string) (string, error) {
+	f := fromStructSlice(rs, sep, delim)
 	return f.Format(rs)
 }
 
 func writeMapSlice(tw *tabwriter.Writer, rs []graph.Result) (int, error) {
-	f := fromStructSlice("\t", "\t\n", rs)
+	f := fromStructSlice(rs, "\t", "\t\n")
 	return formatter.FormatTab(tw, f, rs)
 }
 
-func fromStructSlice(sep, delim string, rs []graph.Result) formatter.Formatter {
+func fromStructSlice(rs []graph.Result, sep, delim string) formatter.Formatter {
 	if len(rs) == 0 {
 		return formatter.NoopFormatter()
 	}
