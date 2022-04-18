@@ -14,21 +14,28 @@
 
 package internal
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
-func Parse(s string) (val interface{}) {
-	var err error
-	if val, err = strconv.ParseBool(s); err == nil {
-	} else if val, err = strconv.ParseInt(s, 10, 32); err == nil {
-	} else {
-		val = s
+// Parse attempts to interpret the string as boolean or integer and returns it.
+// Otherwise, it returns the value itself, regardless of its type.
+func Parse(s string) interface{} {
+	if lc := strings.ToLower(s); lc == "true" || lc == "false" {
+		return lc == "true"
+	} else if val, err := strconv.ParseInt(s, 10, 32); err == nil {
+		return val
 	}
-	return
+	return s
 }
 
-func ReSlice[T any](es []interface{}) (ts []T) {
-	for _, e := range es {
-		ts = append(ts, e.(T))
+// ReSlice creates a new slice of T and inserts all elements from the original.
+// It is assumed that all elements are of type T.
+func ReSlice[T any](es []interface{}) []T {
+	ts := make([]T, len(es))
+	for i, e := range es {
+		ts[i] = e.(T)
 	}
 	return ts
 }

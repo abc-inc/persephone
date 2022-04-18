@@ -51,12 +51,12 @@ func init() {
 		if filterLastElement {
 			length--
 		}
-		currentLevel := schema.ConCmds
+		currLvlCmds := schema.ConCmds
 		for i := 0; i < length; i++ {
 			ok := false
-			for _, foo := range currentLevel {
-				if foo.Name == path[i] {
-					currentLevel = foo.SubCmds
+			for _, currLvlCmd := range currLvlCmds {
+				if currLvlCmd.Name == path[i] {
+					currLvlCmds = currLvlCmd.SubCmds
 					ok = true
 					break
 				}
@@ -66,8 +66,8 @@ func init() {
 			}
 		}
 
-		its := make([]Item, len(currentLevel))
-		for i, cmd := range currentLevel {
+		its := make([]Item, len(currLvlCmds))
+		for i, cmd := range currLvlCmds {
 			its[i] = Item{
 				Type:    types.ConsoleCommandSubCommand,
 				View:    cmd.Name,
