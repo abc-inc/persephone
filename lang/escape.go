@@ -19,6 +19,8 @@ import (
 	"strings"
 )
 
+// EscapeCypher uses backticks "`" to escape a string, which contains special
+// characters.
 func EscapeCypher(str string) string {
 	prefix := ""
 	if strings.HasPrefix(str, ":") {

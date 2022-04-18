@@ -20,23 +20,31 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// Pos provides position of Tokens in a ParseTree.
 type Pos interface {
+	// GetStart returns the position where the Token begins.
 	GetStart() int
+	// GetStop returns the position where the Token ends.
 	GetStop() int
 }
 
+// posStruct holds a position range.
 type posStruct struct {
 	Start, Stop int
 }
 
+// GetStart returns the position where the Token begins.
 func (p posStruct) GetStart() int {
 	return p.Start
 }
 
+// GetStop returns the position where the Token ends.
 func (p posStruct) GetStop() int {
 	return p.Stop
 }
 
+// FindParent returns the closest parent RuleContext matching a certain type.
+// If pt is of type t, it is returned directly.
 func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
 	if pt == nil || reflect.TypeOf(pt).Elem() == t {
 		return pt
@@ -56,6 +64,8 @@ func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
 	return e
 }
 
+// FindAnyParent returns the closest parent RuleContext matching any of the
+// given types.
 func FindAnyParent(pt antlr.Tree, types []string) antlr.Tree {
 	el := pt
 	for el != nil {
@@ -69,6 +79,8 @@ func FindAnyParent(pt antlr.Tree, types []string) antlr.Tree {
 	return el
 }
 
+// FindChild performs a depth-first search traversal and returns the first child
+// of a certain type.
 func FindChild(element antlr.Tree, typ string) antlr.Tree {
 	if element == nil {
 		return nil
@@ -84,6 +96,7 @@ func FindChild(element antlr.Tree, typ string) antlr.Tree {
 	return nil
 }
 
+// GetPosition returns the position of the given Token or Symbol.
 func GetPosition(el antlr.Tree) Pos {
 	if el == nil {
 		return nil
@@ -108,6 +121,7 @@ func GetPosition(el antlr.Tree) Pos {
 	return nil
 }
 
+// HasErrorNode checks whether the given ParseTree contains an ErrorNode.
 func HasErrorNode(element antlr.Tree) bool {
 	if element == nil {
 		return false

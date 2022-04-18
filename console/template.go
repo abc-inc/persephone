@@ -24,30 +24,38 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// TmplExt is the filename extension for templates.
 const TmplExt = ".tmpl"
 
 var tmplMgr *TmplMgr
 var TmplDir = filepath.Join(internal.Must(os.UserConfigDir()), "persephone", "templates")
 
+// NamedTemplate holds metadata of a template.
 type NamedTemplate struct {
 	Name       string `json:"Name"`
 	Tmpl       string `json:"Template"`
 	Persistent bool   `json:"Persistent"`
 }
 
+// String returns the template name.
 func (t NamedTemplate) String() string {
 	return t.Name
 }
 
+// TmplMgr loads and saves templates.
 type TmplMgr struct {
 	TmplsByPath map[string]*template.Template
 }
 
+// NewTmplMgr creates a new template manager.
+// It manages two transient and persistent templates.
+// Persistent templates are stored in the filesystem at an absolute path.
 func NewTmplMgr() *TmplMgr {
 	tmplMgr = &TmplMgr{TmplsByPath: make(map[string]*template.Template)}
 	return tmplMgr
 }
 
+// GetTmplMgr returns the default template manager or creates a new one.
 func GetTmplMgr() *TmplMgr {
 	if tmplMgr != nil {
 		return tmplMgr
@@ -55,6 +63,8 @@ func GetTmplMgr() *TmplMgr {
 	return NewTmplMgr()
 }
 
+// Load parses all template in TmplDir.
+// Already loaded templates with the same name are replaced.
 func (tm *TmplMgr) Load() error {
 	fs := internal.Must(filepath.Glob(filepath.Join(TmplDir, "*"+TmplExt)))
 	for _, f := range fs {
@@ -68,6 +78,7 @@ func (tm *TmplMgr) Load() error {
 	return nil
 }
 
+// Get returns the parsed Template for the given path.
 func (tm *TmplMgr) Get(path string) (t *template.Template) {
 	if !strings.HasSuffix(path, TmplExt) {
 		path += TmplExt
@@ -79,6 +90,9 @@ func (tm *TmplMgr) Get(path string) (t *template.Template) {
 	return
 }
 
+// Set creates or replaces a template with the given text.
+// path can be an absolute path or a basename without slashes.
+// If it is an absolute path, the template is saved in that file.
 func (tm *TmplMgr) Set(path, text string) (t *template.Template, err error) {
 	name := filepath.Base(path)
 	t = template.New(name)
@@ -97,6 +111,7 @@ func (tm *TmplMgr) Set(path, text string) (t *template.Template, err error) {
 	return
 }
 
+// isPersistent returns whether a template is stored in the filesystem.
 func isPersistent(name string) bool {
 	return filepath.IsAbs(name)
 }

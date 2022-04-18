@@ -23,12 +23,14 @@ import (
 	"github.com/briandowns/spinner"
 )
 
+// Input prompts the user to input a single message.
 func Input(msg string, def string) (res string) {
 	in := &survey.Input{Message: msg, Default: def}
 	internal.MustNoErr(survey.AskOne(in, &res, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
 	return
 }
 
+// Pwd is like Input but does not echo the input.
 func Pwd(msg string) (res string) {
 	in := &survey.Password{Message: msg}
 	internal.MustNoErr(survey.AskOne(in, &res, survey.WithValidator(survey.Required), survey.WithIcons(icons)))
@@ -40,6 +42,8 @@ func icons(set *survey.IconSet) {
 	set.Question.Format = ""
 }
 
+// NewSpinner creates a new default Spinner, which writes to stderr.
+// Additional options can be set before it is started.
 func NewSpinner() *spinner.Spinner {
 	dotStyle := spinner.CharSets[11]
 	return spinner.New(dotStyle, 120*time.Millisecond,

@@ -19,6 +19,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// Present indicates presence in a map.
 var Present = struct{}{}
 
 type Index struct {

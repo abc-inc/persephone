@@ -26,6 +26,7 @@ const systemDB = "system"
 
 var defConn *Conn
 
+// Conn represents a database connection, which can open multiple Sessions.
 type Conn struct {
 	Driver neo4j.Driver
 	user   string
@@ -35,10 +36,13 @@ type Conn struct {
 	Params map[string]interface{}
 }
 
+// IsConnected returns whether the database connection is established.
 func IsConnected() bool {
 	return defConn != nil && defConn.DBName != ""
 }
 
+// GetConn returns the default connection, regardless of it's connection state.
+// It panics if there is no connection.
 func GetConn() *Conn {
 	if defConn == nil {
 		panic("Not connected to Neo4j")
@@ -46,6 +50,7 @@ func GetConn() *Conn {
 	return defConn
 }
 
+// NewConn creates a new Neo4j Driver and returns the new Conn.
 func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Conn {
 	d := internal.Must(neo4j.NewDriver(addr, auth, func(config *neo4j.Config) {
 		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
@@ -66,6 +71,7 @@ func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Con
 	return conn
 }
 
+// Close the driver and all underlaying connections.
 func (c *Conn) Close() (err error) {
 	if c.Driver != nil {
 		if err = c.Driver.Close(); err == nil {
@@ -77,11 +83,13 @@ func (c *Conn) Close() (err error) {
 	return err
 }
 
+// Session creates a new Session.
 func (c Conn) Session() neo4j.Session {
 	cfg := neo4j.SessionConfig{DatabaseName: c.DBName}
 	return c.Driver.NewSession(cfg)
 }
 
+// GetTransaction returns the current Transaction ocr creates a new one.
 func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) {
 	if c.Tx == nil {
 		c.Tx, err = c.Session().BeginTransaction()
@@ -90,6 +98,8 @@ func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) 
 	return c.Tx, created, err
 }
 
+// Commit commits the current Transaction.
+// If there is no active Transaction, false is returned.
 func (c *Conn) Commit() (done bool, err error) {
 	if c.Tx != nil {
 		err = c.Tx.Commit()
@@ -98,6 +108,8 @@ func (c *Conn) Commit() (done bool, err error) {
 	return
 }
 
+// Rollback rolls back the current Transaction.
+// If there is no active Transaction, false is returned.
 func (c *Conn) Rollback() (done bool, err error) {
 	if c.Tx != nil {
 		err = c.Tx.Rollback()
@@ -127,6 +139,8 @@ func (c *Conn) UseDB(dbName string) (err error) {
 	return err
 }
 
+// Metadata retrieves schema information like labels, relationships, properties,
+// functions and procedures.
 func (c Conn) Metadata() (Metadata, error) {
 	m := Metadata{}
 	if c.DBName == systemDB {

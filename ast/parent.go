@@ -18,6 +18,7 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// GetParent returns the parent RuleContext in the ParseTree.
 func GetParent(e antlr.Tree) antlr.Tree {
 	pt := e.GetParent()
 	if _, ok := pt.(*antlr.BaseParserRuleContext); ok && pt.GetParent() != nil {

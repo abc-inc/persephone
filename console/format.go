@@ -28,6 +28,7 @@ import (
 var fmtName string
 var w gfmt.Writer
 
+// ChangeFmt creates a new Writer.
 func ChangeFmt(f string) {
 	sepsByType := map[string]string{"csv": ",", "text": " ", "tsv": "\t"}
 

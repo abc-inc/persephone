@@ -14,6 +14,7 @@
 
 package lang
 
+// Keywords is a list of all Cypher keywords.
 var Keywords = []string{
 	"ACCESS",
 	"ACTIVE",

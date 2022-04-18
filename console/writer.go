@@ -33,6 +33,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Query executes a statement and returns the result.
 func Query(req graph.Request) error {
 	log.Debug().Str("statement", req.Query).Fields(req.Params).Msg("Executing")
 
@@ -79,6 +80,7 @@ func Write(i interface{}) {
 	fmt.Println()
 }
 
+// WriteErr formats the error message and writes it to stdout.
 func WriteErr(err error) {
 	if err == nil {
 		return
@@ -125,6 +127,7 @@ func WriteResult(rs []graph.Result) error {
 	return err
 }
 
+// writeSummary returns a summary message of the executed query.
 func writeSummary(n int, sum neo4j.ResultSummary) {
 	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s\n"
 	log.Info().Msgf(sumMsg,
