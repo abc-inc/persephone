@@ -65,9 +65,7 @@ func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Con
 	}
 	internal.MustNoErr(conn.UseDB(dbName))
 
-	if defConn == nil {
-		defConn = conn
-	}
+	defConn = conn
 	return conn
 }
 

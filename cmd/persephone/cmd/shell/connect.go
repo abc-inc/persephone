@@ -44,17 +44,17 @@ func init() {
 func connectCmd(cmd *cobra.Command, args []string) {
 	u := internal.Must(cmd.Flags().GetString("username"))
 	p := internal.Must(cmd.Flags().GetString("password"))
-	Connect(u, p)
+	d := internal.Must(cmd.Flags().GetString("database"))
+	Connect(u, p, d)
 }
 
-func Connect(user, pass string) {
-	if graph.GetConn() != nil && graph.GetConn().Driver != nil {
+func Connect(user, pass, db string) {
+	if graph.IsConnected() {
 		console.Write("Already connected")
 		return
 	}
 
 	addr := viper.GetString("address")
-	db := viper.GetString("database")
 
 	if isatty.IsTerminal(os.Stdin.Fd()) {
 		if user == "" {
