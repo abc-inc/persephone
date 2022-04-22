@@ -30,7 +30,7 @@ import (
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/graph"
-	. "github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
@@ -43,9 +43,9 @@ import (
 )
 
 var p *prompt.Prompt
-var es = editor.NewEditorSupport("")
+var e = editor.NewEditor("")
 var compByConsCmd = make(map[string]repl.CompFunc)
-var cfgFile = filepath.Join(Must(os.UserConfigDir()), "persephone", "config.yaml")
+var cfgFile = filepath.Join(internal.Must(os.UserConfigDir()), "persephone", "config.yaml")
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -77,14 +77,14 @@ func init() {
 	rootCmd.Flags().Bool("driver-version", false, "Print version of the Neo4j Driver used and exit.")
 	rootCmd.Flags().String("file", "", "Pass a file with cypher statements to be executed.")
 	rootCmd.Flags().String("format", "auto", "Desired output format.")
-	rootCmd.Flags().String("log-level", "info", "Level of details to be printed. (debug, info, error)")
+	rootCmd.PersistentFlags().String("log-level", "info", "Level of details to be printed. (debug, info, error)")
 	rootCmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session. Example: `-P \"number=3\"`. Can be specified multiple times.")
 	rootCmd.Flags().Bool("version", false, "Print version information and exit.")
 
-	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
-	rootCmd.Flags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (env: NEO4J_ADDRESS)")
-	rootCmd.Flags().StringP("username", "u", "", "username to connect as. (env: NEO4J_USERNAME)")
-	rootCmd.Flags().StringP("database", "d", "neo4j", "database to connect to. (env: NEO4J_DATABASE)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
+	rootCmd.PersistentFlags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (env: NEO4J_ADDRESS)")
+	rootCmd.PersistentFlags().StringP("username", "u", "", "username to connect as. (env: NEO4J_USERNAME)")
+	rootCmd.PersistentFlags().StringP("database", "d", "neo4j", "database to connect to. (env: NEO4J_DATABASE)")
 
 	rootCmd.AddCommand(
 		browser.ChangePassCmd,
@@ -112,17 +112,16 @@ func init() {
 		VersionCmd,
 	)
 
-	MustNoErr(viper.BindPFlag("address", rootCmd.Flag("address")))
-	MustNoErr(viper.BindPFlag("database", rootCmd.Flag("database")))
-	MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
-	MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
+	internal.MustNoErr(viper.BindPFlag("address", rootCmd.Flag("address")))
+	internal.MustNoErr(viper.BindPFlag("database", rootCmd.Flag("database")))
+	internal.MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
+	internal.MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
 
 	if err := console.GetTmplMgr().Load(); err != nil {
 		console.WriteErr(err)
 	}
 
 	var tmplComp = func(s string) (its []repl.Item) {
-		fmt.Println("tmplMgr", s, console.GetTmplMgr().TmplsByPath)
 		for n := range console.GetTmplMgr().TmplsByPath {
 			if strings.HasPrefix(n, s) {
 				its = append(its, repl.Item{View: strings.TrimSuffix(n, console.TmplExt)})
@@ -207,32 +206,12 @@ func connect(cmd *cobra.Command, args []string) {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	ll := strings.ToLower(Must(cmd.Flags().GetString("log-level")))
+	ll := strings.ToLower(internal.Must(cmd.Flags().GetString("log-level")))
 	if l, err := zerolog.ParseLevel(ll); err == nil {
 		zerolog.SetGlobalLevel(l)
 	}
 
-	if Must(cmd.Flags().GetBool("version")) {
-		versionCmd()
-		return
-	} else if Must(cmd.Flags().GetBool("driver-version")) {
-		driverVersionCmd()
-		return
-	}
-
-	if cmd == cmd.Root() && len(args) > 0 && !strings.HasPrefix(args[0], ":") {
-		if err := console.Query(graph.Request{strings.Join(args, " "), graph.GetConn().Params}); err != nil {
-			console.WriteErr(err)
-		}
-		return
-	}
-	if cmd == cmd.Root() && !isatty.IsTerminal(os.Stdin.Fd()) {
-		sc := bufio.NewScanner(os.Stdin)
-		for sc.Scan() {
-			if err := console.Query(graph.Request{sc.Text(), graph.GetConn().Params}); err != nil {
-				console.WriteErr(err)
-			}
-		}
+	if cmd == cmd.Root() && runRootCmd(cmd, args) {
 		return
 	}
 
@@ -241,9 +220,10 @@ func run(cmd *cobra.Command, args []string) {
 		log.Fatal().Err(err).Send()
 	}
 
-	var ls, ts, pkeys []string
-	for _, e := range md.Nodes {
-		ls = append(ls, e.String())
+	ls := make([]string, len(md.Nodes))
+	var pkeys []string
+	for i, e := range md.Nodes {
+		ls[i] = e.String()
 		for _, p := range e.Properties {
 			pkeys = append(pkeys, p)
 		}
@@ -252,8 +232,9 @@ func run(cmd *cobra.Command, args []string) {
 		pkeys = append(pkeys, md.Props...)
 	}
 
-	for _, r := range md.Rels {
-		ts = append(ts, r.Type)
+	ts := make([]string, len(md.Rels))
+	for i, r := range md.Rels {
+		ts[i] = r.Type
 		for p := range r.Properties {
 			pkeys = append(pkeys, p)
 		}
@@ -273,9 +254,9 @@ func run(cmd *cobra.Command, args []string) {
 		ConCmds:  ccs,
 	}
 
-	es.SetSchema(schema)
+	e.SetSchema(schema)
 
-	histPath := filepath.Join(Must(os.UserCacheDir()), "persephone", "history")
+	histPath := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
 	hist := repl.GetHistory()
 	_ = hist.Load(histPath)
 	defer func() {
@@ -300,6 +281,33 @@ func run(cmd *cobra.Command, args []string) {
 		}),
 	)
 	p.Run()
+}
+
+func runRootCmd(cmd *cobra.Command, args []string) bool {
+	if internal.Must(cmd.Flags().GetBool("version")) {
+		versionCmd()
+		return true
+	} else if internal.Must(cmd.Flags().GetBool("driver-version")) {
+		driverVersionCmd()
+		return true
+	}
+
+	if len(args) > 0 && !strings.HasPrefix(args[0], ":") {
+		if err := console.Query(graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}); err != nil {
+			console.WriteErr(err)
+		}
+		return true
+	}
+	if !isatty.IsTerminal(os.Stdin.Fd()) {
+		sc := bufio.NewScanner(os.Stdin)
+		for sc.Scan() {
+			if err := console.Query(graph.Request{Query: sc.Text(), Params: graph.GetConn().Params}); err != nil {
+				console.WriteErr(err)
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func executor(cyp string, cmd *cobra.Command) {
@@ -345,9 +353,9 @@ func completer(document prompt.Document) (ss []prompt.Suggest) {
 	if strings.HasPrefix(stmt, ":") && strings.IndexByte(stmt, ' ') > 0 {
 		res = compConsCmd(stmt)
 	} else {
-		es.Update(buf)
+		e.Update(buf)
 		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
-		res = es.GetCompletion(line, col, true)
+		res = e.GetCompletion(line, col, true)
 	}
 
 	for _, i := range res.Items {
@@ -369,7 +377,7 @@ func completer(document prompt.Document) (ss []prompt.Suggest) {
 	if start >= 0 && start < len(document.CurrentLine()) {
 		sep = document.CurrentLine()[start : start+1]
 	}
-	MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
+	internal.MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
 	return ss
 }
 
@@ -387,7 +395,6 @@ func compConsCmd(stmt string) (res comp.Result) {
 	}
 
 	if cmdComp != nil {
-		fmt.Println("completing ", cmdComp)
 		for _, p := range cmdComp(args) {
 			it := comp.Item{View: p.View, Content: p.Content}
 			res.Items = append(res.Items, it)
@@ -406,7 +413,7 @@ func compConsCmd(stmt string) (res comp.Result) {
 }
 
 func runConsCmd(cmd *cobra.Command, stmt string) string {
-	args := Must(shellwords.Parse(stmt))
+	args := internal.Must(shellwords.Parse(stmt))
 	cmd.Root().SetArgs(args)
 	if args[0] == ":param" {
 		args = strings.SplitN(stmt, " ", 3)

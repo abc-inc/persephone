@@ -36,8 +36,8 @@ func TestMapProjection(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := editor.NewEditorSupport(test.cypher)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test.cypher)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }

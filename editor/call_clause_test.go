@@ -34,14 +34,14 @@ func TestCallClause(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := editor.NewEditorSupport(test.cypher)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test.cypher)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }
 
 func TestCallClausMismatchedParenthesis(t *testing.T) {
-	s := editor.NewEditorSupport("CALL ()")
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, 5, s.ParseErrors[0].Col)
+	e := editor.NewEditor("CALL ()")
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, 5, e.ParseErrors[0].Col)
 }

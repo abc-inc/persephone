@@ -22,16 +22,16 @@ import (
 )
 
 func TestQuerySemicolonIgnoreLastQuery(t *testing.T) {
-	s := editor.NewEditorSupport("RETURN 1")
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor("RETURN 1")
+	Nil(t, e.ParseErrors)
 }
 
 func TestQuerySemicolonIgnoreLastQuery2(t *testing.T) {
-	s := editor.NewEditorSupport("RETURN 1; RETURN 1")
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor("RETURN 1; RETURN 1")
+	Nil(t, e.ParseErrors)
 }
 
 func TestQuerySemicolonIgnoreLastQueryNewLine(t *testing.T) {
-	s := editor.NewEditorSupport("RETURN 1\n")
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor("RETURN 1\n")
+	Nil(t, e.ParseErrors)
 }

@@ -22,21 +22,21 @@ import (
 )
 
 func TestCorrectASTForSimpleQuery(t *testing.T) {
-	s := editor.NewEditorSupport("RETURN 42;")
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor("RETURN 42;")
+	Nil(t, e.ParseErrors)
 }
 
 func TestErrorsForIncorrectQuery(t *testing.T) {
 	msg1 := "mismatched input 'POTATO' expecting {':', CYPHER, EXPLAIN, PROFILE, USING, CREATE, DROP, LOAD, WITH, OPTIONAL, MATCH, UNWIND, MERGE, SET, DETACH, DELETE, REMOVE, FOREACH, RETURN, START, CALL, CATALOG, SHOW, STOP, ALTER, GRANT, DENY, REVOKE, SP}"
-	s := editor.NewEditorSupport("POTATO")
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, editor.SynErr{1, 0, msg1}, s.ParseErrors[0])
-	Equal(t, "POTATO<EOF>", s.ParseTree.GetText())
+	e := editor.NewEditor("POTATO")
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, editor.SynErr{1, 0, msg1}, e.ParseErrors[0])
+	Equal(t, "POTATO<EOF>", e.ParseTree.GetText())
 }
 
 func TestErrorsIfErrorInLexer(t *testing.T) {
 	msg1 := "mismatched input '`' expecting {<EOF>, ';'}"
-	s := editor.NewEditorSupport("WITH a` WITH 1;")
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, editor.SynErr{1, 6, msg1}, s.ParseErrors[0])
+	e := editor.NewEditor("WITH a` WITH 1;")
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, editor.SynErr{1, 6, msg1}, e.ParseErrors[0])
 }

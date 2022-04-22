@@ -28,13 +28,12 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-var KeywordItems []Item
-
-func init() {
-	for _, kw := range lang.Keywords {
-		KeywordItems = append(KeywordItems,
-			Item{Type: types.Keyword, View: kw, Content: kw})
+func KeywordItems() []Item {
+	its := make([]Item, len(lang.Keywords))
+	for i, kw := range lang.Keywords {
+		its[i] = Item{Type: types.Keyword, View: kw, Content: kw}
 	}
+	return its
 }
 
 type Comp interface {

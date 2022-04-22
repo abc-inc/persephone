@@ -24,21 +24,21 @@ import (
 )
 
 var childToParent = map[string]types.Type{
-	lang.VARIABLE_CONTEXT:                         types.Variable,
-	lang.PARAMETER_NAME_CONTEXT:                   types.Parameter,
-	lang.PROPERTY_KEY_NAME_CONTEXT:                types.PropertyKey,
-	lang.FUNCTION_NAME_CONTEXT:                    types.FunctionName,
-	lang.PROCEDURE_NAME_CONTEXT:                   types.ProcedureName,
-	lang.NODE_LABEL_CONTEXT:                       types.Label,
-	lang.RELATIONSHIP_TYPE_CONTEXT:                types.RelationshipType,
-	lang.RELATIONSHIP_TYPE_OPTIONAL_COLON_CONTEXT: types.RelationshipType,
-	lang.CONSOLE_COMMAND_NAME_CONTEXT:             types.ConsoleCommandName,
-	lang.NODE_LABELS_CONTEXT:                      types.Label,
-	lang.RELATIONSHIP_TYPES_CONTEXT:               types.RelationshipType,
+	lang.VariableContext:                      types.Variable,
+	lang.ParameterNameContext:                 types.Parameter,
+	lang.PropertyKeyNameContext:               types.PropertyKey,
+	lang.FunctionNameContext:                  types.FunctionName,
+	lang.ProcedureNameContext:                 types.ProcedureName,
+	lang.NodeLabelContext:                     types.Label,
+	lang.RelationshipTypeContext:              types.RelationshipType,
+	lang.RelationshipTypeOptionalColonContext: types.RelationshipType,
+	lang.ConsoleCommandNameContext:            types.ConsoleCommandName,
+	lang.NodeLabelsContext:                    types.Label,
+	lang.RelationshipTypesContext:             types.RelationshipType,
 }
 
 func ruleSpecificParent(e antlr.ParseTree) []Info {
-	var ctxNames []string
+	ctxNames := make([]string, len(childToParent))
 	for name := range childToParent {
 		ctxNames = append(ctxNames, name)
 	}

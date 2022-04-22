@@ -39,7 +39,7 @@ func (q QueryBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
 		if t.Type != types.Variable {
 			continue
 		}
-		ns := q.refProvs[lang.VARIABLE_CONTEXT].GetNames(query.(*parser.CypherQueryContext))
+		ns := q.refProvs[lang.VariableContext].GetNames(query.(*parser.CypherQueryContext))
 		for _, n := range ns {
 			is = append(is, Item{
 				Type:    types.Variable,

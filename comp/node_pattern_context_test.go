@@ -128,7 +128,7 @@ func TestPropertyKeyAutoCompletionYieldsAllAfterColonInUnclosedMapLiteral(t *tes
 			To:   LineCol{Line: 1, Col: 12},
 		},
 	}
-	expected.Items = append(expected.Items, KeywordItems...)
+	expected.Items = append(expected.Items, KeywordItems()...)
 
 	checkCompletion(t, "MATCH ({key:▼", expected, true)
 }
@@ -148,7 +148,7 @@ func TestPropertyKeyAutoCompletionYieldsAllAfterColonInMapLiteral(t *testing.T) 
 			To:   LineCol{Line: 1, Col: 12},
 		},
 	}
-	expected.Items = append(expected.Items, KeywordItems...)
+	expected.Items = append(expected.Items, KeywordItems()...)
 
 	checkCompletion(t, "MATCH ({key:▼ })", expected, true)
 }

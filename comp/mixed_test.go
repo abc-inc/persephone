@@ -60,7 +60,7 @@ func TestMixedWithoutFiltersYieldsOnlyKeywordsAtTheStartOfAQuery(t *testing.T) {
 			To:   LineCol{Line: 1, Col: 0},
 		},
 	}
-	expected.Items = append(expected.Items, KeywordItems...)
+	expected.Items = append(expected.Items, KeywordItems()...)
 
 	checkCompletion(t, "▼", expected, false)
 }

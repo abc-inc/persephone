@@ -17,7 +17,7 @@ package cmd
 import (
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
-	. "github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 )
@@ -49,18 +49,18 @@ func Schema() {
 		"ORDER BY `Index Name`;"
 
 	t := graph.NewTypedTemplate[index](graph.GetConn())
-	idxs, _ := MustTuple(t.Query(cyp, nil, func(rec *neo4j.Record) index {
-		ls := MustOk(rec.Get("LabelsOrTypes")).([]interface{})
-		ps := MustOk(rec.Get("Properties")).([]interface{})
+	idxs, _ := internal.MustTuple(t.Query(cyp, nil, func(rec *neo4j.Record) index {
+		ls := internal.MustOk(rec.Get("LabelsOrTypes")).([]interface{})
+		ps := internal.MustOk(rec.Get("Properties")).([]interface{})
 
 		return index{
-			Name:          MustOk(rec.Get("Index Name")).(string),
-			Type:          MustOk(rec.Get("Type")).(string),
-			Uniqueness:    MustOk(rec.Get("Uniqueness")).(string),
-			EntityType:    MustOk(rec.Get("Index Name")).(string),
-			LabelsOrTypes: ReSlice[string](ls),
-			Properties:    ReSlice[string](ps),
-			State:         MustOk(rec.Get("State")).(string),
+			Name:          internal.MustOk(rec.Get("Index Name")).(string),
+			Type:          internal.MustOk(rec.Get("Type")).(string),
+			Uniqueness:    internal.MustOk(rec.Get("Uniqueness")).(string),
+			EntityType:    internal.MustOk(rec.Get("Index Name")).(string),
+			LabelsOrTypes: internal.ReSlice[string](ls),
+			Properties:    internal.ReSlice[string](ps),
+			State:         internal.MustOk(rec.Get("State")).(string),
 		}
 	}))
 

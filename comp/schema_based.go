@@ -87,7 +87,7 @@ type SchemaBased struct {
 func NewSchemaBased(schema graph.Schema) *SchemaBased {
 	s := &SchemaBased{Schema: schema}
 	s.cache = make(map[types.Type][]Item)
-	s.cache[types.Keyword] = KeywordItems
+	s.cache[types.Keyword] = KeywordItems()
 	s.cache[types.Label] = mapItems(schema.Labels, types.Label, strF, escF, nilF)
 	s.cache[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
 	s.cache[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
@@ -175,7 +175,7 @@ func mapItemsStruct(ns []graph.Func, typ types.Type,
 func mapItemsCmd(ns []graph.Cmd, typ types.Type,
 	viewFunc func(graph.Cmd) string,
 	contFunc func(graph.Cmd) string,
-	pfFunc func(cmd graph.Cmd) string) (its []Item) {
+	pfFunc func(graph.Cmd) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{

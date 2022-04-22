@@ -21,7 +21,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-func Parse(input string) (antlr.ParseTree, *ref.RefListener, *ErrorListener, map[string]ref.Provider) {
+func Parse(input string) (antlr.ParseTree, *ref.Listener, *ErrorListener, map[string]ref.Provider) {
 	refListener := ref.NewRefListener()
 	errListener := &ErrorListener{}
 	chars := antlr.NewInputStream(input)

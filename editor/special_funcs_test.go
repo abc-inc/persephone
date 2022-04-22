@@ -34,8 +34,8 @@ func TestSpecialFunctions(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			b := editor.NewEditorSupport(test.cypher)
-			Nil(t, b.ParseErrors)
+			e := editor.NewEditor(test.cypher)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }

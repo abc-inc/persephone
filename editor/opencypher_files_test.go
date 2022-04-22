@@ -25,8 +25,8 @@ import (
 func TestCypherLegacyFiles(t *testing.T) {
 	for i, test := range cypherLegacy {
 		t.Run("cypher-legacy-query-"+strconv.Itoa(i), func(t *testing.T) {
-			s := editor.NewEditorSupport(test)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }
@@ -34,8 +34,8 @@ func TestCypherLegacyFiles(t *testing.T) {
 func TestOpenCypherFiles(t *testing.T) {
 	for i, test := range cypherDefault {
 		t.Run("cypher-query-"+strconv.Itoa(i), func(t *testing.T) {
-			s := editor.NewEditorSupport(test)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }

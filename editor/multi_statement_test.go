@@ -27,9 +27,9 @@ func TestCatchErrorInSecondStatement(t *testing.T) {
 POTATO;
 RETURN rand();`
 
-	s := editor.NewEditorSupport(cypher)
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, editor.SynErr{2, 0, msg1}, s.ParseErrors[0])
+	e := editor.NewEditor(cypher)
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, editor.SynErr{2, 0, msg1}, e.ParseErrors[0])
 }
 
 func TestParseCommonParam(t *testing.T) {
@@ -41,10 +41,10 @@ hello;
 hello2;
 :play reco;`
 
-	s := editor.NewEditorSupport(cypher)
-	Equal(t, 2, len(s.ParseErrors))
-	Equal(t, editor.SynErr{2, 0, msg1}, s.ParseErrors[0])
-	Equal(t, editor.SynErr{4, 0, msg2}, s.ParseErrors[1])
+	e := editor.NewEditor(cypher)
+	Equal(t, 2, len(e.ParseErrors))
+	Equal(t, editor.SynErr{2, 0, msg1}, e.ParseErrors[0])
+	Equal(t, editor.SynErr{4, 0, msg2}, e.ParseErrors[1])
 }
 
 func TestParseCommon(t *testing.T) {
@@ -55,10 +55,10 @@ func TestParseCommon(t *testing.T) {
 hello2;
 :play reco;`
 
-	s := editor.NewEditorSupport(cypher)
-	Equal(t, 2, len(s.ParseErrors))
-	Equal(t, editor.SynErr{1, 0, msg1}, s.ParseErrors[0])
-	Equal(t, editor.SynErr{3, 0, msg2}, s.ParseErrors[1])
+	e := editor.NewEditor(cypher)
+	Equal(t, 2, len(e.ParseErrors))
+	Equal(t, editor.SynErr{1, 0, msg1}, e.ParseErrors[0])
+	Equal(t, editor.SynErr{3, 0, msg2}, e.ParseErrors[1])
 }
 
 func TestParseCommonParamCommand(t *testing.T) {
@@ -67,8 +67,8 @@ func TestParseCommonParamCommand(t *testing.T) {
 RETURN $x;
 :play reco;`
 
-	s := editor.NewEditorSupport(cypher)
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor(cypher)
+	Nil(t, e.ParseErrors)
 }
 
 func TestParseMultipleParamCommandsWithQuery(t *testing.T) {
@@ -79,13 +79,13 @@ WHERE n.age > $age
 AND n.interest IN $interests
 RETURN n;`
 
-	s := editor.NewEditorSupport(cypher)
-	Nil(t, s.ParseErrors)
+	e := editor.NewEditor(cypher)
+	Nil(t, e.ParseErrors)
 }
 
 func TestRecoverToSecondStatementAfterInvalidCommand(t *testing.T) {
 	cypher := ":PUT ao*51 fagas 8(!; :play;"
-	s := editor.NewEditorSupport(cypher)
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, editor.SynErr{1, 7, "mismatched input '*' expecting {<EOF>, ';'}"}, s.ParseErrors[0])
+	e := editor.NewEditor(cypher)
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, editor.SynErr{1, 7, "mismatched input '*' expecting {<EOF>, ';'}"}, e.ParseErrors[0])
 }

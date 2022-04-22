@@ -69,11 +69,11 @@ func (tm *TmplMgr) Load() error {
 	fs := internal.Must(filepath.Glob(filepath.Join(TmplDir, "*"+TmplExt)))
 	for _, f := range fs {
 		log.Info().Str("name", filepath.Base(f)).Msg("Loading template")
-		if t, err := template.ParseFiles(f); err != nil {
+		t, err := template.ParseFiles(f)
+		if err != nil {
 			return err
-		} else {
-			tm.TmplsByPath[filepath.Base(f)] = t
 		}
+		tm.TmplsByPath[filepath.Base(f)] = t
 	}
 	return nil
 }

@@ -22,8 +22,8 @@ import (
 )
 
 func ruleVariableInExpressionPossibleFunction(e antlr.ParseTree) []Info {
-	variable := ast.FindAnyParent(e, []string{lang.VARIABLE_CONTEXT})
-	expression := ast.FindAnyParent(variable, []string{lang.EXPRESSION_CONTEXT})
+	variable := ast.FindAnyParent(e, []string{lang.VariableContext})
+	expression := ast.FindAnyParent(variable, []string{lang.ExpressionContext})
 	if variable != nil && expression != nil {
 		return []Info{{Type: types.Variable}, {Type: types.FunctionName}}
 	}

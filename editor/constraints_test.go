@@ -33,14 +33,14 @@ func TestConstraints(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := editor.NewEditorSupport(test.cypher)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test.cypher)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }
 
 func TestDropWithoutPropertyFails(t *testing.T) {
-	s := editor.NewEditorSupport("DROP CONSTRAINT ON (n:Person) ASSERT (n)")
-	Equal(t, 1, len(s.ParseErrors))
-	Equal(t, len(s.Input), s.ParseErrors[0].Col)
+	e := editor.NewEditor("DROP CONSTRAINT ON (n:Person) ASSERT (n)")
+	Equal(t, 1, len(e.ParseErrors))
+	Equal(t, len(e.Input), e.ParseErrors[0].Col)
 }

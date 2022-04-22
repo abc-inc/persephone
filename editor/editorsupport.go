@@ -26,7 +26,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-type EditorSupport struct {
+type Editor struct {
 	schema  graph.Schema
 	Input   string
 	posConv PosConv
@@ -38,36 +38,36 @@ type EditorSupport struct {
 	statements          []parser.CypherPartContext
 }
 
-func NewEditorSupport(input string) *EditorSupport {
-	e := &EditorSupport{}
+func NewEditor(input string) *Editor {
+	e := &Editor{}
 	e.completion = *comp.NewAutoCompletion(graph.Schema{})
 	e.Update(input)
 	return e
 }
 
-func (es *EditorSupport) Update(input string) {
-	es.posConv = *NewPosConv(input)
+func (e *Editor) Update(input string) {
+	e.posConv = *NewPosConv(input)
 
-	es.Input = input
+	e.Input = input
 	parseTree, referencesListener, errorListener, referencesProviders := Parse(input)
-	es.ParseTree = parseTree
+	e.ParseTree = parseTree
 
-	es.ParseErrors = errorListener.errors
+	e.ParseErrors = errorListener.errors
 
-	es.statements = referencesListener.Statements
-	es.referencesProviders = referencesProviders
+	e.statements = referencesListener.Statements
+	e.referencesProviders = referencesProviders
 
-	es.completion.UpdateReferenceProviders(es.referencesProviders)
+	e.completion.UpdateReferenceProviders(e.referencesProviders)
 }
 
-func (es *EditorSupport) SetSchema(schema graph.Schema) {
-	es.schema = schema
-	es.completion.UpdateSchema(es.schema)
+func (e *Editor) SetSchema(schema graph.Schema) {
+	e.schema = schema
+	e.completion.UpdateSchema(e.schema)
 }
 
-func (es EditorSupport) GetElement(line, column int) antlr.Tree {
-	abs := es.posConv.ToAbsolute(line, column)
-	return getElement(es.ParseTree, abs)
+func (e Editor) GetElement(line, column int) antlr.Tree {
+	abs := e.posConv.ToAbsolute(line, column)
+	return getElement(e.ParseTree, abs)
 }
 
 func getElement(pt antlr.Tree, abs int) antlr.Tree {
@@ -93,49 +93,49 @@ func getElement(pt antlr.Tree, abs int) antlr.Tree {
 	return nil
 }
 
-func (es EditorSupport) GetReferences(line, column int) []antlr.ParserRuleContext {
-	e := ast.FindAnyParent(es.GetElement(line, column), lang.SymbolicContexts)
-	if e == nil {
+func (e Editor) GetReferences(line, column int) []antlr.ParserRuleContext {
+	el := ast.FindAnyParent(e.GetElement(line, column), lang.SymbolicContexts)
+	if el == nil {
 		return nil
 	}
 
 	var query antlr.Tree
-	typ := reflect.TypeOf(e).Elem().Name()
-	if typ == lang.VARIABLE_CONTEXT {
-		query = ast.FindAnyParent(e, []string{lang.QUERY_CONTEXT})
+	typ := reflect.TypeOf(el).Elem().Name()
+	if typ == lang.VariableContext {
+		query = ast.FindAnyParent(el, []string{lang.QueryContext})
 	}
 
-	text := e.(antlr.ParseTree).GetText()
+	text := el.(antlr.ParseTree).GetText()
 	if query == nil {
-		return es.referencesProviders[typ].GetReferences(text, nil)
+		return e.referencesProviders[typ].GetReferences(text, nil)
 	}
-	return es.referencesProviders[typ].GetReferences(text, query.(*parser.CypherQueryContext))
+	return e.referencesProviders[typ].GetReferences(text, query.(*parser.CypherQueryContext))
 }
 
-func (es EditorSupport) GetCompletionInfo(line, column int) comp.Info {
-	element := es.GetElementForCompletion(line, column)
-	query := ast.FindAnyParent(element, []string{lang.QUERY_CONTEXT})
-	info := comp.GetTypes(element)
+func (e Editor) GetCompletionInfo(line, column int) comp.Info {
+	el := e.GetElementForCompletion(line, column)
+	query := ast.FindAnyParent(el, []string{lang.QueryContext})
+	info := comp.GetTypes(el)
 	return comp.Info{
-		Element: element,
+		Element: el,
 		Query:   query,
 		Found:   info.Found,
 		Types:   info.Types,
 	}
 }
 
-func (es EditorSupport) GetElementForCompletion(line, column int) antlr.Tree {
-	e := es.GetElement(line, column)
-	if p := ast.FindAnyParent(e, lang.CompletionCandidates); p != nil {
+func (e Editor) GetElementForCompletion(line, column int) antlr.Tree {
+	el := e.GetElement(line, column)
+	if p := ast.FindAnyParent(el, lang.CompletionCandidates); p != nil {
 		return p
 	}
-	return e
+	return el
 }
 
-func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Result {
-	info := es.GetCompletionInfo(line, column)
+func (e Editor) GetCompletion(line, column int, doFilter bool) comp.Result {
+	info := e.GetCompletionInfo(line, column)
 	if !info.Found && column > 0 {
-		if prevInfo := es.GetCompletionInfo(line, column-1); prevInfo.Found {
+		if prevInfo := e.GetCompletionInfo(line, column-1); prevInfo.Found {
 			info = prevInfo
 		}
 	}
@@ -152,15 +152,15 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 		pos := ast.GetPosition(element)
 		smartReplaceRange := comp.CalculateSmartReplaceRange(element, pos.GetStart(), pos.GetStop())
 		if smartReplaceRange != nil {
-			replFrom.Line, replFrom.Col = es.posConv.ToRelative(smartReplaceRange.Start)
-			replTo.Line, replTo.Col = es.posConv.ToRelative(smartReplaceRange.Stop + 1)
+			replFrom.Line, replFrom.Col = e.posConv.ToRelative(smartReplaceRange.Start)
+			replTo.Line, replTo.Col = e.posConv.ToRelative(smartReplaceRange.Stop + 1)
 
 			if smartReplaceRange.FilterText != "" {
 				filter = smartReplaceRange.FilterText
 			}
 		} else {
-			replFrom.Line, replFrom.Col = es.posConv.ToRelative(pos.GetStart())
-			replTo.Line, replTo.Col = es.posConv.ToRelative(pos.GetStop() + 1)
+			replFrom.Line, replFrom.Col = e.posConv.ToRelative(pos.GetStart())
+			replTo.Line, replTo.Col = e.posConv.ToRelative(pos.GetStop() + 1)
 		}
 	}
 
@@ -174,7 +174,7 @@ func (es EditorSupport) GetCompletion(line, column int, doFilter bool) comp.Resu
 		}
 	}
 
-	items := es.completion.GetItems(types, query, filter)
+	items := e.completion.GetItems(types, query, filter)
 	return comp.Result{
 		Items: items,
 		Range: comp.Range{From: replFrom, To: replTo},

@@ -15,7 +15,6 @@ linters:
     # additional
     - bodyclose
     - errorlint
-    - gochecknoinits
     - gocognit
     - goconst
     - gocritic
@@ -30,3 +29,11 @@ linters:
     - unconvert
     - unparam
     - whitespace
+
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+  whitespace:
+    multi-if: true
+    multi-func: true

@@ -19,12 +19,11 @@ import (
 	"testing"
 
 	"github.com/abc-inc/persephone/editor"
-	"github.com/antlr/antlr4/runtime/Go/antlr"
 	. "github.com/stretchr/testify/require"
 )
 
 func TestRefLabelsReturnsReferenceForSingleLabel(t *testing.T) {
-	e := editor.NewEditorSupport("MATCH (n:Label)")
+	e := editor.NewEditor("MATCH (n:Label)")
 	refs := e.GetReferences(1, 10)
 
 	ref := refs[0]
@@ -37,10 +36,10 @@ func TestRefLabelsReturnsReferenceForSingleLabel(t *testing.T) {
 }
 
 func TestRefLabelsReturnsReferencesForMultipleLabels(t *testing.T) {
-	e := editor.NewEditorSupport("MATCH (n:Label) MATCH (m:Label)")
+	e := editor.NewEditor("MATCH (n:Label) MATCH (m:Label)")
 	refs := e.GetReferences(1, 10)
 
-	ref := refs[0].(antlr.ParserRuleContext)
+	ref := refs[0]
 	Equal(t, "LabelNameContext", reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 9, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
@@ -48,7 +47,7 @@ func TestRefLabelsReturnsReferencesForMultipleLabels(t *testing.T) {
 	Equal(t, 1, ref.GetStop().GetLine())
 	Equal(t, "Label", ref.GetText())
 
-	ref = refs[1].(antlr.ParserRuleContext)
+	ref = refs[1]
 	Equal(t, "LabelNameContext", reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 25, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
@@ -58,10 +57,10 @@ func TestRefLabelsReturnsReferencesForMultipleLabels(t *testing.T) {
 }
 
 func TestRefLabelsReturnsReferencesForMultipleQueries(t *testing.T) {
-	e := editor.NewEditorSupport("MATCH (n:Label); MATCH (n:Label);")
+	e := editor.NewEditor("MATCH (n:Label); MATCH (n:Label);")
 	refs := e.GetReferences(1, 10)
 
-	ref := refs[0].(antlr.ParserRuleContext)
+	ref := refs[0]
 	Equal(t, "LabelNameContext", reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 9, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
@@ -69,7 +68,7 @@ func TestRefLabelsReturnsReferencesForMultipleQueries(t *testing.T) {
 	Equal(t, 1, ref.GetStop().GetLine())
 	Equal(t, "Label", ref.GetText())
 
-	ref = refs[1].(antlr.ParserRuleContext)
+	ref = refs[1]
 	Equal(t, "LabelNameContext", reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 26, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())

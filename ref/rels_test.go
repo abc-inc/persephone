@@ -24,11 +24,11 @@ import (
 )
 
 func TestRelationshipsReturnsReferenceForRelationshipTypes(t *testing.T) {
-	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-()")
-	refs := es.GetReferences(1, 13)
+	e := editor.NewEditor("MATCH ()-[:TYPE]-()")
+	refs := e.GetReferences(1, 13)
 
 	ref := refs[0]
-	Equal(t, lang.RELATIONSHIP_TYPE_NAME_CONTEXT, reflect.TypeOf(ref).Elem().Name())
+	Equal(t, lang.RelationshipTypeNameContext, reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 11, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
 	Equal(t, 14, ref.GetStop().GetStop())
@@ -37,11 +37,11 @@ func TestRelationshipsReturnsReferenceForRelationshipTypes(t *testing.T) {
 }
 
 func TestRelationshipsReturnsReferencesForMultipleRelationshipTypes(t *testing.T) {
-	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-() MATCH ()-[:TYPE]-()")
-	refs := es.GetReferences(1, 13)
+	e := editor.NewEditor("MATCH ()-[:TYPE]-() MATCH ()-[:TYPE]-()")
+	refs := e.GetReferences(1, 13)
 
 	ref := refs[0]
-	Equal(t, lang.RELATIONSHIP_TYPE_NAME_CONTEXT, reflect.TypeOf(ref).Elem().Name())
+	Equal(t, lang.RelationshipTypeNameContext, reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 11, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
 	Equal(t, 14, ref.GetStop().GetStop())
@@ -49,7 +49,7 @@ func TestRelationshipsReturnsReferencesForMultipleRelationshipTypes(t *testing.T
 	Equal(t, "TYPE", ref.GetText())
 
 	ref = refs[1]
-	Equal(t, lang.RELATIONSHIP_TYPE_NAME_CONTEXT, reflect.TypeOf(ref).Elem().Name())
+	Equal(t, lang.RelationshipTypeNameContext, reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 31, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
 	Equal(t, 34, ref.GetStop().GetStop())
@@ -58,11 +58,11 @@ func TestRelationshipsReturnsReferencesForMultipleRelationshipTypes(t *testing.T
 }
 
 func TestRelationshipsReturnsReferencesForMultipleQueries(t *testing.T) {
-	es := editor.NewEditorSupport("MATCH ()-[:TYPE]-(); MATCH ()-[:TYPE]-()")
-	refs := es.GetReferences(1, 13)
+	e := editor.NewEditor("MATCH ()-[:TYPE]-(); MATCH ()-[:TYPE]-()")
+	refs := e.GetReferences(1, 13)
 
 	ref := refs[0]
-	Equal(t, lang.RELATIONSHIP_TYPE_NAME_CONTEXT, reflect.TypeOf(ref).Elem().Name())
+	Equal(t, lang.RelationshipTypeNameContext, reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 11, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
 	Equal(t, 14, ref.GetStop().GetStop())
@@ -70,7 +70,7 @@ func TestRelationshipsReturnsReferencesForMultipleQueries(t *testing.T) {
 	Equal(t, "TYPE", ref.GetText())
 
 	ref = refs[1]
-	Equal(t, lang.RELATIONSHIP_TYPE_NAME_CONTEXT, reflect.TypeOf(ref).Elem().Name())
+	Equal(t, lang.RelationshipTypeNameContext, reflect.TypeOf(ref).Elem().Name())
 	Equal(t, 32, ref.GetStart().GetStart())
 	Equal(t, 1, ref.GetStart().GetLine())
 	Equal(t, 35, ref.GetStop().GetStop())

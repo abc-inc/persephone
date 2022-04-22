@@ -63,9 +63,9 @@ func checkCompletion(t *testing.T, queryWithCursor string, expectedItems Result,
 	pos := strings.IndexRune(queryWithCursor, '▼')
 	query := strings.Replace(queryWithCursor, "▼", "", 1)
 
-	backend := editor.NewEditorSupport(query)
-	backend.SetSchema(schema)
-	completion := backend.GetCompletion(1, pos, doFilter)
+	e := editor.NewEditor(query)
+	e.SetSchema(schema)
+	completion := e.GetCompletion(1, pos, doFilter)
 	Equal(t, expectedItems, completion)
 }
 
@@ -73,8 +73,8 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 	pos := strings.IndexRune(queryWithCursor, '▼')
 	query := strings.Replace(queryWithCursor, "▼", "", 1)
 
-	es := editor.NewEditorSupport(query)
-	el := es.GetElementForCompletion(1, pos)
+	e := editor.NewEditor(query)
+	el := e.GetElementForCompletion(1, pos)
 	ts := GetTypes(el)
 
 	exp := make([]types.Data, len(expectedTypes))

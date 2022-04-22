@@ -52,7 +52,7 @@ func init() {
 }
 
 func History() {
-	var es []entry
+	es := make([]entry, len(repl.GetHistory().Entries()))
 	for i, e := range repl.GetHistory().Entries() {
 		es = append(es, entry{i, e})
 	}

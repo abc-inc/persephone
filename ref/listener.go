@@ -20,7 +20,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-type RefListener struct {
+type Listener struct {
 	Queries            []parser.CypherQueryContext
 	QueriesAndCommands []antlr.ParserRuleContext
 	Statements         []parser.CypherPartContext
@@ -30,37 +30,37 @@ type RefListener struct {
 	parser.BaseCypherListener
 }
 
-func NewRefListener() *RefListener {
+func NewRefListener() *Listener {
 	is := map[string]*Index{}
 	for _, ctx := range lang.SymbolicContexts {
 		is[ctx] = NewIndex()
 	}
-	return &RefListener{
+	return &Listener{
 		Indexes: is,
 	}
 }
 
-func (l *RefListener) EnterRaw(ctx antlr.ParserRuleContext) {
+func (l *Listener) EnterRaw(ctx antlr.ParserRuleContext) {
 	l.Raw = append(l.Raw, ctx)
 }
 
-func (l *RefListener) ExitRaw(ctx antlr.ParserRuleContext) {
+func (l *Listener) ExitRaw(ctx antlr.ParserRuleContext) {
 	if len(l.Raw) == 0 {
 		l.Raw = append(l.Raw, ctx)
 	}
 }
 
-func (l *RefListener) EnterCypherPart(ctx *parser.CypherPartContext) {
+func (l *Listener) EnterCypherPart(ctx *parser.CypherPartContext) {
 	l.Statements = append(l.Statements, *ctx)
 }
 
-func (l *RefListener) ExitCypherPart(ctx *parser.CypherPartContext) {
+func (l *Listener) ExitCypherPart(ctx *parser.CypherPartContext) {
 	if len(l.Statements) == 0 {
 		l.Statements = append(l.Statements, *ctx)
 	}
 }
 
-func (l *RefListener) EnterCypherConsoleCommand(ctx *parser.CypherConsoleCommandContext) {
+func (l *Listener) EnterCypherConsoleCommand(ctx *parser.CypherConsoleCommandContext) {
 	l.QueriesAndCommands = append(l.QueriesAndCommands, ctx)
 	for _, i := range l.Indexes {
 		i.AddQuery()
@@ -68,11 +68,11 @@ func (l *RefListener) EnterCypherConsoleCommand(ctx *parser.CypherConsoleCommand
 	l.InConsoleCommand = true
 }
 
-func (l *RefListener) ExitCypherConsoleCommand(ctx *parser.CypherConsoleCommandContext) {
+func (l *Listener) ExitCypherConsoleCommand(ctx *parser.CypherConsoleCommandContext) {
 	l.InConsoleCommand = false
 }
 
-func (l *RefListener) EnterCypherQuery(ctx *parser.CypherQueryContext) {
+func (l *Listener) EnterCypherQuery(ctx *parser.CypherQueryContext) {
 	l.Queries = append(l.Queries, *ctx)
 	l.QueriesAndCommands = append(l.QueriesAndCommands, ctx)
 	for _, i := range l.Indexes {
@@ -80,37 +80,37 @@ func (l *RefListener) EnterCypherQuery(ctx *parser.CypherQueryContext) {
 	}
 }
 
-func (l *RefListener) ExitVariable(ctx *parser.VariableContext) {
+func (l *Listener) ExitVariable(ctx *parser.VariableContext) {
 	if l.InConsoleCommand {
 		return
 	}
-	l.Indexes[lang.VARIABLE_CONTEXT].AddVariable(ctx)
+	l.Indexes[lang.VariableContext].AddVariable(ctx)
 }
 
-func (l *RefListener) ExitLabelName(ctx *parser.LabelNameContext) {
+func (l *Listener) ExitLabelName(ctx *parser.LabelNameContext) {
 	if l.InConsoleCommand {
 		return
 	}
-	l.Indexes[lang.LABEL_NAME_CONTEXT].Add(ctx, true)
+	l.Indexes[lang.LabelNameContext].Add(ctx, true)
 }
 
-func (l *RefListener) ExitRelTypeName(ctx *parser.RelTypeNameContext) {
+func (l *Listener) ExitRelTypeName(ctx *parser.RelTypeNameContext) {
 	if l.InConsoleCommand {
 		return
 	}
-	l.Indexes[lang.RELATIONSHIP_TYPE_NAME_CONTEXT].Add(ctx, true)
+	l.Indexes[lang.RelationshipTypeNameContext].Add(ctx, true)
 }
 
-func (l *RefListener) ExitPropertyKeyName(ctx *parser.PropertyKeyNameContext) {
+func (l *Listener) ExitPropertyKeyName(ctx *parser.PropertyKeyNameContext) {
 	if l.InConsoleCommand {
 		return
 	}
-	l.Indexes[lang.PROPERTY_KEY_NAME_CONTEXT].Add(ctx, true)
+	l.Indexes[lang.PropertyKeyNameContext].Add(ctx, true)
 }
 
-func (l *RefListener) ExitParameterName(ctx *parser.ParameterNameContext) {
+func (l *Listener) ExitParameterName(ctx *parser.ParameterNameContext) {
 	if l.InConsoleCommand {
 		return
 	}
-	l.Indexes[lang.PARAMETER_NAME_CONTEXT].Add(ctx, true)
+	l.Indexes[lang.ParameterNameContext].Add(ctx, true)
 }

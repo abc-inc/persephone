@@ -23,8 +23,8 @@ import (
 )
 
 func TestGetElementIdentifyRuleAtCursor(t *testing.T) {
-	s := editor.NewEditorSupport("MATCH (n)-[r]->(n) RETURN n")
-	tree := s.GetElement(1, 12).GetParent()
+	e := editor.NewEditor("MATCH (n)-[r]->(n) RETURN n")
+	tree := e.GetElement(1, 12).GetParent()
 	ctx := tree.(*antlr.BaseParserRuleContext)
 	Equal(t, "[r]", ctx.GetText())
 	Equal(t, 10, ctx.GetStart().GetColumn())

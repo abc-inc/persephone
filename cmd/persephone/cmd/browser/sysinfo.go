@@ -21,7 +21,7 @@ import (
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/event"
 	"github.com/abc-inc/persephone/graph"
-	. "github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 )
@@ -62,14 +62,14 @@ func SysInfo() {
 
 func ListDBs() []DBInfo {
 	t := graph.NewTypedTemplate[DBInfo](graph.GetConn())
-	dbs, _ := MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) DBInfo {
+	dbs, _ := internal.MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) DBInfo {
 		return DBInfo{
-			Name:    MustOk(rec.Get("name")).(string),
-			Address: MustOk(rec.Get("address")).(string),
-			Role:    MustOk(rec.Get("role")).(string),
-			Status:  MustOk(rec.Get("requestedStatus")).(string),
-			Default: MustOk(rec.Get("default")).(bool),
-			Error:   MustOk(rec.Get("error")).(string),
+			Name:    internal.MustOk(rec.Get("name")).(string),
+			Address: internal.MustOk(rec.Get("address")).(string),
+			Role:    internal.MustOk(rec.Get("role")).(string),
+			Status:  internal.MustOk(rec.Get("requestedStatus")).(string),
+			Default: internal.MustOk(rec.Get("default")).(bool),
+			Error:   internal.MustOk(rec.Get("error")).(string),
 		}
 	}))
 	return dbs

@@ -34,7 +34,7 @@ func ruleConsoleCommandSubcommands(e antlr.ParseTree) []Info {
 		// If first child of parent contains console command
 		// and second child is our current element
 		// then we are at the space at the end of console command
-		child1 := ast.FindChild(pt.GetChild(0), lang.CONSOLE_COMMAND_CONTEXT)
+		child1 := ast.FindChild(pt.GetChild(0), lang.ConsoleCommandContext)
 		if child1 != nil && pt.GetChildCount() > 1 && pt.GetChild(1) == e {
 			consCmd = child1
 			isAtTheEnd = true

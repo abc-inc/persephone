@@ -36,8 +36,8 @@ func TestGenericQueries(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run("", func(t *testing.T) {
-			s := editor.NewEditorSupport(test)
-			Nil(t, s.ParseErrors)
+			e := editor.NewEditor(test)
+			Nil(t, e.ParseErrors)
 		})
 	}
 }

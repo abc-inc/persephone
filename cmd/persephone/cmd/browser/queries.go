@@ -20,7 +20,7 @@ import (
 
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
-	. "github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 )
@@ -48,12 +48,12 @@ func Queries() {
 	t := graph.NewTypedTemplate[query](graph.GetConn())
 	qs, _, err := t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
 		return query{
-			DBURI:   "neo4j://" + MustOk(rec.Get("requestUri")).(string),
-			User:    MustOk(rec.Get("username")).(string),
-			Meta:    MustOk(rec.Get("metaData")),
-			Query:   MustOk(rec.Get("query")).(string),
-			Params:  string(Must(json.Marshal(MustOk(rec.Get("parameters"))))),
-			Elapsed: time.Duration(MustOk(rec.Get("elapsedTimeMillis")).(int64)),
+			DBURI:   "neo4j://" + internal.MustOk(rec.Get("requestUri")).(string),
+			User:    internal.MustOk(rec.Get("username")).(string),
+			Meta:    internal.MustOk(rec.Get("metaData")),
+			Query:   internal.MustOk(rec.Get("query")).(string),
+			Params:  string(internal.Must(json.Marshal(internal.MustOk(rec.Get("parameters"))))),
+			Elapsed: time.Duration(internal.MustOk(rec.Get("elapsedTimeMillis")).(int64)),
 		}
 	})
 
