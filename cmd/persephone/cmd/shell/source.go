@@ -33,15 +33,19 @@ var SourceCmd = &cobra.Command{
 }
 
 func Source(path string) {
-	f, err := os.Open(path)
-	if err != nil {
-		console.WriteErr(err)
-		return
-	}
+	var f = os.Stdin
+	if path != "-" {
+		var err error
+		f, err = os.Open(path)
+		if err != nil {
+			console.WriteErr(err)
+			return
+		}
 
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
+		defer func(f *os.File) {
+			_ = f.Close()
+		}(f)
+	}
 
 	tx, created, err := graph.GetConn().GetTransaction()
 	if err != nil {

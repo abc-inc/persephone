@@ -206,6 +206,7 @@ func connect(cmd *cobra.Command, args []string) {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	fmt.Println("run", cmd.Name(), args)
 	ll := strings.ToLower(internal.Must(cmd.Flags().GetString("log-level")))
 	if l, err := zerolog.ParseLevel(ll); err == nil {
 		zerolog.SetGlobalLevel(l)
@@ -265,7 +266,7 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	p = prompt.New(func(cyp string) { executor(cyp, cmd) },
+	p = prompt.New(func(cyp string) { console.WriteErr(executor(cyp, cmd)) },
 		completer,
 		prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
 			return breakline && in == "exit"
@@ -290,50 +291,63 @@ func runRootCmd(cmd *cobra.Command, args []string) bool {
 	} else if internal.Must(cmd.Flags().GetBool("driver-version")) {
 		driverVersionCmd()
 		return true
-	}
-
-	if len(args) > 0 && !strings.HasPrefix(args[0], ":") {
-		if err := console.Query(graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}); err != nil {
-			console.WriteErr(err)
-		}
-		return true
-	}
-	if !isatty.IsTerminal(os.Stdin.Fd()) {
+	} else if !isatty.IsTerminal(os.Stdin.Fd()) {
 		sc := bufio.NewScanner(os.Stdin)
 		for sc.Scan() {
-			if err := console.Query(graph.Request{Query: sc.Text(), Params: graph.GetConn().Params}); err != nil {
+			log.Info().Str("statement", sc.Text()).Msg("Executing")
+			if err := executor(sc.Text(), cmd); err != nil {
 				console.WriteErr(err)
+				return true
 			}
 		}
 		return true
+	} else if len(args) == 0 {
+		return false
 	}
-	return false
+
+	if strings.HasPrefix(args[0], ":") {
+		consCmd, args2, err := cmd.Root().Find(args)
+		if err != nil {
+			console.WriteErr(err)
+		} else if cmd == consCmd {
+			console.WriteErr(cmd.Usage())
+		} else {
+			console.WriteErr(runConsCmd(consCmd, strings.Join(args2, " ")))
+		}
+	} else {
+		req := graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}
+		if err := console.Query(req); err != nil {
+			console.WriteErr(err)
+		}
+	}
+	return true
 }
 
-func executor(cyp string, cmd *cobra.Command) {
+func executor(cyp string, cmd *cobra.Command) error {
+	if cyp == "" {
+		return nil
+	}
+
 	hist := repl.GetHistory()
 	if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
 		hist.Add(cyp)
-		cyp = runConsCmd(cmd, cyp)
-	}
-
-	if cyp == "" {
-		return
+		return runConsCmd(cmd, cyp)
 	}
 
 	lines = append(lines, cyp)
 	if !strings.HasSuffix(cyp, ";") {
-		return
+		return nil
 	}
 
 	cyp = strings.Join(lines, "\n")
 	lines = nil
 
 	hist.Add(cyp)
-	err := console.Query(graph.Request{Query: cyp, Params: graph.GetConn().Params})
-	if err != nil {
-		console.WriteErr(err)
+	req := graph.Request{Query: cyp, Params: graph.GetConn().Params}
+	if err := console.Query(req); err != nil {
+		return err
 	}
+	return nil
 }
 
 func completer(document prompt.Document) (ss []prompt.Suggest) {
@@ -412,15 +426,12 @@ func compConsCmd(stmt string) (res comp.Result) {
 	return
 }
 
-func runConsCmd(cmd *cobra.Command, stmt string) string {
+func runConsCmd(cmd *cobra.Command, stmt string) error {
 	args := internal.Must(shellwords.Parse(stmt))
 	cmd.Root().SetArgs(args)
 	if args[0] == ":param" {
 		args = strings.SplitN(stmt, " ", 3)
 		cmd.Root().SetArgs(args)
 	}
-	if err := cmd.Execute(); err != nil {
-		console.WriteErr(err)
-	}
-	return ""
+	return cmd.Execute()
 }
