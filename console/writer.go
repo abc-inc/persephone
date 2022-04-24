@@ -31,6 +31,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog/log"
+	"github.com/xlab/treeprint"
 )
 
 // Query executes a statement and returns the result.
@@ -43,7 +44,8 @@ func Query(r graph.Request) error {
 	return queryResult(r)
 }
 
-func queryRaw(req graph.Request) error {
+// queryRaw is like queryResult but outputs Records as they are received.
+func queryRaw(r graph.Request) error {
 	sp := NewSpinner()
 	sp.Start()
 
@@ -58,7 +60,9 @@ func queryRaw(req graph.Request) error {
 	return err
 }
 
-func queryResult(req graph.Request) error {
+// queryResult uses a TypedTemplate to execute the Request, maps each Record to
+// a Result and output them along with the ResultSummary.
+func queryResult(r graph.Request) error {
 	sp := NewSpinner()
 	sp.Start()
 
@@ -73,6 +77,7 @@ func queryResult(req graph.Request) error {
 	return err
 }
 
+// Write outputs the given value using the formatting Writer.
 func Write(i interface{}) {
 	if _, err := w.Write(i); err != nil {
 		log.Fatal().Err(err).Send()
@@ -92,6 +97,7 @@ func WriteErr(err error) {
 	color.Red(string(r) + msg[1:])
 }
 
+// WriteResult outputs the Result using a formatting Writer.
 func WriteResult(rs []graph.Result) error {
 	result, err := collectProps(rs)
 	if err != nil {
@@ -127,14 +133,58 @@ func WriteResult(rs []graph.Result) error {
 	return err
 }
 
-// writeSummary returns a summary message of the executed query.
+// writeSummary outputs a summary message of the executed query.
 func writeSummary(n int, sum neo4j.ResultSummary) {
+	if sum.Profile() != nil {
+		t := treeprint.New()
+		plan := formatPlan(t, sum.Profile())
+		lines := strings.Split(t.String(), "\n")
+		if _, ok := w.(gfmt.Tab); ok {
+			for i := range plan {
+				plan[i].Op = lines[i+1]
+			}
+		}
+		Write(plan)
+	}
 	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s\n"
 	log.Info().Msgf(sumMsg,
 		n, english.PluralWord(n, "row", "rows"),
 		sum.ResultAvailableAfter(), sum.ResultConsumedAfter())
 }
 
+// formatPlan traverses the execution plan and initializes a data structure
+// that holds all operations and metadata.
+func formatPlan(t treeprint.Tree, p neo4j.ProfiledPlan) []graph.PlanOp {
+	if len(p.Children()) == 0 {
+		t.AddNode(p.Operator())
+		n := toNode(p)
+		return []graph.PlanOp{n}
+	}
+
+	var res []graph.PlanOp
+	n := toNode(p)
+	res = append(res, n)
+	br := t.AddBranch(p.Operator())
+
+	for _, c := range p.Children() {
+		res = append(res, formatPlan(br, c)...)
+	}
+	return res
+}
+
+// toNode extracts the metadata from the plan entry.
+func toNode(p neo4j.ProfiledPlan) graph.PlanOp {
+	return graph.PlanOp{
+		Op:      p.Operator(),
+		Details: p.Identifiers(),
+		RowsEst: 0,
+		Rows:    p.Records(),
+		DBHits:  p.DbHits(),
+		Cache:   fmt.Sprintf("%d/%d", p.PageCacheHits(), p.PageCacheMisses()),
+	}
+}
+
+// collectProps extracts all properties from every result.
 func collectProps(rs []graph.Result) ([]graph.Result, error) {
 	tm := GetTmplMgr()
 	result := []graph.Result{}
@@ -243,6 +293,9 @@ func fromStructSlice(rs []graph.Result, sep, delim string) formatter.Formatter {
 	})
 }
 
+// toString converts the given value to a string using fmt.Sprint. Pointers,
+// slices and structs are formatted in a human-readable way e.g., by removing
+// brackets.
 func toString(i interface{}) string {
 	if i == nil {
 		return ""

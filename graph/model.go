@@ -94,3 +94,12 @@ type NodeRelProperty struct {
 	Type      string `json:"type"`
 	Array     bool   `json:"array"`
 }
+
+type PlanOp struct {
+	Op      string   `json:"Operator"`
+	Details []string `json:"Details"`
+	RowsEst int64    `json:"Estimated Rows"`
+	Rows    int64    `json:"Rows"`
+	DBHits  int64    `json:"DB Hits"`
+	Cache   string   `json:"Page Cache Hits/Misses"`
+}
