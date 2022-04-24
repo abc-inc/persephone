@@ -187,7 +187,7 @@ func (c Conn) listFuncs(cyp string) (funcs []Func, err error) {
 func (c *Conn) Username() string {
 	if c.user == "" {
 		u, err := NewTypedTemplate[string](c).QuerySingle(
-			"CALL dbms.showCurrentUser()", nil, NewSingleColumnRowMapper[string]())
+			"CALL dbms.showCurrentUser()", nil, NewSingleValueMapper[string](0))
 		c.user = internal.Must(u, err)
 	}
 	return c.user

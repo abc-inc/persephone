@@ -46,7 +46,8 @@ var QueriesCmd = &cobra.Command{
 
 func Queries() {
 	t := graph.NewTypedTemplate[query](graph.GetConn())
-	qs, _, err := t.Query("CALL dbms.listQueries()", nil, func(rec *neo4j.Record) query {
+	r := graph.Request{Query: "CALL dbms.listQueries()"}
+	qs, _, err := t.Query(r, func(rec *neo4j.Record) query {
 		return query{
 			DBURI:   "neo4j://" + internal.MustOk(rec.Get("requestUri")).(string),
 			User:    internal.MustOk(rec.Get("username")).(string),

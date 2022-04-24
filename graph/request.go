@@ -14,31 +14,46 @@
 
 package graph
 
-import (
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
-)
+import "github.com/neo4j/neo4j-go-driver/v4/neo4j"
 
+// Request is a Cypher query and bind parameters.
 type Request struct {
 	Query  string
 	Params map[string]interface{}
 }
 
-type RowMapper[T any] func(rec *neo4j.Record) T
+// String returns the Cypher query.
+func (r Request) String() string {
+	return r.Query
+}
 
-func NewSingleColumnRowMapper[T any]() RowMapper[T] {
+// Mapper is used by TypedTemplate for mapping results on a per-record basis.
+// Implementations of this type perform the actual work of mapping each Record
+// to a type, but don't need to worry about error handling. Errors will be
+// handled by the calling TypedTemplate.
+type Mapper[T any] func(rec *neo4j.Record) T
+
+// NewSingleValueMapper creates a new Mapper that converts a single column into
+// a single result value per record. The type of the result value for each
+// record can be specified. The value for the single column will be extracted
+// from the Record and cast to the specified target type.
+func NewSingleValueMapper[T any](idx int) Mapper[T] {
 	return func(rec *neo4j.Record) T {
-		return rec.Values[0].(T)
+		return rec.Values[idx].(T)
 	}
 }
 
-func NewResultRowMapper() RowMapper[Result] {
+// NewResultMapper creates a new Mapper that converts Records to Results.
+// For each Node and Relationship, its properties are extracted into a map.
+// Additionally, IDs, labels and types are added so that specific modifications
+// can be applied by the caller.
+func NewResultMapper() Mapper[Result] {
 	return func(rec *neo4j.Record) (m Result) {
 		for i, k := range rec.Keys {
 			if n, ok := rec.Values[i].(neo4j.Node); ok {
 				m2 := mapNode(n)
 				m.Add(k, m2)
-			} else if r, ok := rec.Values[i].(dbtype.Relationship); ok {
+			} else if r, ok := rec.Values[i].(neo4j.Relationship); ok {
 				m2 := mapRel(r)
 				m.Add(k, m2)
 			} else {
@@ -49,7 +64,9 @@ func NewResultRowMapper() RowMapper[Result] {
 	}
 }
 
-func NewRawResultRowMapper() RowMapper[map[string]interface{}] {
+// NewRawResultMapper creates a new Mapper that extracts all columns to
+// key-value pairs as they are returned.
+func NewRawResultMapper() Mapper[map[string]interface{}] {
 	return func(rec *neo4j.Record) map[string]interface{} {
 		m := make(map[string]interface{})
 		for i, k := range rec.Keys {
@@ -59,6 +76,8 @@ func NewRawResultRowMapper() RowMapper[map[string]interface{}] {
 	}
 }
 
+// mapNode extracts all properties from the given Node.
+// Additionally, it adds "ID", "Labels" and the primary label as "Label".
 func mapNode(n neo4j.Node) map[string]interface{} {
 	m := make(map[string]interface{})
 	for pk, pv := range n.Props {
@@ -70,6 +89,8 @@ func mapNode(n neo4j.Node) map[string]interface{} {
 	return m
 }
 
+// mapRel extracts all properties from the given Relationship.
+// Additionally, it adds "ID", "StartID", "EndID" and "Type".
 func mapRel(r neo4j.Relationship) map[string]interface{} {
 	n := make(map[string]interface{})
 	for pk, pv := range r.Props {

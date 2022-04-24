@@ -39,6 +39,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -53,10 +54,11 @@ var rootCmd = &cobra.Command{
 	Short: `A command line shell where you can execute Cypher against an instance of Neo4j. ` +
 		`By default the shell is interactive but you can use it for scripting ` +
 		`by passing Cypher directly on the command line or by piping a file with Cypher statements.`,
-	Long:             ``,
-	PersistentPreRun: connect,
-	Run:              run,
-	TraverseChildren: true,
+	Long:              ``,
+	PersistentPreRun:  connect,
+	Run:               run,
+	PersistentPostRun: resetFlags,
+	TraverseChildren:  true,
 }
 
 var lines []string
@@ -90,8 +92,10 @@ func init() {
 		browser.ChangePassCmd,
 		browser.ClearCmd,
 		browser.ConfigCmd,
+		browser.DBsCmd,
 		browser.QueriesCmd,
 		browser.SchemaCmd,
+		browser.StatusCmd,
 		browser.SysinfoCmd,
 		persephone.FormatCmd,
 		persephone.IssueCmd,
@@ -206,7 +210,6 @@ func connect(cmd *cobra.Command, args []string) {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	fmt.Println("run", cmd.Name(), args)
 	ll := strings.ToLower(internal.Must(cmd.Flags().GetString("log-level")))
 	if l, err := zerolog.ParseLevel(ll); err == nil {
 		zerolog.SetGlobalLevel(l)
@@ -315,8 +318,8 @@ func runRootCmd(cmd *cobra.Command, args []string) bool {
 			console.WriteErr(runConsCmd(consCmd, strings.Join(args2, " ")))
 		}
 	} else {
-		req := graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}
-		if err := console.Query(req); err != nil {
+		r := graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}
+		if err := console.Query(r); err != nil {
 			console.WriteErr(err)
 		}
 	}
@@ -343,8 +346,8 @@ func executor(cyp string, cmd *cobra.Command) error {
 	lines = nil
 
 	hist.Add(cyp)
-	req := graph.Request{Query: cyp, Params: graph.GetConn().Params}
-	if err := console.Query(req); err != nil {
+	r := graph.Request{Query: cyp, Params: graph.GetConn().Params}
+	if err := console.Query(r); err != nil {
 		return err
 	}
 	return nil
@@ -433,5 +436,16 @@ func runConsCmd(cmd *cobra.Command, stmt string) error {
 		args = strings.SplitN(stmt, " ", 3)
 		cmd.Root().SetArgs(args)
 	}
-	return cmd.Execute()
+	err := cmd.Execute()
+	resetFlags(cmd, args)
+	return err
+}
+
+func resetFlags(cmd *cobra.Command, _ []string) {
+	if cmd == cmd.Root() {
+		return
+	}
+	cmd.LocalFlags().VisitAll(func(f *pflag.Flag) {
+		internal.MustNoErr(f.Value.Set(f.DefValue))
+	})
 }

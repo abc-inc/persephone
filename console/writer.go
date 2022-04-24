@@ -34,13 +34,13 @@ import (
 )
 
 // Query executes a statement and returns the result.
-func Query(req graph.Request) error {
-	log.Debug().Str("statement", req.Query).Fields(req.Params).Msg("Executing")
+func Query(r graph.Request) error {
+	log.Debug().Str("statement", r.Query).Fields(r.Params).Msg("Executing")
 
 	if FormatName() == "raw" || FormatName() == "rawc" {
-		return queryRaw(req)
+		return queryRaw(r)
 	}
-	return queryResult(req)
+	return queryResult(r)
 }
 
 func queryRaw(req graph.Request) error {
@@ -48,7 +48,7 @@ func queryRaw(req graph.Request) error {
 	sp.Start()
 
 	t := graph.NewTypedTemplate[map[string]interface{}](graph.GetConn())
-	ms, sum, err := t.Query(req.Query, req.Params, graph.NewRawResultRowMapper())
+	ms, sum, err := t.Query(r, graph.NewRawResultMapper())
 
 	sp.Stop()
 	if err == nil {
@@ -63,7 +63,7 @@ func queryResult(req graph.Request) error {
 	sp.Start()
 
 	t := graph.NewTypedTemplate[graph.Result](graph.GetConn())
-	rs, sum, err := t.Query(req.Query, graph.GetConn().Params, graph.NewResultRowMapper())
+	rs, sum, err := t.Query(r, graph.NewResultMapper())
 
 	sp.Stop()
 	if err == nil {

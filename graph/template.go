@@ -23,23 +23,36 @@ import (
 var errEmpty = errors.New("empty")
 var errMultiple = errors.New("multiple")
 
+// Template simplifies the use of Neo4j and helps to avoid common errors.
+// It executes core Neo4j workflow, leaving application code to provide Cypher
+// and extract results. Template executes Cypher queries or updates, initiating
+// iteration over Results and catching errors. Callers need only to implement
+// callback functions, giving them a clearly defined contract.
+// All Neo4j operations performed are logged at debug level, using the Logger.
 type Template struct {
 	conn *Conn
 }
 
+// TypedTemplate is an instantiated Template for a specific type.
 type TypedTemplate[T any] struct {
 	Template
 }
 
+// NewTemplate creates a new Template with the given Conn.
 func NewTemplate(conn *Conn) *Template {
 	return &Template{conn}
 }
 
+// NewTypedTemplate creates a new TypedTemplate with the given Conn.
 func NewTypedTemplate[T any](conn *Conn) *TypedTemplate[T] {
 	return &TypedTemplate[T]{Template: *NewTemplate(conn)}
 }
 
-func (t TypedTemplate[T]) Query(cyp string, args map[string]interface{}, rm RowMapper[T]) (
+// Query executes the given Cypher with list of parameters to bind to the query,
+// mapping each record to a value via a RowMapper. If there is no Transaction
+// on this Session, then an explicit transaction is started and committed
+// afterwards.
+func (t TypedTemplate[T]) Query(r Request, m Mapper[T]) (
 	list []T, summary neo4j.ResultSummary, err error) {
 
 	tx, created, err := t.conn.GetTransaction()
@@ -51,13 +64,13 @@ func (t TypedTemplate[T]) Query(cyp string, args map[string]interface{}, rm RowM
 		}(tx)
 	}
 
-	res, err := tx.Run(cyp, args)
+	res, err := tx.Run(r.Query, r.Params)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	for res.Next() {
-		list = append(list, rm(res.Record()))
+		list = append(list, m(res.Record()))
 	}
 	summary, _ = res.Consume()
 
@@ -67,7 +80,12 @@ func (t TypedTemplate[T]) Query(cyp string, args map[string]interface{}, rm RowM
 	return list, summary, err
 }
 
-func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, rm RowMapper[T]) (val T, err error) {
+// QuerySingle is like Query, but maps a exactly one result record to a value
+// via a Mapper. If the query does not return exactly one record, an error is
+// returned.
+func (t TypedTemplate[T]) QuerySingle(
+	cyp string, params map[string]interface{}, m Mapper[T]) (val T, err error) {
+
 	tx, created, err := t.conn.GetTransaction()
 	if err != nil {
 		return val, err
@@ -77,14 +95,14 @@ func (t TypedTemplate[T]) QuerySingle(cyp string, args map[string]interface{}, r
 		}(t.conn)
 	}
 
-	res, err := tx.Run(cyp, args)
+	res, err := tx.Run(cyp, params)
 	if err != nil {
 		return val, err
 	} else if !res.Next() {
 		return val, errEmpty
 	}
 
-	val = rm(res.Record())
+	val = m(res.Record())
 	if res.Next() {
 		return val, errMultiple
 	}

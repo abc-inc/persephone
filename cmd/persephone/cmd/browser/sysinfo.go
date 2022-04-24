@@ -62,7 +62,8 @@ func SysInfo() {
 
 func ListDBs() []DBInfo {
 	t := graph.NewTypedTemplate[DBInfo](graph.GetConn())
-	dbs, _ := internal.MustTuple(t.Query("SHOW DATABASES", nil, func(rec *neo4j.Record) DBInfo {
+	r := graph.Request{Query: "SHOW DATABASES"}
+	dbs, _ := internal.MustTuple(t.Query(r, func(rec *neo4j.Record) DBInfo {
 		return DBInfo{
 			Name:    internal.MustOk(rec.Get("name")).(string),
 			Address: internal.MustOk(rec.Get("address")).(string),

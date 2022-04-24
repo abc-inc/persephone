@@ -49,7 +49,8 @@ func Schema() {
 		"ORDER BY `Index Name`;"
 
 	t := graph.NewTypedTemplate[index](graph.GetConn())
-	idxs, _ := internal.MustTuple(t.Query(cyp, nil, func(rec *neo4j.Record) index {
+	r := graph.Request{Query: cyp}
+	idxs, _ := internal.MustTuple(t.Query(r, func(rec *neo4j.Record) index {
 		ls := internal.MustOk(rec.Get("LabelsOrTypes")).([]interface{})
 		ps := internal.MustOk(rec.Get("Properties")).([]interface{})
 
