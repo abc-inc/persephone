@@ -24,6 +24,7 @@ type Metadata struct {
 	Props []string
 }
 
+// apocMetaGraph examines a subset of the graph to provide meta information.
 func apocMetaGraph(c Conn, m Metadata) Metadata {
 	res, err := c.Session().Run("CALL apoc.meta.schema", nil)
 	if err != nil {

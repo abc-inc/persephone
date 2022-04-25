@@ -35,10 +35,9 @@ func (a authSchema) String() string {
 	return []string{"none", "basic", "kerberos", "bearer"}[a]
 }
 
-// Auth parses the credentials and creates a new AuthToken.
-// An auth token shall be prefixed with a colon ":" to designate its type.
-// If it does not contain a valid authentication scheme, it falls back to
-// Basic authentication.
+// Auth parses the credentials and creates a new AuthToken. The credentials
+// shall be prefixed with a colon (":") to designate the type. If it does not
+// contain a valid authentication scheme, it falls back to Basic authentication.
 func Auth(cred string) (neo4j.AuthToken, string) {
 	typ, c, _ := strings.Cut(cred, ":")
 	switch typ {

@@ -53,6 +53,7 @@ func (r *Result) Value(key string) (interface{}, bool) {
 	return r.Values[idx], true
 }
 
+// Node describes the metamodel of a kind of nodes.
 type Node struct {
 	Count         int64 `json:"count"`
 	Relationships map[string]RelProperty
@@ -61,16 +62,19 @@ type Node struct {
 	Labels        []string `json:"labels"`
 }
 
+// String returns the labels of the Node.
 func (n Node) String() string {
 	return ":" + strings.Join(n.Labels, ":")
 }
 
+// Relationship describes the metamodel of a kind of relationships.
 type Relationship struct {
 	Count      int64                      `json:"count"`
 	Type       string                     `json:"type"`
 	Properties map[string]NodeRelProperty `json:"properties"`
 }
 
+// String returns the relationship type.
 func (r Relationship) String() string {
 	return r.Type
 }

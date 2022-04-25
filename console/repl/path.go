@@ -23,23 +23,29 @@ import (
 	"time"
 )
 
+// PathComp returns directory entries matching the given path prefix. The path
+// before the last path separator is used as base directory. If path is not
+// absolute, then the path is resolved relatively to the working directory.
+// If an I/O error occurs, no items are returned.
 func PathComp(path string) []Item {
 	if path == "" {
 		path = "./"
 	}
 
-	lastSepIdx := strings.LastIndex(path, "/")
-	if lastSepIdx == -1 || (!filepath.IsAbs(path) && !strings.HasPrefix(path, "./")) {
+	idx := strings.LastIndex(path, "/")
+	if idx == -1 || (!filepath.IsAbs(path) && !strings.HasPrefix(path, "./")) {
 		path = "./" + path
-		lastSepIdx += 2
+		idx += 2
 	}
 
-	return findFromPrefix(path, lastSepIdx)
+	return findFromPrefix(path, idx)
 }
 
-func findFromPrefix(path string, lastSepIdx int) (is []Item) {
+// findFromPrefix returns files and directories matching the given path prefix.
+// If path is not a directory, then the last path segment is used as a filter.
+func findFromPrefix(path string, idx int) (is []Item) {
 	var filter string
-	if lastSepIdx != len(path)-1 || !isDir(path) {
+	if idx != len(path)-1 || !isDir(path) {
 		// path does not end with /
 		// it might be directory or incomplete name - try parent directory
 		filter = filepath.Base(path)
@@ -68,10 +74,13 @@ func findFromPrefix(path string, lastSepIdx int) (is []Item) {
 	return
 }
 
+// fileDetails returns file size in bytes and modification time formatted as
+// human-readable string.
 func fileDetails(fi fs.FileInfo) string {
 	return fmt.Sprintf("%8d %s", fi.Size(), fi.ModTime().Format(time.Stamp))
 }
 
+// isDir reports whether path is a directory.
 func isDir(path string) bool {
 	s, err := os.Stat(path)
 	return err == nil && s.IsDir()

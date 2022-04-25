@@ -37,6 +37,7 @@ func Pwd(msg string) (res string) {
 	return
 }
 
+// icons configures the IconSet used when prompting the user for input.
 func icons(set *survey.IconSet) {
 	set.Question.Text = "Enter"
 	set.Question.Format = ""

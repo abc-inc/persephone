@@ -20,8 +20,11 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
-var errEmpty = errors.New("empty")
-var errMultiple = errors.New("multiple")
+// ErrEmpty indicates that a query returned no result.
+var ErrEmpty = errors.New("empty")
+
+// ErrMultiple indicates that a query returned more Records than expected.
+var ErrMultiple = errors.New("multiple")
 
 // Template simplifies the use of Neo4j and helps to avoid common errors.
 // It executes core Neo4j workflow, leaving application code to provide Cypher
@@ -99,12 +102,12 @@ func (t TypedTemplate[T]) QuerySingle(
 	if err != nil {
 		return val, err
 	} else if !res.Next() {
-		return val, errEmpty
+		return val, ErrEmpty
 	}
 
 	val = m(res.Record())
 	if res.Next() {
-		return val, errMultiple
+		return val, ErrMultiple
 	}
 
 	if created {

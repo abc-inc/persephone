@@ -24,6 +24,7 @@ import (
 
 const systemDB = "system"
 
+// defConn holds the default database connection.
 var defConn *Conn
 
 // Conn represents a database connection, which can open multiple Sessions.
@@ -41,7 +42,7 @@ func IsConnected() bool {
 	return defConn != nil && defConn.DBName != ""
 }
 
-// GetConn returns the default connection, regardless of it's connection state.
+// GetConn returns the default connection, regardless of its connection state.
 // It panics if there is no connection.
 func GetConn() *Conn {
 	if defConn == nil {
@@ -69,7 +70,7 @@ func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Con
 	return conn
 }
 
-// Close the driver and all underlaying connections.
+// Close the driver and all underlying connections.
 func (c *Conn) Close() (err error) {
 	if c.Driver != nil {
 		if err = c.Driver.Close(); err == nil {
@@ -87,7 +88,7 @@ func (c Conn) Session() neo4j.Session {
 	return c.Driver.NewSession(cfg)
 }
 
-// GetTransaction returns the current Transaction ocr creates a new one.
+// GetTransaction returns the current Transaction or creates a new one.
 func (c *Conn) GetTransaction() (tx neo4j.Transaction, created bool, err error) {
 	if c.Tx == nil {
 		c.Tx, err = c.Session().BeginTransaction()
@@ -116,6 +117,7 @@ func (c *Conn) Rollback() (done bool, err error) {
 	return
 }
 
+// UseDB permanently changes the database.
 func (c *Conn) UseDB(dbName string) (err error) {
 	if _, err = c.Rollback(); err != nil {
 		return err
@@ -184,6 +186,7 @@ func (c Conn) listFuncs(cyp string) (funcs []Func, err error) {
 	return
 }
 
+// Username returns the username used to connect to the database.
 func (c *Conn) Username() string {
 	if c.user == "" {
 		u, err := NewTypedTemplate[string](c).QuerySingle(
