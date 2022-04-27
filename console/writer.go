@@ -18,6 +18,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"text/tabwriter"
@@ -27,9 +28,11 @@ import (
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
 	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/dustin/go-humanize/english"
 	"github.com/fatih/color"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/treeprint"
 )
@@ -55,6 +58,7 @@ func queryRaw(r graph.Request) error {
 	sp.Stop()
 	if err == nil {
 		Write(ms)
+		fmt.Println()
 		writeSummary(len(ms), sum)
 	}
 	return err
@@ -72,6 +76,7 @@ func queryResult(r graph.Request) error {
 	sp.Stop()
 	if err == nil {
 		err = WriteResult(rs)
+		fmt.Println()
 		writeSummary(len(rs), sum)
 	}
 	return err
@@ -135,16 +140,41 @@ func WriteResult(rs []graph.Result) error {
 
 // writeSummary outputs a summary message of the executed query.
 func writeSummary(n int, sum neo4j.ResultSummary) {
+	writeNotifications(sum.Notifications())
+
 	if sum.Profile() != nil {
 		t := treeprint.New()
-		plan := formatPlan(t, sum.Profile())
+		plan := formatPlan(t, sum.Plan(), sum.Profile())
+		planStats := graph.PlanStats{
+			Plan:      "PROFILE",
+			Statement: graph.StmtType(sum.StatementType()),
+			Version:   sum.Profile().Arguments()["version"].(string),
+			Planner:   sum.Profile().Arguments()["planner"].(string),
+			Runtime:   sum.Profile().Arguments()["runtime"].(string),
+			Time:      (sum.ResultAvailableAfter() + sum.ResultConsumedAfter()).Milliseconds(),
+			DBHits:    0,
+			Rows:      int64(n),
+			Memory:    sum.Profile().Arguments()["GlobalMemory"].(int64),
+		}
+		for _, p := range plan {
+			planStats.DBHits += p.DBHits
+		}
+
 		lines := strings.Split(t.String(), "\n")
-		if _, ok := w.(gfmt.Tab); ok {
+		if _, ok := w.(*gfmt.JSON); ok {
+			plan = []*graph.PlanOp{plan[0]}
+		} else if _, ok := w.(*gfmt.YAML); ok {
+			plan = []*graph.PlanOp{plan[0]}
+		} else {
 			for i := range plan {
 				plan[i].Op = lines[i+1]
+				plan[i].Children = nil
 			}
 		}
+		Write([]graph.PlanStats{planStats})
+		fmt.Println()
 		Write(plan)
+		fmt.Println()
 	}
 	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s\n"
 	log.Info().Msgf(sumMsg,
@@ -152,35 +182,61 @@ func writeSummary(n int, sum neo4j.ResultSummary) {
 		sum.ResultAvailableAfter(), sum.ResultConsumedAfter())
 }
 
-// formatPlan traverses the execution plan and initializes a data structure
-// that holds all operations and metadata.
-func formatPlan(t treeprint.Tree, p neo4j.ProfiledPlan) []graph.PlanOp {
-	if len(p.Children()) == 0 {
-		t.AddNode(p.Operator())
-		n := toNode(p)
-		return []graph.PlanOp{n}
+func writeNotifications(ns []neo4j.Notification) {
+	if len(ns) == 0 {
+		return
 	}
 
-	var res []graph.PlanOp
-	n := toNode(p)
-	res = append(res, n)
-	br := t.AddBranch(p.Operator())
+	for _, n := range ns {
+		var e *zerolog.Event
+		switch n.Severity() {
+		case "INFORMATION":
+			e = log.Info()
+		case "WARNING":
+			e = log.Warn()
+		default:
+			e = log.Error()
+		}
+		e.Str("description", n.Description()).Msg(n.Title())
+	}
+	fmt.Println()
+}
 
-	for _, c := range p.Children() {
-		res = append(res, formatPlan(br, c)...)
+// formatPlan traverses the execution plan and initializes a data structure
+// that holds all operations and metadata.
+func formatPlan(t treeprint.Tree, p neo4j.Plan, pp neo4j.ProfiledPlan) []*graph.PlanOp {
+	if len(pp.Children()) == 0 {
+		n := toNode(p, pp)
+		t.AddNode(n.Op)
+		return []*graph.PlanOp{n}
+	}
+
+	var res []*graph.PlanOp
+	n := toNode(p, pp)
+	res = append(res, n)
+	br := t.AddBranch(n.Op)
+
+	for _, c := range pp.Children() {
+		xs := formatPlan(br, nil, c)
+		n.Children = append(n.Children, xs[0])
+		res = append(res, xs...)
 	}
 	return res
 }
 
 // toNode extracts the metadata from the plan entry.
-func toNode(p neo4j.ProfiledPlan) graph.PlanOp {
-	return graph.PlanOp{
-		Op:      p.Operator(),
-		Details: p.Identifiers(),
-		RowsEst: 0,
-		Rows:    p.Records(),
-		DBHits:  p.DbHits(),
-		Cache:   fmt.Sprintf("%d/%d", p.PageCacheHits(), p.PageCacheMisses()),
+func toNode(p neo4j.Plan, pp neo4j.ProfiledPlan) *graph.PlanOp {
+	op, _, _ := strings.Cut(pp.Operator(), "@")
+	return &graph.PlanOp{
+		Op:          op,
+		Details:     internal.NilToZero[string](pp.Arguments()["Details"]),
+		RowsEst:     int64(math.Round(pp.Arguments()["EstimatedRows"].(float64))),
+		Rows:        pp.Records(),
+		DBHits:      pp.DbHits(),
+		Memory:      internal.NilToZero[int64](pp.Arguments()["Memory"]),
+		CacheHits:   pp.PageCacheHits(),
+		CacheMisses: pp.PageCacheMisses(),
+		Order:       internal.NilToZero[string](pp.Arguments()["Order"]),
 	}
 }
 

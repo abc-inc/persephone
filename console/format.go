@@ -20,6 +20,7 @@ import (
 
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
+	"github.com/abc-inc/gutenfmt/meta"
 	"github.com/abc-inc/persephone/event"
 	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog/log"
@@ -27,6 +28,10 @@ import (
 
 var fmtName string
 var w gfmt.Writer
+
+func init() {
+	meta.Resolve = meta.TagResolver{TagName: "table"}.Lookup
+}
 
 // ChangeFmt creates a new Writer.
 func ChangeFmt(f string) {

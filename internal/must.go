@@ -56,3 +56,13 @@ func MustTuple[A any, B any](a A, b B, err error) (A, B) {
 	MustNoErr(err)
 	return a, b
 }
+
+// NilToZero returns the zero value of type T, if the argument is nil.
+// Otherwise, it casts the value and returns the value.
+// Note that this function panics if the value cannot be cast to type T.
+func NilToZero[T any](i any) (ret T) {
+	if i != nil {
+		return i.(T)
+	}
+	return
+}

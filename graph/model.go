@@ -15,8 +15,11 @@
 package graph
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/dustin/go-humanize/english"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/db"
 )
 
@@ -99,11 +102,51 @@ type NodeRelProperty struct {
 	Array     bool   `json:"array"`
 }
 
+type StmtType neo4j.StatementType
+
+func (s StmtType) String() string {
+	return []string{"UNKNOWN", "READ_ONLY", "READ_WRITE", "WRITE_ONLY", "SCHEMA_WRITE"}[s]
+}
+
+func (s StmtType) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + s.String() + "\""), nil
+}
+
+func (s StmtType) MarshalYAML() (interface{}, error) {
+	return s.String(), nil
+}
+
+type PlanStats struct {
+	Plan      string   `json:"plan" yaml:"plan" table:"Plan"`
+	Statement StmtType `json:"queryType" yaml:"queryType" table:"Statement"`
+	Version   string   `json:"version" yaml:"version" table:"Version"`
+	Planner   string   `json:"planner" yaml:"planner" table:"Planner"`
+	Runtime   string   `json:"runtime" yaml:"runtime" table:"Runtime"`
+	Time      int64    `json:"time" yaml:"time" table:"Time"`
+	DBHits    int64    `json:"dbHits" yaml:"dbHits" table:"DB Hits"`
+	Rows      int64    `json:"rows" yaml:"rows" table:"rows"`
+	Memory    int64    `json:"memory" yaml:"memory" table:"Memory (Bytes)"`
+}
+
+func (p PlanStats) String() string {
+	return fmt.Sprintf("%s (%d ms, %d rows, %d DB hits)", p.Plan, p.Time, p.Rows, p.DBHits)
+}
+
 type PlanOp struct {
-	Op      string   `json:"Operator"`
-	Details []string `json:"Details"`
-	RowsEst int64    `json:"Estimated Rows"`
-	Rows    int64    `json:"Rows"`
-	DBHits  int64    `json:"DB Hits"`
-	Cache   string   `json:"Page Cache Hits/Misses"`
+	Op          string    `json:"operatorType" yaml:"operatorType" table:"Operator"`
+	Details     string    `json:"details,omitempty" yaml:"details,omitempty" table:"Details,omitempty"`
+	RowsEst     int64     `json:"estimatedRows" yaml:"estimatedRows" table:"Estimated Rows"`
+	Rows        int64     `json:"rows" yaml:"rows" table:"Rows"`
+	DBHits      int64     `json:"dbHits" yaml:"dbHits" table:"DB Hits"`
+	Memory      int64     `json:"memory" yaml:"memory" table:"Memory (Bytes)"`
+	CacheHits   int64     `json:"pageCacheHits" yaml:"pageCacheHits" table:"Cache Hits"`
+	CacheMisses int64     `json:"pageCacheMisses" yaml:"pageCacheMisses" table:"Cache Misses"`
+	Order       string    `json:"order,omitempty" yaml:"order,omitempty" table:"Ordered by,omitempty"`
+	Children    []*PlanOp `json:"children,omitempty" yaml:"children,omitempty" table:"-"`
+}
+
+func (p PlanOp) String() string {
+	return fmt.Sprintf("%s (%d %s, %d DB %s)", p.Op,
+		p.Rows, english.PluralWord(int(p.Rows), "row", ""),
+		p.DBHits, english.PluralWord(int(p.DBHits), "hit", ""))
 }
