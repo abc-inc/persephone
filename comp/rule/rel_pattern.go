@@ -23,7 +23,8 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-// If we are in relationship pattern then return variables and types
+// ruleRelationshipPattern checks if we are in relationship pattern, and then
+// returns variables and types.
 func ruleRelationshipPattern(e antlr.ParseTree) []Info {
 	parent := ast.FindParent(e, reflect.TypeOf(parser.RelationshipPatternContext{}))
 	if parent == nil {

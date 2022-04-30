@@ -24,18 +24,19 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// rulePropInMapLiteral checks whether we are in a map, and then returns
+// parameter and/or property key completion.
 func rulePropInMapLiteral(e antlr.ParseTree) []Info {
-	mapLitContext := ast.FindParent(e, reflect.TypeOf(parser.MapLiteralContext{}))
-	propContext := ast.FindParent(e, reflect.TypeOf(parser.PropertiesContext{}))
-
-	if mapLitContext != nil {
+	mapLitCtx := ast.FindParent(e, reflect.TypeOf(parser.MapLiteralContext{}))
+	if mapLitCtx != nil {
 		if e.GetText() == "}" {
 			return nil
 		}
 		return []Info{{Type: types.PropertyKey}}
 	}
 
-	if propContext != nil {
+	propCtx := ast.FindParent(e, reflect.TypeOf(parser.PropertiesContext{}))
+	if propCtx != nil {
 		if e.GetText() == "}" || strings.TrimSpace(e.GetText()) == "" {
 			return nil
 		}

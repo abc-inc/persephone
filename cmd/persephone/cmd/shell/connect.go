@@ -54,8 +54,6 @@ func Connect(user, pass, db string) {
 		return
 	}
 
-	addr := viper.GetString("address")
-
 	if isatty.IsTerminal(os.Stdin.Fd()) {
 		if user == "" {
 			user, pass = console.Input("username:", "neo4j"), ""
@@ -65,6 +63,7 @@ func Connect(user, pass, db string) {
 		}
 	}
 
+	addr := viper.GetString("address")
 	log.Info().Str("db", db).Str("addr", addr).Str("user", user).
 		Msg("Connecting to Neo4j database")
 	_ = graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db)

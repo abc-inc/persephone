@@ -21,6 +21,7 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// Item is completion candidate of a certain type.
 type Item struct {
 	Type    types.Type `json:"type"`
 	View    string     `json:"view"`
@@ -28,37 +29,45 @@ type Item struct {
 	Postfix string     `json:"postfix"`
 }
 
+// String returns a text representation of this completion item.
 func (i Item) String() string {
 	return fmt.Sprintf("%s(%s):%s", i.Type, i.View, i.Content)
 }
 
+// LineCol represents the position of a character in a multi-line string.
 type LineCol struct {
 	Line, Col int
 }
 
+// String returns "(line,column)".
 func (l LineCol) String() string {
 	return fmt.Sprintf("(%d,%d)", l.Line, l.Col)
 }
 
+// Range represents the position range of a substring in a multi-line string.
 type Range struct {
 	From, To LineCol
 }
 
+// String returns "[(fromLine,fromColumn),(toLine,toColumn)]".
 func (r Range) String() string {
 	return fmt.Sprintf("[%d,%d]", r.From, r.To)
 }
 
+// Filter is used limit the replacement range in a longer input string.
 type Filter struct {
 	FilterText string
 	Start      int
 	Stop       int
 }
 
+// Result holds the completion candidates and their insert position.
 type Result struct {
 	Items []Item
 	Range Range
 }
 
+// Info lists all completion types, which are allowed at a certain position.
 type Info struct {
 	Element antlr.Tree
 	Query   antlr.Tree

@@ -14,10 +14,13 @@
 
 package editor
 
+// PosConv provides line and column info for absolute positions in a multi-line
+// string and vice versa.
 type PosConv struct {
 	newLines []int
 }
 
+// NewPosConv splits the given input line by line and indexes their position.
 func NewPosConv(input string) *PosConv {
 	pc := &PosConv{}
 	for i, s := range input {
@@ -28,6 +31,7 @@ func NewPosConv(input string) *PosConv {
 	return pc
 }
 
+// ToAbsolute calculates the absolute position of line and column.
 func (pc PosConv) ToAbsolute(line, column int) int {
 	if line < 2 {
 		return column
@@ -35,6 +39,7 @@ func (pc PosConv) ToAbsolute(line, column int) int {
 	return pc.newLines[line-2] + column + 1
 }
 
+// ToRelative determines line and column for a given position.
 func (pc PosConv) ToRelative(abs int) (int, int) {
 	for i := len(pc.newLines) - 1; i >= 0; i-- {
 		column := abs - pc.newLines[i]

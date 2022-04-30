@@ -21,8 +21,11 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// Parse creates a ParseTree from the given input and collects RuleContext
+// nodes for post-processing. The returned Providers hold references to specific
+// elements encountered during the tree traversal.
 func Parse(input string) (antlr.ParseTree, *ref.Listener, *ErrorListener, map[string]ref.Provider) {
-	refListener := ref.NewRefListener()
+	refListener := ref.NewListener()
 	errListener := &ErrorListener{}
 	chars := antlr.NewInputStream(input)
 	lexer := parser.NewCypherLexer(chars)

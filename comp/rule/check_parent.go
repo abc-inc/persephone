@@ -37,6 +37,8 @@ var childToParent = map[string]types.Type{
 	lang.RelationshipTypesContext:             types.RelationshipType,
 }
 
+// ruleSpecificParent checks that the ParseTree element is inside a specific
+// parent context.
 func ruleSpecificParent(e antlr.ParseTree) []Info {
 	ctxNames := make([]string, len(childToParent))
 	for name := range childToParent {

@@ -14,6 +14,7 @@
 
 package types
 
+// Type designates the type of completion, such as keyword.
 type Type int
 
 const (
@@ -32,6 +33,7 @@ const (
 	Noop
 )
 
+// String returns the name of this Type.
 func (t Type) String() string {
 	return []string{
 		"keyword", "label", "variable", "parameter", "propertyKey", "relationshipType",

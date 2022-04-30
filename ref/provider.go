@@ -19,6 +19,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// Provider is like a flattened representation of the ParseTree.
 type Provider struct {
 	Queries []parser.CypherQueryContext
 

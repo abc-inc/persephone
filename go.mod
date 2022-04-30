@@ -24,6 +24,7 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
 	github.com/xlab/treeprint v1.1.0
+	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
 )
 
 require (

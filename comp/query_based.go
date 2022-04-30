@@ -22,14 +22,18 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// QueryBased completion provides Items based on the input text.
 type QueryBased struct {
 	refProvs map[string]ref.Provider
 }
 
+// NewQueryBased creates a new QueryBased completer using the given Providers.
 func NewQueryBased(refProvs map[string]ref.Provider) *QueryBased {
 	return &QueryBased{refProvs: refProvs}
 }
 
+// Complete returns all variables from the entire CypherQueryContext.
+// If variables are not requested, an empty result is returned.
 func (q QueryBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
 	if query == nil {
 		return is

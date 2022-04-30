@@ -19,15 +19,19 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// Rule is a function that analyzes the given ParseTree and returns info about
+// the supported completion types at a certain position.
 type Rule func(e antlr.ParseTree) []Info
 
+// Info holds the result of a Rule evaluation.
 type Info struct {
 	Type  types.Type
 	Path  []string
 	Found bool
 }
 
-// OrderedRules are sorted starting with specific ones, and finishing with more generic ones.
+// OrderedRules are sorted starting with specific ones, and finishing with more
+// generic ones.
 var OrderedRules = []Rule{
 	ruleNoop,
 	ruleVariableInExpressionPossibleFunction,

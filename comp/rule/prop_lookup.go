@@ -20,6 +20,8 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// rulePropertyLookup checks whether we are in any property context, and then
+// returns property key completion.
 func rulePropertyLookup(e antlr.ParseTree) []Info {
 	if parentCtx := e.GetParent(); parentCtx != nil {
 		if lookupCtx := parentCtx.GetParent(); lookupCtx != nil {

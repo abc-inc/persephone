@@ -22,7 +22,8 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-// Return procedure output completion if we are inside procedure
+// ruleProcedureOutputsInCallClause checks if we are inside a procedure,
+// and then returns procedure output completion.
 func ruleProcedureOutputsInCallClause(e antlr.ParseTree) []Info {
 	call := ast.FindAnyParent(e, []string{lang.CallContext})
 	if call == nil {

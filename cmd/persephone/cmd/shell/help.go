@@ -17,6 +17,7 @@ package cmd
 import (
 	"strings"
 
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ var HelpCmd = &cobra.Command{
 	Use:         ":help [command]",
 	Short:       "Show this help message",
 	Long:        "Show the list of available commands or help for a specific command",
-	Annotations: map[string]string{"offline": "true"},
+	Annotations: cmd.Annotate(cmd.Offline),
 	Run:         helpCmd,
 }
 

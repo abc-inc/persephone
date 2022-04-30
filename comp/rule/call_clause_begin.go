@@ -21,15 +21,16 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-// If we are in call rule, and element is second child of call return procedure types
+// ruleCallClauseBeginning checks if we are in call rule, and the ParseTree
+// element is the second child of call return procedure types.
 func ruleCallClauseBeginning(e antlr.ParseTree) []Info {
-	parent := ast.GetParent(e)
-	if parent == nil {
+	p := ast.GetParent(e)
+	if p == nil {
 		return nil
 	}
 
-	if _, ok := parent.(*parser.CallContext); ok {
-		if parent.GetChildCount() > 1 && parent.GetChild(1) == e {
+	if _, ok := p.(*parser.CallContext); ok {
+		if p.GetChildCount() > 1 && p.GetChild(1) == e {
 			return []Info{{Type: types.ProcedureName}}
 		}
 	}

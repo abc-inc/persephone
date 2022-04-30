@@ -21,7 +21,8 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-// If we are in node pattern then return variables and types
+// ruleNodePattern checks if we are in node pattern and then returns variables
+// and types.
 func ruleNodePattern(e antlr.ParseTree) []Info {
 	parent := ast.GetParent(e)
 	text := e.GetText()

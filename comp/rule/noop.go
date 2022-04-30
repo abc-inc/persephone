@@ -22,7 +22,7 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
-// Specify place where no autocompletion should be triggered
+// ruleNoop checks whether no autocompletion should be triggered.
 func ruleNoop(e antlr.ParseTree) []Info {
 	if reflect.TypeOf(e).Elem().Name() == lang.StringLiteralContext {
 		return []Info{{Type: types.Noop}}

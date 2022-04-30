@@ -21,6 +21,8 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// ruleVariableInExpressionPossibleFunction checks if a variable is inside an
+// expression context, and then it might be a variable or a function.
 func ruleVariableInExpressionPossibleFunction(e antlr.ParseTree) []Info {
 	variable := ast.FindAnyParent(e, []string{lang.VariableContext})
 	expression := ast.FindAnyParent(variable, []string{lang.ExpressionContext})

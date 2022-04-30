@@ -28,6 +28,7 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
+// KeywordItems lists all keywords as completion items.
 func KeywordItems() []Item {
 	its := make([]Item, len(lang.Keywords))
 	for i, kw := range lang.Keywords {

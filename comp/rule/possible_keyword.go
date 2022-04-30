@@ -23,7 +23,8 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
-// If any of the keywords contains element text, return ALL
+// rulePossibleKeyword checks if any of the keywords contains element text,
+// and then returns all completion types.
 func rulePossibleKeyword(e antlr.ParseTree) (is []Info) {
 	text := strings.ToUpper(e.GetText())
 	if pos := sort.SearchStrings(lang.Keywords, text); pos < len(lang.Keywords) && strings.Contains(lang.Keywords[pos], text) {

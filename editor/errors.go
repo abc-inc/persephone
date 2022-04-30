@@ -25,7 +25,9 @@ type ErrorListener struct {
 	errors []SynErr
 }
 
-func (el *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
+func (el *ErrorListener) SyntaxError(
+	r antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
+
 	if msg == "mismatched input '<EOF>' expecting {';', SP}" {
 		// suppress error about missing semicolon at the end of a query
 		return

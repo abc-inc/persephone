@@ -19,6 +19,8 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// ruleParamStartsWithDollar checks whether the ParseTree element is a parameter
+// using the Dollar syntax.
 func ruleParamStartsWithDollar(e antlr.ParseTree) []Info {
 	if e.GetText() == "$" {
 		return []Info{{Type: types.Parameter}}

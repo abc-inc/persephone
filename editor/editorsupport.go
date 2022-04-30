@@ -38,6 +38,7 @@ type Editor struct {
 	statements          []parser.CypherPartContext
 }
 
+// NewEditor initializes a new Editor with various autocompletion capabilities.
 func NewEditor(input string) *Editor {
 	e := &Editor{}
 	e.completion = *comp.NewAutoCompletion(graph.Schema{})
@@ -45,6 +46,8 @@ func NewEditor(input string) *Editor {
 	return e
 }
 
+// Update parses the given input, records various ParseTree elements and updates
+// the reference providers to provide more appropriate completion results.
 func (e *Editor) Update(input string) {
 	e.posConv = *NewPosConv(input)
 
@@ -60,16 +63,19 @@ func (e *Editor) Update(input string) {
 	e.completion.UpdateReferenceProviders(e.referencesProviders)
 }
 
+// SetSchema updates the metadata used for providing schema-specific completion.
 func (e *Editor) SetSchema(schema graph.Schema) {
 	e.schema = schema
 	e.completion.UpdateSchema(e.schema)
 }
 
+// GetElement returns the ParseTree at the given line and column.
 func (e Editor) GetElement(line, column int) antlr.Tree {
 	abs := e.posConv.ToAbsolute(line, column)
 	return getElement(e.ParseTree, abs)
 }
 
+// getElement returns the ParseTree at the given position in the input string.
 func getElement(pt antlr.Tree, abs int) antlr.Tree {
 	pos := ast.GetPosition(pt)
 	if pos != nil && (abs < pos.GetStart() || abs > pos.GetStop()) {

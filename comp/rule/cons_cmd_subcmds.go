@@ -24,13 +24,15 @@ import (
 	"github.com/gschauer/cypher2go/v4/parser"
 )
 
-// If we are in console command, and not in console command name, return path
+// ruleConsoleCommandSubcommands checks if we are in a console command, and not
+// in console command name, and then returns the path.
 func ruleConsoleCommandSubcommands(e antlr.ParseTree) []Info {
 	pt := ast.GetParent(e)
 	consCmd := ast.FindParent(pt, reflect.TypeOf(parser.CypherConsoleCommandContext{}))
 	isAtTheEnd := false
 	if consCmd == nil {
-		// We are not in console command. But maybe we are on a space at the end of console command?
+		// We are not in console command.
+		// But maybe we are on a space at the end of console command?
 		// If first child of parent contains console command
 		// and second child is our current element
 		// then we are at the space at the end of console command
@@ -81,10 +83,5 @@ func ruleConsoleCommandSubcommands(e antlr.ParseTree) []Info {
 		filterLastElement = currentElementInParameter
 	}
 
-	return []Info{{
-		Type:  types.ConsoleCommandSubCommand,
-		Path:  path,
-		Found: filterLastElement,
-	},
-	}
+	return []Info{{types.ConsoleCommandSubCommand, path, filterLastElement}}
 }

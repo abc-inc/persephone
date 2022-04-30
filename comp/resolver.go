@@ -20,6 +20,8 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+// evaluateRules applies the Rules to the given ParseTree and returns the first
+// non-empty result of Rule.
 func evaluateRules(element antlr.ParseTree) []rule.Info {
 	for _, r := range rule.OrderedRules {
 		if items := r(element); len(items) > 0 {
@@ -29,6 +31,8 @@ func evaluateRules(element antlr.ParseTree) []rule.Info {
 	return nil
 }
 
+// GetTypes returns the completion types of the first Rule matching the given
+// ParseTree.
 func GetTypes(element antlr.Tree) Info {
 	// If element is nil, then no types
 	if element == nil {

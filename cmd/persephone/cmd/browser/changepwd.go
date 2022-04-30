@@ -35,11 +35,7 @@ var errPwdMismatch = errors.New("the two entered passwords must be the same")
 var ChangePassCmd = &cobra.Command{
 	Use:   ":change-password",
 	Short: "Change the user password",
-	Run:   changePassCmd,
-}
-
-func changePassCmd(cmd *cobra.Command, args []string) {
-	ChangePass("", "", "")
+	Run:   func(cmd *cobra.Command, args []string) { ChangePass("", "", "") },
 }
 
 func ChangePass(p, newP1, newP2 string) {

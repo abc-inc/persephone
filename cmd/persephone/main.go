@@ -260,19 +260,19 @@ func run(cmd *cobra.Command, args []string) {
 
 	e.SetSchema(schema)
 
-	histPath := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
+	f := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
 	hist := repl.GetHistory()
-	_ = hist.Load(histPath)
+	_ = hist.Load(f)
 	defer func() {
-		if err := hist.Save(histPath); err != nil {
+		if err := hist.Save(f); err != nil {
 			console.WriteErr(err)
 		}
 	}()
 
 	p = prompt.New(func(cyp string) { console.WriteErr(executor(cyp, cmd)) },
 		completer,
-		prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
-			return breakline && in == "exit"
+		prompt.OptionSetExitCheckerOnInput(func(in string, breakLine bool) bool {
+			return breakLine && in == "exit"
 		}), prompt.OptionPrefix(""),
 		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionCompletionWordSeparator(" "),

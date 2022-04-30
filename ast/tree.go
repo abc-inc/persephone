@@ -18,9 +18,10 @@ import (
 	"reflect"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"golang.org/x/exp/slices"
 )
 
-// Pos provides position of Tokens in a ParseTree.
+// Pos provides the position of Tokens in a ParseTree.
 type Pos interface {
 	// GetStart returns the position where the Token begins.
 	GetStart() int
@@ -44,12 +45,12 @@ func (p posStruct) GetStop() int {
 }
 
 // FindParent returns the closest parent RuleContext matching a certain type.
-// If pt is of type t, it is returned directly.
-func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
-	if pt == nil || reflect.TypeOf(pt).Elem() == t {
-		return pt
+// If the Tree is of type t, it is returned directly.
+func FindParent(e antlr.Tree, t reflect.Type) antlr.Tree {
+	if e == nil || reflect.TypeOf(e).Elem() == t {
+		return e
 	}
-	e := pt.GetParent()
+	e = e.GetParent()
 	for e != nil {
 		if reflect.TypeOf(e).Elem() == t {
 			break
@@ -66,29 +67,26 @@ func FindParent(pt antlr.Tree, t reflect.Type) antlr.Tree {
 
 // FindAnyParent returns the closest parent RuleContext matching any of the
 // given types.
-func FindAnyParent(pt antlr.Tree, types []string) antlr.Tree {
-	el := pt
-	for el != nil {
-		for _, t := range types {
-			if t == reflect.TypeOf(el).Elem().Name() {
-				return el
-			}
+func FindAnyParent(e antlr.Tree, types []string) antlr.Tree {
+	for e != nil {
+		if slices.Contains(types, reflect.TypeOf(e).Elem().Name()) {
+			return e
 		}
-		el = GetParent(el)
+		e = GetParent(e)
 	}
-	return el
+	return e
 }
 
 // FindChild performs a depth-first search traversal and returns the first child
 // of a certain type.
-func FindChild(element antlr.Tree, typ string) antlr.Tree {
-	if element == nil {
+func FindChild(e antlr.Tree, typ string) antlr.Tree {
+	if e == nil {
 		return nil
 	}
-	if reflect.TypeOf(element).Elem().Name() == typ {
-		return element
+	if reflect.TypeOf(e).Elem().Name() == typ {
+		return e
 	}
-	for _, c := range element.GetChildren() {
+	for _, c := range e.GetChildren() {
 		if result := FindChild(c, typ); result != nil {
 			return result
 		}
@@ -122,14 +120,14 @@ func GetPosition(el antlr.Tree) Pos {
 }
 
 // HasErrorNode checks whether the given ParseTree contains an ErrorNode.
-func HasErrorNode(element antlr.Tree) bool {
-	if element == nil {
+func HasErrorNode(e antlr.Tree) bool {
+	if e == nil {
 		return false
 	}
-	if _, ok := element.(antlr.ErrorNode); ok {
+	if _, ok := e.(antlr.ErrorNode); ok {
 		return true
 	}
-	for _, c := range element.GetChildren() {
+	for _, c := range e.GetChildren() {
 		if HasErrorNode(c) {
 			return true
 		}
