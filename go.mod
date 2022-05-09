@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/abc-inc/browser v1.0.0
 	github.com/abc-inc/go-fuzzaldrin-plus v1.0.0
-	github.com/abc-inc/gutenfmt v0.1.0
+	github.com/abc-inc/gutenfmt v0.1.1
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220411172017-c7567ba9bb40
 	github.com/briandowns/spinner v1.18.1
 	github.com/c-bata/go-prompt v0.2.5
@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	github.com/alecthomas/chroma v0.9.4 // indirect
+	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
