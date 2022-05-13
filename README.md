@@ -1,104 +1,79 @@
-https://neo4j-client.net/
+# persephone
 
-https://github.com/cleishm/libneo4j-client
+persephone is a Neo4j client on the command line
+(and a powerful and visually appealing [fictional character][why] in _The Matrix_).
 
-http://manpages.ubuntu.com/manpages/bionic/man1/neo4j-client.1.html
+It brings rapid database exploration, development and automation to the terminal.
 
-# Output Format (Properties)
+![persephone demo](docs/images/persephone_demo.gif)
 
-MATCH (n) RETURN n.title, n.year;
+## Installation
 
-**csv**
+Download binaries for various platforms and operating systems from the [releases page][].
 
-```csv
-n.title,n.year
-Matrix,1999
-```
+### Build from source
 
-**json**
+See here on how to [build persephone from source][build from source].
 
-```json
-{
-  "n.title": "Matrix",
-  "n.year": 1999
-}
-```
+## Comparison with Cypher Shell and neo4j-client
 
-**table**
+### neo4j-client
 
-```text
-n.title  n.year
-Matrix   1999
-```
+The development of [neo4j-client][] started in early 2016.
+It was - and still is - a feature-rich unofficial Neo4j command line client.
+It uses Bolt protocol version 1, which is not supported by Neo4j 3.5 and newer. 
 
-**yaml**
+### Cypher Shell
 
-```yaml
-- n.title: Matrix
-  n.year: 1999
-```
+About half a year later, the official Cypher Shell was built by Neo4j, Inc.
+It became part of the Neo4j distribution.
 
-# Output Format (Nodes)
+Cypher Shell CLI is used to run queries and perform administrative tasks against a Neo4j instance.
+By default, the shell is interactive, but you can also use it for scripting, by passing cypher
+directly on the command line or by piping a file with cypher statements.
 
-MATCH (n) RETURN n;
+Cypher Shell requires Java 8 or newer, lacks some commands from [Neo4j Browser][],
+and does not provide a rich command line experience like autocompletion for Cypher statements.
 
-**csv**
+### persephone
 
-```csv
-n
-Matrix (1999)
-```
+persephone is a new project that helps us explore what an official Neo4j CLI could look like
+with a fundamentally different __human-first__ design.
+It implements well-established [Command Line Interface Guidelines],
+which are implemented in modern CLIs, including, but not limited to
 
-**json**
+- [AWS CLI][]
+- [Azure CLI][]
+- [GitHub CLI][]
+- and alike.
 
-```json
-{
-  "n": "Matrix (1999)"
-}
-```
+persephone comes with the official Neo4j Driver, which implements Bolt protocol version 3,
+and works with Neo4j 3.5 and newer.
+It has no runtime dependencies and runs on a variety of platforms and operating systems.
 
-**table**
+Check out a [more detailed explanation][alternatives] about alternatives to learn more.
 
-```text
-n
-Matrix (1999)
-```
+## Contributing
 
-**yaml**
+If anything feels off, or if you feel that some functionality is missing, please check out the [contributing][] page.
+There you will find instructions for sharing your feedback, building the application locally,
+and submitting pull requests to the project.
 
-```yaml
-- n: Matrix (1999)
-```
+<!-- internal links -->
 
-# Examples
+[alternatives]: ./docs/alternatives.md
+[build from source]: ./docs/source.md
+[contributing]: ./docs/contributing.md
+[releases page]: https://github.com/abc-inc/persephone/releases/latest
+[why]: ./docs/why.md
 
-## Map Nodes with Custom Template
+<!-- external references -->
+[Bolt compatibility]: https://neo4j.com/docs/bolt/current/bolt-compatibility/
+[Command Line Interface Guidelines]: https://clig.dev/
 
-```text
-Query:  MATCH (n) WHERE n.name=$name RETURN n
-Params: {name: "ABC"}
-
-Template:
-{{range $a := .}}
-{{index (index $a "n") "Id"}}: {{index (index (index $a "n") "Props") "name"}}
-{{end}}
-
-Output: 
-0: ABC
-```
-
-## Map Key Value Pairs with Custom Template
-
-```text
-Query:  MATCH (n) WHERE n.name=$name RETURN id(n) AS id, n.name AS name
-Params: {name: "ABC"}
-
-Template:
-{{range $a := .}}
->{{$a}}<
-{{index $a "id"}}: {{index $a "name"}}
-{{end}}`
-
-Output: 
-0: ABC
-```
+<!-- other products -->
+[AWS CLI]: https://aws.amazon.com/cli
+[Azure CLI]: https://docs.microsoft.com/en-us/cli/azure/
+[GitHub CLI]: https://cli.github.com/
+[Neo4j Browser]: https://github.com/neo4j/neo4j-browser
+[neo4j-client]: https://github.com/cleishm/libneo4j-client

@@ -15,54 +15,25 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	stdlog "log"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
-	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
-	persephone "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
-	shell "github.com/abc-inc/persephone/cmd/persephone/cmd/shell"
-	"github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
+	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/root"
+	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
-	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
-	"github.com/abc-inc/persephone/types"
-	"github.com/c-bata/go-prompt"
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
-	"github.com/mattn/go-shellwords"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
-var p *prompt.Prompt
-var e = editor.NewEditor("")
-var compByConsCmd = make(map[string]repl.CompFunc)
-var cfgFile = filepath.Join(internal.Must(os.UserConfigDir()), "persephone", "config.yaml")
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use: "persephone",
-	Short: `A command line shell where you can execute Cypher against an instance of Neo4j. ` +
-		`By default the shell is interactive but you can use it for scripting ` +
-		`by passing Cypher directly on the command line or by piping a file with Cypher statements.`,
-	Long:              ``,
-	PersistentPreRun:  connect,
-	Run:               run,
-	PersistentPostRun: resetFlags,
-	TraverseChildren:  true,
-}
-
-var lines []string
-
+// init initializes the all loggers to meaningful default values.
 func init() {
 	stdlog.SetFlags(0)
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
@@ -73,379 +44,56 @@ func init() {
 		TimeFormat: zerolog.TimeFieldFormat,
 	})
 
-	cobra.OnInitialize(initConfig)
-
-	rootCmd.Args = cobra.MaximumNArgs(1)
-	rootCmd.Flags().Bool("driver-version", false, "Print version of the Neo4j Driver used and exit.")
-	rootCmd.Flags().String("file", "", "Pass a file with cypher statements to be executed.")
-	rootCmd.Flags().String("format", "auto", "Desired output format.")
-	rootCmd.PersistentFlags().String("log-level", "info", "Level of details to be printed. (debug, info, error)")
-	rootCmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session. Example: `-P \"number=3\"`. Can be specified multiple times.")
-	rootCmd.Flags().Bool("version", false, "Print version information and exit.")
-
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file ("+cfgFile+")")
-	rootCmd.PersistentFlags().StringP("address", "a", "neo4j://localhost:7687", "address and port to connect to (env: NEO4J_ADDRESS)")
-	rootCmd.PersistentFlags().StringP("username", "u", "", "username to connect as. (env: NEO4J_USERNAME)")
-	rootCmd.PersistentFlags().StringP("database", "d", "neo4j", "database to connect to. (env: NEO4J_DATABASE)")
-
-	rootCmd.AddCommand(
-		browser.ChangePassCmd,
-		browser.ClearCmd,
-		browser.ConfigCmd,
-		browser.DBsCmd,
-		browser.QueriesCmd,
-		browser.SchemaCmd,
-		browser.StatusCmd,
-		browser.SysinfoCmd,
-		persephone.FormatCmd,
-		persephone.IssueCmd,
-		persephone.TemplateCmd,
-		shell.BeginCmd,
-		shell.CommitCmd,
-		shell.ConnectCmd,
-		shell.DisconnectCmd,
-		shell.ExitCmd,
-		shell.HelpCmd,
-		shell.HistoryCmd,
-		shell.ParamCmd,
-		shell.ParamsCmd,
-		shell.RollbackCmd,
-		shell.SourceCmd,
-		shell.UseCmd,
-		DriverVersionCmd,
-		VersionCmd,
-	)
-
-	internal.MustNoErr(viper.BindPFlag("address", rootCmd.Flag("address")))
-	internal.MustNoErr(viper.BindPFlag("database", rootCmd.Flag("database")))
-	internal.MustNoErr(viper.BindPFlag("format", rootCmd.Flag("format")))
-	internal.MustNoErr(viper.BindPFlag("username", rootCmd.Flag("username")))
-
-	if err := console.GetTmplMgr().Load(); err != nil {
-		console.WriteErr(err)
-	}
-
-	var tmplComp = func(s string) (its []repl.Item) {
-		for n := range console.GetTmplMgr().TmplsByPath {
-			if strings.HasPrefix(n, s) {
-				its = append(its, repl.Item{View: strings.TrimSuffix(n, console.TmplExt)})
-			}
-		}
-		return
-	}
-
-	compByConsCmd[persephone.FQCmdName(persephone.FormatCmd)] = persephone.FormatComp
-
-	compByConsCmd[persephone.FQCmdName(shell.HistoryCmd)] = repl.SubCmdComp(shell.HistoryCmd)
-
-	compByConsCmd[persephone.FQCmdName(shell.SourceCmd)] = repl.PathComp
-
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateCmd)] = repl.SubCmdComp(persephone.TemplateCmd)
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateEditCmd)] = tmplComp
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateGetCmd)] = tmplComp
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateListCmd)] = repl.NoComp
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateSetCmd)] = tmplComp
-	compByConsCmd[persephone.FQCmdName(persephone.TemplateWriteCmd)] = tmplComp
-
-	compByConsCmd[persephone.FQCmdName(shell.UseCmd)] = shell.UseCompFunc()
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	}
-	viper.SetEnvPrefix("NEO4J")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err == nil {
-		log.Debug().Str("config", viper.ConfigFileUsed()).Msg("Loading config")
-	}
+	console.ChangeFmt("")
 }
 
 func main() {
+	sessCfg := config.NewSessionConfig()
+	cfg := config.FromFile(*sessCfg.CfgFile)
+	f := cmdutil.NewFactory(cfg, sessCfg)
+	rootCmd := cmd.NewCmdRoot(f)
+
+	var o sync.Once
+	cobra.OnInitialize(func() {
+		o.Do(func() { onCfgLoaded(cfg, sessCfg, rootCmd) })
+	})
+
+	defer func(cfg config.Config) {
+		if err := cfg.Save(); err != nil {
+			log.Warn().Err(err).Msg("Cannot save config")
+		}
+	}(cfg)
 	cobra.CheckErr(rootCmd.Execute())
 }
 
-func connect(cmd *cobra.Command, args []string) {
-	if offline, ok := cmd.Annotations["offline"]; ok && offline == "true" {
-		return
-	}
-	for _, f := range []string{"driver-version", "help", "version"} {
-		if f, err := cmd.Root().Flags().GetBool(f); err == nil && f {
-			return
-		}
-	}
-	if graph.IsConnected() {
-		return
-	}
+// onCfgLoaded is invoked after the CLI is initialized and all configs are loaded.
+func onCfgLoaded(cfg config.Config, sessCfg *config.SessionConfig, rootCmd *cobra.Command) {
+	// Reconfigure Logging
+	ll := strings.ToLower(internal.Must(rootCmd.Flags().GetString("log-level")))
+	l := internal.Must(zerolog.ParseLevel(ll))
+	zerolog.SetGlobalLevel(l)
 
-	console.ChangeFmt(viper.GetString("format"))
-
-	addr := viper.GetString("address")
-	u := viper.GetString("username")
-	p := viper.GetString("password")
-	db := viper.GetString("database")
-
-	if u == "" && isatty.IsTerminal(os.Stdin.Fd()) {
-		u = console.Input("username:", "neo4j")
-	}
-	if p == "" && isatty.IsTerminal(os.Stdin.Fd()) {
-		p = console.Pwd("password:")
+	// Make sure that config is loaded
+	if err := cfg.Load(); !errors.Is(err, os.ErrNotExist) {
+		internal.MustNoErr(err)
 	}
 
-	log.Info().Str("db", db).Str("addr", addr).Str("user", u).
-		Msg("Connecting to Neo4j database")
-
-	auth, u := graph.Auth(u + ":" + p)
-	conn := graph.NewConn(addr, u, auth, db)
-	conn.DBName = db
-
-	if isatty.IsTerminal(os.Stdin.Fd()) {
-		consCmdCol := color.New(color.FgCyan).Sprint
-		log.Info().Msgf("Type %s for a list of available commands or %s to exit the shell.",
-			consCmdCol(":help"), consCmdCol(":exit"))
-		log.Info().Msg("Note that Cypher queries must end with a semicolon.")
+	// Setup output format
+	if f := internal.Must(rootCmd.PersistentFlags().GetString("format")); f != "" {
+		console.ChangeFmt(f)
+	} else {
+		console.ChangeFmt(cfg.Get("format", "auto").(string))
 	}
-}
+	console.OnFormatChange(func(i console.FormatInfo) {
+		cfg.Set("format", i.Format)
+		*sessCfg.Format = i.Format
+	})
 
-func run(cmd *cobra.Command, args []string) {
-	ll := strings.ToLower(internal.Must(cmd.Flags().GetString("log-level")))
-	if l, err := zerolog.ParseLevel(ll); err == nil {
-		zerolog.SetGlobalLevel(l)
+	// Set credentials, if available
+	if p, ok := os.LookupEnv("NEO4J_PASSWORD"); ok {
+		*sessCfg.Password = p
 	}
-
-	if cmd == cmd.Root() && runRootCmd(cmd, args) {
-		return
-	}
-
-	md, err := graph.GetConn().Metadata()
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-
-	ls := make([]string, len(md.Nodes))
-	var pkeys []string
-	for i, e := range md.Nodes {
-		ls[i] = e.String()
-		for _, p := range e.Properties {
-			pkeys = append(pkeys, p)
-		}
-	}
-	if len(pkeys) == 0 {
-		pkeys = append(pkeys, md.Props...)
-	}
-
-	ts := make([]string, len(md.Rels))
-	for i, r := range md.Rels {
-		ts[i] = r.Type
-		for p := range r.Properties {
-			pkeys = append(pkeys, p)
-		}
-	}
-
-	ccs := make([]graph.Cmd, len(cmd.Root().Commands()))
-	for i, c := range cmd.Root().Commands() {
-		ccs[i] = graph.Cmd{Name: c.Name(), Desc: strings.TrimPrefix(c.Name(), ":")}
-	}
-
-	schema := graph.Schema{
-		Labels:   ls,
-		RelTypes: ts,
-		PropKeys: pkeys,
-		Funcs:    md.Funcs,
-		Procs:    md.Procs,
-		ConCmds:  ccs,
-	}
-
-	e.SetSchema(schema)
 
 	f := filepath.Join(internal.Must(os.UserCacheDir()), "persephone", "history")
-	hist := repl.GetHistory()
-	_ = hist.Load(f)
-	defer func() {
-		if err := hist.Save(f); err != nil {
-			console.WriteErr(err)
-		}
-	}()
-
-	p = prompt.New(func(cyp string) { console.WriteErr(executor(cyp, cmd)) },
-		completer,
-		prompt.OptionSetExitCheckerOnInput(func(in string, breakLine bool) bool {
-			return breakLine && in == "exit"
-		}), prompt.OptionPrefix(""),
-		prompt.OptionPrefixTextColor(prompt.Cyan),
-		prompt.OptionCompletionWordSeparator(" "),
-		prompt.OptionHistory(hist.Entries()),
-		prompt.OptionLivePrefix(func() (prefix string, useLivePrefix bool) {
-			if graph.GetConn().DBName == "" {
-				return "Disconnected>", true
-			}
-			return fmt.Sprintf("%s@%s> ", graph.GetConn().Username(), graph.GetConn().DBName), len(lines) == 0
-		}),
-	)
-	p.Run()
-}
-
-func runRootCmd(cmd *cobra.Command, args []string) bool {
-	if internal.Must(cmd.Flags().GetBool("version")) {
-		versionCmd()
-		return true
-	} else if internal.Must(cmd.Flags().GetBool("driver-version")) {
-		driverVersionCmd()
-		return true
-	} else if !isatty.IsTerminal(os.Stdin.Fd()) {
-		sc := bufio.NewScanner(os.Stdin)
-		for sc.Scan() {
-			log.Info().Str("statement", sc.Text()).Msg("Executing")
-			if err := executor(sc.Text(), cmd); err != nil {
-				console.WriteErr(err)
-				return true
-			}
-		}
-		return true
-	} else if len(args) == 0 {
-		return false
-	}
-
-	if strings.HasPrefix(args[0], ":") {
-		consCmd, args2, err := cmd.Root().Find(args)
-		if err != nil {
-			console.WriteErr(err)
-		} else if cmd == consCmd {
-			console.WriteErr(cmd.Usage())
-		} else {
-			console.WriteErr(runConsCmd(consCmd, strings.Join(args2, " ")))
-		}
-	} else {
-		r := graph.Request{Query: strings.Join(args, " "), Params: graph.GetConn().Params}
-		if err := console.Query(r); err != nil {
-			console.WriteErr(err)
-		}
-	}
-	return true
-}
-
-func executor(cyp string, cmd *cobra.Command) error {
-	if cyp == "" {
-		return nil
-	}
-
-	hist := repl.GetHistory()
-	if len(lines) == 0 && strings.HasPrefix(cyp, ":") {
-		hist.Add(cyp)
-		return runConsCmd(cmd, cyp)
-	}
-
-	lines = append(lines, cyp)
-	if !strings.HasSuffix(cyp, ";") {
-		return nil
-	}
-
-	cyp = strings.Join(lines, "\n")
-	lines = nil
-
-	hist.Add(cyp)
-	r := graph.Request{Query: cyp, Params: graph.GetConn().Params}
-	if err := console.Query(r); err != nil {
-		return err
-	}
-	return nil
-}
-
-func completer(document prompt.Document) (ss []prompt.Suggest) {
-	stmt := strings.TrimLeft(document.TextBeforeCursor(), " ")
-	if stmt == "exit" || stmt == ":exit" {
-		return nil
-	}
-	if stmt == "" || strings.IndexRune(");'\"", rune(stmt[len(stmt)-1])) >= 0 {
-		return nil
-	}
-
-	buf := strings.Join(lines, "\n")
-	buf += "\n" + stmt
-	buf = strings.TrimPrefix(buf, "\n")
-
-	var res comp.Result
-	if strings.HasPrefix(stmt, ":") && strings.IndexByte(stmt, ' ') > 0 {
-		res = compConsCmd(stmt)
-	} else {
-		e.Update(buf)
-		line, col := editor.NewPosConv(buf).ToRelative(len(buf))
-		res = e.GetCompletion(line, col, true)
-	}
-
-	for _, i := range res.Items {
-		if stmt == "" && (i.Type == types.Variable || i.Type == types.PropertyKey) {
-			continue
-		}
-		if strings.HasPrefix(i.View, "apoc.") && !strings.Contains(stmt, "apoc.") {
-			continue
-		}
-		if i.View == strings.Trim(i.Content, "`") {
-			ss = append(ss, prompt.Suggest{Text: i.View})
-		} else {
-			ss = append(ss, prompt.Suggest{Text: i.View, Description: i.Content})
-		}
-	}
-
-	sep := " "
-	start := res.Range.From.Col - 1
-	if start >= 0 && start < len(document.CurrentLine()) {
-		sep = document.CurrentLine()[start : start+1]
-	}
-	internal.MustNoErr(prompt.OptionCompletionWordSeparator(sep)(p))
-	return ss
-}
-
-func compConsCmd(stmt string) (res comp.Result) {
-	args, parts := "", strings.SplitN(stmt, " ", 3)
-	var cmdComp repl.CompFunc
-	for i := len(parts) - 1; i >= 0; i-- {
-		if cmdComp = compByConsCmd[strings.Join(parts[:i], " ")]; cmdComp != nil {
-			if len(parts) > i {
-				args = strings.Join(parts[i:], " ")
-			}
-			parts = parts[:i]
-			break
-		}
-	}
-
-	if cmdComp != nil {
-		for _, p := range cmdComp(args) {
-			it := comp.Item{View: p.View, Content: p.Content}
-			res.Items = append(res.Items, it)
-		}
-
-		start := strings.LastIndex(stmt, "/") + 1
-		if start == 0 {
-			start = len(parts[0]) + 1
-		}
-		res.Range = comp.Range{
-			From: comp.LineCol{Line: 0, Col: start},
-			To:   comp.LineCol{Line: 0, Col: len(stmt)},
-		}
-	}
-	return
-}
-
-func runConsCmd(cmd *cobra.Command, stmt string) error {
-	args := internal.Must(shellwords.Parse(stmt))
-	cmd.Root().SetArgs(args)
-	if args[0] == ":param" {
-		args = strings.SplitN(stmt, " ", 3)
-		cmd.Root().SetArgs(args)
-	}
-	err := cmd.Execute()
-	resetFlags(cmd, args)
-	return err
-}
-
-func resetFlags(cmd *cobra.Command, _ []string) {
-	if cmd == cmd.Root() {
-		return
-	}
-	cmd.LocalFlags().VisitAll(func(f *pflag.Flag) {
-		internal.MustNoErr(f.Value.Set(f.DefValue))
-	})
+	_ = repl.GetHistory().Load(f)
 }

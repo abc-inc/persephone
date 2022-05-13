@@ -12,21 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+//go:build no_markdown
 
-import (
-	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
-	"github.com/spf13/cobra"
-)
+package docs
 
-var ParamsCmd = &cobra.Command{
-	Use:   ":params [parameter]",
-	Short: "Print all currently set query parameters and their values",
-	Long:  "Print a table of all currently set query parameters or the value for the given parameter",
-	Run:   func(cmd *cobra.Command, args []string) { Params() },
-}
-
-func Params() {
-	console.Write(graph.GetConn().Params)
+// Render returns the given string as is.
+func Render(md string) (string, error) {
+	return md, nil
 }

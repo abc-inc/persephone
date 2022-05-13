@@ -17,6 +17,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
@@ -25,33 +26,36 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var ConnectCmd = &cobra.Command{
-	Use:         ":connect",
-	Short:       "Connect to a database",
-	Annotations: cmd.Annotate(cmd.Offline),
-	Run:         connectCmd,
+func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
+	run := func(cmd *cobra.Command, args []string) {
+		u := internal.Must(cmd.Flags().GetString("username"))
+		p := internal.Must(cmd.Flags().GetString("password"))
+		d := internal.Must(cmd.Flags().GetString("database"))
+		if err := Connect(*f.SessionConfig().Address, u, p, d); err != nil {
+			console.WriteErr(err)
+		}
+	}
+
+	cmd := &cobra.Command{
+		Use:         ":connect",
+		Short:       "Connect to a database",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run:         run,
+	}
+
+	cmd.Flags().StringP("username", "u", "", "Username to connect as (default: neo4j) (env: NEO4J_USERNAME)")
+	cmd.Flags().StringP("password", "p", "", "Password to connect with (default: ) (env: NEO4J_PASSWORD)")
+	cmd.Flags().StringP("database", "d", "neo4j", "Database to connect to (default: neo4j) (env: NEO4J_DATABASE)")
+
+	return cmd
 }
 
-func init() {
-	ConnectCmd.Flags().StringP("username", "u", "", "username to connect as (default: neo4j). (env: NEO4J_USERNAME)")
-	ConnectCmd.Flags().StringP("password", "p", "", "password to connect with (default: ). (env: NEO4J_PASSWORD)")
-	ConnectCmd.Flags().StringP("database", "d", "neo4j", "database to connect to (default: neo4j). (env: NEO4J_DATABASE)")
-}
-
-func connectCmd(cmd *cobra.Command, args []string) {
-	u := internal.Must(cmd.Flags().GetString("username"))
-	p := internal.Must(cmd.Flags().GetString("password"))
-	d := internal.Must(cmd.Flags().GetString("database"))
-	Connect(u, p, d)
-}
-
-func Connect(user, pass, db string) {
+func Connect(addr string, user, pass, db string) error {
 	if graph.IsConnected() {
 		console.Write("Already connected")
-		return
+		return nil
 	}
 
 	if isatty.IsTerminal(os.Stdin.Fd()) {
@@ -63,8 +67,7 @@ func Connect(user, pass, db string) {
 		}
 	}
 
-	addr := viper.GetString("address")
 	log.Info().Str("db", db).Str("addr", addr).Str("user", user).
 		Msg("Connecting to Neo4j database")
-	_ = graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db)
+	return internal.Second(graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db))
 }

@@ -12,30 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package cmdutil
 
 import (
-	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
-	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
-func NewCmdHelp(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:         ":help [command]",
-		Short:       "Show this help message",
-		Long:        "Show the list of available commands or help for a specific command",
-		Annotations: cmd.Annotate(cmdutil.SkipAuth),
-		Run:         helpCmd,
+// ResetFlags visits all local flags and sets them to the default value.
+// Additionally, it resets the "help" flag of the root command.
+func ResetFlags(cmd *cobra.Command, _ []string) {
+	f := cmd.Root().PersistentFlags().Lookup("help")
+	internal.MustNoErr(f.Value.Set(f.DefValue))
+	if cmd == cmd.Root() {
+		return
 	}
 
-	return cmd
-}
-
-func helpCmd(cmd *cobra.Command, args []string) {
-	if subCmd, _, err := cmd.Root().Find(args); err == nil && subCmd != nil {
-		_ = subCmd.Help()
-	} else {
-		_ = cmd.Root().Help()
-	}
+	cmd.LocalFlags().VisitAll(func(f *pflag.Flag) {
+		internal.MustNoErr(f.Value.Set(f.DefValue))
+	})
 }

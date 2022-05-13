@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -25,27 +26,35 @@ import (
 
 var version string
 
-var DriverVersionCmd = &cobra.Command{
-	Use:         ":driver-version",
-	Aliases:     []string{"driver-version"},
-	Short:       "Print version of the Neo4j Driver used.",
-	Annotations: map[string]string{},
-	Run:         func(cmd *cobra.Command, args []string) { driverVersionCmd() },
+func NewCmdDriverVersion(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":driver-version",
+		Aliases:     []string{"driver-version"},
+		Short:       "Print version of the Neo4j Driver used",
+		Annotations: map[string]string{},
+		Run:         func(cmd *cobra.Command, args []string) { driverVersion() },
+	}
+
+	return cmd
 }
 
-var VersionCmd = &cobra.Command{
-	Use:         ":version",
-	Aliases:     []string{"version"},
-	Short:       "Print version information.",
-	Annotations: cmd.Annotate(cmd.Offline),
-	Run:         func(cmd *cobra.Command, args []string) { versionCmd() },
+func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":version",
+		Aliases:     []string{"version"},
+		Short:       "Print version information",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run:         func(cmd *cobra.Command, args []string) { appVersion() },
+	}
+
+	return cmd
 }
 
-func driverVersionCmd() {
+func driverVersion() {
 	ua := strings.Split(neo4j.UserAgent, "/")
 	fmt.Println("Neo4j Driver", ua[len(ua)-1])
 }
 
-func versionCmd() {
+func appVersion() {
 	fmt.Println("persephone ", version)
 }

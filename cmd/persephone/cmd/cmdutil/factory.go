@@ -12,31 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package event
+package cmdutil
 
-import "reflect"
+import "github.com/abc-inc/persephone/config"
 
-type FormatEvent struct {
-	Format string
-	Sep    string
+type Factory struct {
+	Config        func() config.Config
+	SessionConfig func() *config.SessionConfig
 }
 
-type Subscriber[E any] func(e E)
-
-var subByType = make(map[string][]Subscriber[any])
-
-func Subscribe[E any](e E, s Subscriber[E]) {
-	subByType[typeOf(e)] = append(subByType[typeOf(e)], func(e interface{}) {
-		s(e.(E))
-	})
-}
-
-func Publish[E any](e E) {
-	for _, s := range subByType[typeOf(e)] {
-		s(e)
+func NewFactory(cfg config.Config, sessCfg *config.SessionConfig) *Factory {
+	return &Factory{
+		func() config.Config { return cfg },
+		func() *config.SessionConfig { return sessCfg },
 	}
-}
-
-func typeOf(e interface{}) string {
-	return reflect.TypeOf(e).Name()
 }
