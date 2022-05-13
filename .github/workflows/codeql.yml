@@ -28,6 +28,9 @@ jobs:
             ${{ runner.OS }}-go-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
+        with:
+          languages: go
+          queries: security-and-quality
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
