@@ -21,6 +21,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 )
 
 // Input prompts the user to input a single message.
@@ -51,4 +52,16 @@ func NewSpinner() *spinner.Spinner {
 		spinner.WithWriter(os.Stderr),
 		spinner.WithColor("fgCyan"),
 		spinner.WithFinalMSG("\033[2K\r"))
+}
+
+func SuccessIcon() string {
+	return color.GreenString("✓")
+}
+
+func WarningIcon() string {
+	return color.YellowString("!")
+}
+
+func FailureIcon() string {
+	return color.RedString("X")
 }

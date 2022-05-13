@@ -32,9 +32,9 @@ var TmplDir = filepath.Join(internal.Must(os.UserConfigDir()), "persephone", "te
 
 // NamedTemplate holds metadata of a template.
 type NamedTemplate struct {
-	Name       string `json:"Name"`
-	Tmpl       string `json:"Template"`
-	Persistent bool   `json:"Persistent"`
+	Name       string `json:"Name" table:"Name" yaml:"Name"`
+	Tmpl       string `json:"Template" table:"Template" yaml:"Template"`
+	Persistent bool   `json:"Persistent" table:"Persistent" yaml:"Persistent"`
 }
 
 // String returns the template name.
@@ -80,9 +80,7 @@ func (tm *TmplMgr) Load() error {
 
 // Get returns the parsed Template for the given path.
 func (tm *TmplMgr) Get(path string) (t *template.Template) {
-	if !strings.HasSuffix(path, TmplExt) {
-		path += TmplExt
-	}
+	path = TmplFileName(path)
 	var ok bool
 	if t, ok = tm.TmplsByPath[path]; !ok {
 		t, _ = tm.TmplsByPath[filepath.Join(TmplDir, path)]
@@ -95,12 +93,20 @@ func (tm *TmplMgr) Get(path string) (t *template.Template) {
 // If it is an absolute path, the template is saved in that file.
 func (tm *TmplMgr) Set(path, text string) (t *template.Template, err error) {
 	name := filepath.Base(path)
+	text = strings.TrimSuffix(text, "\n")
 	t = template.New(name)
 	if t, err = t.Parse(text); err != nil {
 		return nil, err
 	}
+
+	// Remove previous templates with the same name
+	delete(tm.TmplsByPath, strings.TrimSuffix(name, TmplExt))
+	delete(tm.TmplsByPath, TmplFileName(name))
+
+	// Replace it with the new one
 	tm.TmplsByPath[name] = t
 	if isPersistent(path) {
+		path = filepath.Join(TmplDir, path)
 		if err = os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			log.Err(err).Msg("Cannot save template")
 			return
@@ -113,5 +119,16 @@ func (tm *TmplMgr) Set(path, text string) (t *template.Template, err error) {
 
 // isPersistent returns whether a template is stored in the filesystem.
 func isPersistent(name string) bool {
-	return filepath.IsAbs(name)
+	return filepath.Ext(name) == TmplExt
+}
+
+// TmplFileName returns the basename of the template with the give name.
+// This ensures that the returned name does not contain a file separator,
+// and ends with the template file extension.
+func TmplFileName(name string) string {
+	name = filepath.Base(name)
+	if strings.HasSuffix(name, TmplExt) {
+		return name
+	}
+	return name + TmplExt
 }

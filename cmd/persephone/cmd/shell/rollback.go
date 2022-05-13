@@ -17,6 +17,7 @@ package cmd
 import (
 	"errors"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
@@ -24,11 +25,15 @@ import (
 
 var errNoTxRollback = errors.New("there is no open transaction to rollback")
 
-var RollbackCmd = &cobra.Command{
-	Use:   ":rollback",
-	Short: "Rollback the currently open transaction",
-	Long:  "Rollback and close the currently open transaction",
-	Run:   func(cmd *cobra.Command, args []string) { Rollback() },
+func NewCmdRollback(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":rollback",
+		Short: "Rollback the currently open transaction",
+		Long:  "Rollback and close the currently open transaction",
+		Run:   func(cmd *cobra.Command, args []string) { Rollback() },
+	}
+
+	return cmd
 }
 
 func Rollback() {

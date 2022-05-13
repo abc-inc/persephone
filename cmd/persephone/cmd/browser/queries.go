@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
@@ -26,22 +27,26 @@ import (
 )
 
 type query struct {
-	DBURI   string        `json:"Database URI"`
-	User    string        `json:"User"`
-	Query   string        `json:"Query"`
-	Params  interface{}   `json:"Params"`
-	Meta    interface{}   `json:"Meta"`
-	Elapsed time.Duration `json:"Elapsed time"`
+	DBURI   string        `json:"Database URI" table:"Database URI"`
+	User    string        `json:"User" table:"User"`
+	Query   string        `json:"Query" table:"Query"`
+	Params  any           `json:"Params" table:"Params"`
+	Meta    any           `json:"Meta" table:"Meta"`
+	Elapsed time.Duration `json:"Elapsed time" table:"Elapsed time"`
 }
 
 func (q query) String() string {
 	return q.Query
 }
 
-var QueriesCmd = &cobra.Command{
-	Use:   ":queries",
-	Short: "List your servers and clusters running queries",
-	Run:   func(cmd *cobra.Command, args []string) { Queries() },
+func NewCmdQueries(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":queries",
+		Short: "List your servers and clusters running queries",
+		Run:   func(cmd *cobra.Command, args []string) { Queries() },
+	}
+
+	return cmd
 }
 
 func Queries() {

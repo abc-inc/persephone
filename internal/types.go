@@ -21,7 +21,7 @@ import (
 
 // Parse attempts to interpret the string as boolean or integer and returns it.
 // Otherwise, it returns the value itself, regardless of its type.
-func Parse(s string) interface{} {
+func Parse(s string) any {
 	if lc := strings.ToLower(s); lc == "true" || lc == "false" {
 		return lc == "true"
 	} else if val, err := strconv.ParseInt(s, 10, 32); err == nil {
@@ -32,7 +32,7 @@ func Parse(s string) interface{} {
 
 // ReSlice creates a new slice of T and inserts all elements from the original.
 // It is assumed that all elements are of type T.
-func ReSlice[T any](es []interface{}) []T {
+func ReSlice[T any](es []any) []T {
 	ts := make([]T, len(es))
 	for i, e := range es {
 		ts[i] = e.(T)

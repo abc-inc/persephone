@@ -26,15 +26,15 @@ import (
 )
 
 type History struct {
-	Max     int
+	max     int
 	entries []string
 }
 
 var _ io.WriterTo = (*History)(nil)
 var hist *History
 
-func NewHistory() *History {
-	hist = &History{Max: 1000}
+func NewHistory(max int) *History {
+	hist = &History{max: max}
 	return hist
 }
 
@@ -42,7 +42,7 @@ func GetHistory() *History {
 	if hist != nil {
 		return hist
 	}
-	return NewHistory()
+	return NewHistory(1000)
 }
 
 func (h *History) Load(path string) error {
@@ -57,14 +57,13 @@ func (h *History) Load(path string) error {
 	for sc.Scan() {
 		h.entries = append(h.entries, sc.Text())
 	}
+	h.trim()
 	return nil
 }
 
 func (h *History) Add(e string) {
 	h.entries = append(h.entries, e)
-	if len(h.entries) > h.Max {
-		h.entries = h.entries[len(h.entries)-h.Max:]
-	}
+	h.trim()
 }
 
 func (h History) Save(path string) error {
@@ -87,6 +86,12 @@ func (h History) WriteTo(w io.Writer) (n int64, err error) {
 		n += int64(cnt)
 	}
 	return n, err
+}
+
+func (h *History) trim() {
+	if len(h.entries) > h.max {
+		h.entries = h.entries[len(h.entries)-h.max:]
+	}
 }
 
 func (h *History) Clear() {

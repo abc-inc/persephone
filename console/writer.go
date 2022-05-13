@@ -41,7 +41,7 @@ import (
 func Query(r graph.Request) error {
 	log.Debug().Str("statement", r.Query).Fields(r.Params).Msg("Executing")
 
-	if FormatName() == "raw" || FormatName() == "rawc" {
+	if info.Format == "raw" || info.Format == "rawc" {
 		return queryRaw(r)
 	}
 	return queryResult(r)
@@ -52,7 +52,7 @@ func queryRaw(r graph.Request) error {
 	sp := NewSpinner()
 	sp.Start()
 
-	t := graph.NewTypedTemplate[map[string]interface{}](graph.GetConn())
+	t := graph.NewTypedTemplate[map[string]any](graph.GetConn())
 	ms, sum, err := t.Query(r, graph.NewRawResultMapper())
 
 	sp.Stop()
@@ -83,7 +83,7 @@ func queryResult(r graph.Request) error {
 }
 
 // Write outputs the given value using the formatting Writer.
-func Write(i interface{}) {
+func Write(i any) {
 	if _, err := w.Write(i); err != nil {
 		log.Fatal().Err(err).Send()
 	}
@@ -116,9 +116,9 @@ func WriteResult(rs []graph.Result) error {
 	case gfmt.Text:
 		txt, err = writeText(result, wr.Sep, wr.Delim)
 	default: // json and yaml
-		ms := []map[string]interface{}{}
+		ms := []map[string]any{}
 		for _, r := range result {
-			m := map[string]interface{}{}
+			m := map[string]any{}
 			ms = append(ms, m)
 			for i, k := range r.Keys {
 				m[k] = r.Values[i]
@@ -247,7 +247,7 @@ func collectProps(rs []graph.Result) ([]graph.Result, error) {
 	for i, r := range rs {
 		result = append(result, graph.Result{})
 		for j, v := range r.Values {
-			props, ok := v.(map[string]interface{})
+			props, ok := v.(map[string]any)
 			if !ok {
 				result[i].Add(r.Keys[j], v)
 				continue
@@ -265,7 +265,7 @@ func collectProps(rs []graph.Result) ([]graph.Result, error) {
 					return result, err
 				}
 				result[i].Add(r.Keys[j], str)
-			} else if strings.HasPrefix(FormatName(), "json") || strings.HasPrefix(FormatName(), "yaml") {
+			} else if strings.HasPrefix(info.Format, "json") || strings.HasPrefix(info.Format, "yaml") {
 				result[i].Add(r.Keys[j], props)
 			} else {
 				str, err := toJSON(props)
@@ -279,7 +279,7 @@ func collectProps(rs []graph.Result) ([]graph.Result, error) {
 	return result, nil
 }
 
-func apply(t *template.Template, props map[string]interface{}) (string, error) {
+func apply(t *template.Template, props map[string]any) (string, error) {
 	b := &strings.Builder{}
 	if err := t.Execute(b, props); err != nil {
 		return "", err
@@ -287,13 +287,13 @@ func apply(t *template.Template, props map[string]interface{}) (string, error) {
 	return strings.TrimSuffix(b.String(), "\n"), nil
 }
 
-func toJSON(props map[string]interface{}) (txt string, err error) {
+func toJSON(props map[string]any) (txt string, err error) {
 	bs, err := json.Marshal(props)
 	if err != nil {
 		return
 	}
 	txt = string(bs)
-	if FormatName() == "csv" {
+	if info.Format == "csv" {
 		b := &strings.Builder{}
 		w := csv.NewWriter(b)
 		_ = w.Write([]string{txt})
@@ -327,7 +327,7 @@ func fromStructSlice(rs []graph.Result, sep, delim string) formatter.Formatter {
 
 	fs := rs[0].Keys
 
-	return formatter.Func(func(i interface{}) (string, error) {
+	return formatter.Func(func(i any) (string, error) {
 		rs := i.([]graph.Result)
 		b := &strings.Builder{}
 		for _, f := range fs {
@@ -352,7 +352,7 @@ func fromStructSlice(rs []graph.Result, sep, delim string) formatter.Formatter {
 // toString converts the given value to a string using fmt.Sprint. Pointers,
 // slices and structs are formatted in a human-readable way e.g., by removing
 // brackets.
-func toString(i interface{}) string {
+func toString(i any) string {
 	if i == nil {
 		return ""
 	}

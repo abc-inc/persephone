@@ -15,14 +15,19 @@
 package cmd
 
 import (
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/spf13/cobra"
 )
 
-var DBsCmd = &cobra.Command{
-	Use:   ":dbs",
-	Short: "Show databases available for the current user",
-	Run:   func(cmd *cobra.Command, args []string) { DBs() },
+func NewCmdDBs(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":dbs",
+		Short: "Show databases available for the current user",
+		Run:   func(cmd *cobra.Command, args []string) { DBs() },
+	}
+
+	return cmd
 }
 
 func DBs() {

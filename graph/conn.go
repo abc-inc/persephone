@@ -34,7 +34,7 @@ type Conn struct {
 	auth   neo4j.AuthToken
 	DBName string
 	Tx     neo4j.Transaction
-	Params map[string]interface{}
+	Params map[string]any
 }
 
 // IsConnected returns whether the database connection is established.
@@ -52,22 +52,25 @@ func GetConn() *Conn {
 }
 
 // NewConn creates a new Neo4j Driver and returns the new Conn.
-func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) *Conn {
+func NewConn(addr string, user string, auth neo4j.AuthToken, dbName string) (*Conn, error) {
 	d := internal.Must(neo4j.NewDriver(addr, auth, func(config *neo4j.Config) {
 		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
 	}))
 
+	defConn = nil
 	conn := &Conn{
 		Driver: d,
 		user:   user,
 		auth:   auth,
 		DBName: dbName,
-		Params: make(map[string]interface{}),
+		Params: make(map[string]any),
 	}
-	internal.MustNoErr(conn.UseDB(dbName))
 
-	defConn = conn
-	return conn
+	err := conn.UseDB(dbName)
+	if err == nil {
+		defConn = conn
+	}
+	return conn, err
 }
 
 // Close the driver and all underlying connections.
@@ -75,7 +78,7 @@ func (c *Conn) Close() (err error) {
 	if c.Driver != nil {
 		if err = c.Driver.Close(); err == nil {
 			c.Driver, c.Tx = nil, nil
-			c.Params = make(map[string]interface{})
+			c.Params = make(map[string]any)
 			c.DBName = ""
 		}
 	}
@@ -125,7 +128,7 @@ func (c *Conn) UseDB(dbName string) (err error) {
 
 	currDBName := c.DBName
 	c.DBName = dbName
-	_, err = c.Session().ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+	_, err = c.Session().ReadTransaction(func(tx neo4j.Transaction) (any, error) {
 		return tx.Run("CALL db.ping()", nil)
 	})
 	var nerr *neo4j.Neo4jError

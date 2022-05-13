@@ -17,11 +17,8 @@ package cmd
 import (
 	"strings"
 
+	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
-)
-
-const (
-	Offline = "offline"
 )
 
 func Annotate(keys ...string) map[string]string {
@@ -37,4 +34,9 @@ func FQCmdName(cmd *cobra.Command) string {
 		return ""
 	}
 	return strings.TrimPrefix(FQCmdName(cmd.Parent())+" "+cmd.Name(), " ")
+}
+
+func FindCmd(cmd *cobra.Command, args ...string) *cobra.Command {
+	sub, _, err := cmd.Find(args)
+	return internal.Must(sub, err)
 }

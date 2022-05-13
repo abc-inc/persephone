@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
@@ -26,11 +27,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-var ExitCmd = &cobra.Command{
-	Use:         ":exit",
-	Short:       "Exit persephone",
-	Annotations: cmd.Annotate(cmd.Offline),
-	Run:         func(cmd *cobra.Command, args []string) { Exit() },
+func NewCmdExit(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":exit",
+		Short:       "Exit persephone",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run:         func(cmd *cobra.Command, args []string) { Exit() },
+	}
+
+	return cmd
 }
 
 func Exit() {

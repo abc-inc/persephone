@@ -18,6 +18,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/fatih/color"
@@ -32,10 +33,14 @@ const cypSetPass = "ALTER CURRENT USER SET PASSWORD FROM $old TO $new"
 var errPwdEmpty = errors.New("current and new password must be provided")
 var errPwdMismatch = errors.New("the two entered passwords must be the same")
 
-var ChangePassCmd = &cobra.Command{
-	Use:   ":change-password",
-	Short: "Change the user password",
-	Run:   func(cmd *cobra.Command, args []string) { ChangePass("", "", "") },
+func NewCmdChangePass(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":change-password",
+		Short: "Change the user password",
+		Run:   func(cmd *cobra.Command, args []string) { ChangePass("", "", "") },
+	}
+
+	return cmd
 }
 
 func ChangePass(p, newP1, newP2 string) {
@@ -58,8 +63,8 @@ func ChangePass(p, newP1, newP2 string) {
 		return
 	}
 
-	_, err := graph.GetConn().Session().WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
-		return tx.Run(cypSetPass, map[string]interface{}{"old": p, "new": newP1})
+	_, err := graph.GetConn().Session().WriteTransaction(func(tx neo4j.Transaction) (any, error) {
+		return tx.Run(cypSetPass, map[string]any{"old": p, "new": newP1})
 	})
 	if err != nil {
 		console.WriteErr(err)

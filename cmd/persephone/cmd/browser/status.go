@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/fatih/color"
@@ -22,11 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var StatusCmd = &cobra.Command{
-	Use:         ":status",
-	Short:       "Show metadata for the currently open connection",
-	Annotations: cmd.Annotate(cmd.Offline),
-	Run:         func(cmd *cobra.Command, args []string) { Status() },
+func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":status",
+		Short:       "Show metadata for the currently open connection",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run:         func(cmd *cobra.Command, args []string) { Status() },
+	}
+
+	return cmd
 }
 
 func Status() {

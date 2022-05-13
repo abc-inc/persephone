@@ -19,17 +19,24 @@ import (
 	"os"
 	"strings"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
 )
 
-var SourceCmd = &cobra.Command{
-	Use:   ":source [filename]",
-	Short: "Execute Cypher statements from a file",
-	Args:  cobra.ExactArgs(1),
-	Run:   func(cmd *cobra.Command, args []string) { Source(args[0]) },
+func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":source [filename]",
+		Short: "Execute Cypher statements from a file",
+		Args:  cobra.ExactArgs(1),
+		Run:   func(cmd *cobra.Command, args []string) { Source(args[0]) },
+	}
+
+	cmd.Flags().StringSliceP("param", "P", nil, "Add a parameter to this session (can be specified multiple times). Example: `-P \"number=3\"`")
+
+	return cmd
 }
 
 func Source(path string) {

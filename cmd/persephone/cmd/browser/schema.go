@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
@@ -23,23 +24,27 @@ import (
 )
 
 type index struct {
-	Name          string   `json:"Index Name"`
-	Type          string   `json:"Type"`
-	Uniqueness    string   `json:"Uniqueness"`
-	EntityType    string   `json:"EntityType"`
-	LabelsOrTypes []string `json:"LabelsOrTypes"`
-	Properties    []string `json:"Properties"`
-	State         string   `json:"State"`
+	Name          string   `json:"Index Name" table:"Index Name" yaml:"Index Name"`
+	Type          string   `json:"Type" table:"Type" yaml:"Type"`
+	Uniqueness    string   `json:"Uniqueness" table:"Uniqueness" yaml:"Uniqueness"`
+	EntityType    string   `json:"EntityType" table:"EntityType" yaml:"EntityType"`
+	LabelsOrTypes []string `json:"LabelsOrTypes" table:"LabelsOrTypes" yaml:"LabelsOrTypes"`
+	Properties    []string `json:"Properties" table:"Properties" yaml:"Properties"`
+	State         string   `json:"State" table:"State" yaml:"State"`
 }
 
 func (i index) String() string {
 	return i.Name
 }
 
-var SchemaCmd = &cobra.Command{
-	Use:   ":schema",
-	Short: "Show information about database schema indexes and constraints",
-	Run:   func(cmd *cobra.Command, args []string) { Schema() },
+func NewCmdSchema(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":schema",
+		Short: "Show information about database schema indexes and constraints",
+		Run:   func(cmd *cobra.Command, args []string) { Schema() },
+	}
+
+	return cmd
 }
 
 func Schema() {
@@ -51,8 +56,8 @@ func Schema() {
 	t := graph.NewTypedTemplate[index](graph.GetConn())
 	r := graph.Request{Query: cyp}
 	idxs, _ := internal.MustTuple(t.Query(r, func(rec *neo4j.Record) index {
-		ls := internal.MustOk(rec.Get("LabelsOrTypes")).([]interface{})
-		ps := internal.MustOk(rec.Get("Properties")).([]interface{})
+		ls := internal.MustOk(rec.Get("LabelsOrTypes")).([]any)
+		ps := internal.MustOk(rec.Get("Properties")).([]any)
 
 		return index{
 			Name:          internal.MustOk(rec.Get("Index Name")).(string),

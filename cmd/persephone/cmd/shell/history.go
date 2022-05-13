@@ -17,44 +17,45 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
-	"github.com/abc-inc/persephone/event"
 	"github.com/spf13/cobra"
 )
 
 type entry struct {
-	Pos  int    `json:"Pos"`
-	Stmt string `json:"Statement"`
+	Pos  int    `json:"Pos" table:"Pos" yaml:"Pos"`
+	Stmt string `json:"Statement" table:"Statement" yaml:"Statement"`
 }
 
-var HistoryCmd = &cobra.Command{
-	Use:   ":history",
-	Short: "Print a list of the last commands executed",
-	Long:  "Print a list of the last statements executed",
-	Run:   func(cmd *cobra.Command, args []string) { History() },
-}
+func NewCmdHistory(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":history",
+		Short: "Print a list of the last statements executed",
+		Run:   func(cmd *cobra.Command, args []string) { History() },
+	}
 
-func init() {
-	HistoryCmd.AddCommand(&cobra.Command{
+	cmd.AddCommand(&cobra.Command{
 		Use:   "clear",
-		Short: "Removes all entries from the history",
+		Short: "Remove all entries from the history",
 		Run:   func(cmd *cobra.Command, args []string) { HistoryClear() },
 	})
 
-	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
-		sep := e.Sep
-		console.SetFormatter(entry{}, func(i interface{}) (string, error) {
+	console.OnFormatChange(func(i console.FormatInfo) {
+		sep := i.Sep
+		console.SetFormatter(entry{}, func(i any) (string, error) {
 			e := i.(entry)
 			return fmt.Sprintf("%d%s%s", e.Pos+1, sep, e.Stmt), nil
 		})
 	})
+
+	return cmd
 }
 
 func History() {
 	es := make([]entry, len(repl.GetHistory().Entries()))
 	for i, e := range repl.GetHistory().Entries() {
-		es = append(es, entry{i, e})
+		es[i] = entry{i, e}
 	}
 	console.Write(es)
 }

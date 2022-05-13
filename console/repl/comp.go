@@ -38,7 +38,7 @@ func NoComp(string) []Item {
 func SubCmdComp(cmd *cobra.Command) func(str string) []Item {
 	return func(s string) (its []Item) {
 		for _, c := range cmd.Commands() {
-			if strings.HasPrefix(c.Name(), s) {
+			if strings.HasPrefix(c.Name(), s) && !c.Hidden {
 				its = append(its, Item{View: c.Name()})
 			}
 		}

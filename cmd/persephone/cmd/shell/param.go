@@ -19,27 +19,64 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
+	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
-var ParamCmd = &cobra.Command{
-	Use:   ":param name value",
-	Short: "Set the value of a query parameter",
-	Long:  "Set the specified query parameter to the value given",
-	Args:  cobra.ExactArgs(2),
-	Run:   func(cmd *cobra.Command, args []string) { Param(args[0], args[1]) },
+func NewCmdParam(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":param <command>",
+		Short: "Manage query parameters",
+	}
+
+	cmd.AddCommand(
+		NewCmdParamList(f),
+		NewCmdParamSet(f),
+	)
+
+	return cmd
 }
 
-func Param(key, val string) {
+func NewCmdParamList(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "Print all currently set query parameters and their values",
+		Long:  "Print a table of all currently set query parameters or the value for the given parameter",
+		Args:  cobra.ExactArgs(0),
+		Run:   func(cmd *cobra.Command, args []string) { ListParams() },
+	}
+
+	return cmd
+}
+
+func NewCmdParamSet(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set name value",
+		Short: "Set the value of a query parameter",
+		Long:  "Set the specified query parameter to the value given",
+		Args:  cobra.ExactArgs(2),
+		Run:   func(cmd *cobra.Command, args []string) { _ = SetParam(args[0], args[1]) },
+	}
+
+	return cmd
+}
+
+func ListParams() {
+	console.Write(graph.GetConn().Params)
+}
+
+func SetParam(key, val string) error {
 	key = strings.Trim(key, `"`)
-	var m map[string]interface{}
+	var m map[string]any
 	err := json.Unmarshal([]byte(fmt.Sprintf(`{"%s": %s}`, key, val)), &m)
 	if err != nil {
-		log.Err(err).Msg("Failed to parse parameter")
-		log.Info().Msg("The value must be a valid JSON string, number, object, etc.")
-		return
+		log.Err(err).Msgf("Failed to parse parameter: '%s'\n"+
+			"The value must be a valid JSON string, number, object, etc.", val)
+		return err
 	}
 	graph.GetConn().Params[key] = m[key]
+	return err
 }

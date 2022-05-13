@@ -17,7 +17,9 @@ package cmd
 import (
 	"errors"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
@@ -26,14 +28,20 @@ import (
 
 var errInvalidArgs = errors.New("invalid arguments")
 
-var ConfigCmd = &cobra.Command{
-	Use:         ":config [name [value]]",
-	Short:       "Get and set config options",
-	Annotations: cmd.Annotate(cmd.Offline),
-	Run:         configCmd,
+func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":config [name [value]]",
+		Short:       "Get and set config options",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			configCmd(f.Config(), cmd, args)
+		},
+	}
+
+	return cmd
 }
 
-func configCmd(cmd *cobra.Command, args []string) {
+func configCmd(cfg config.Config, cmd *cobra.Command, args []string) {
 	switch len(args) {
 	case 0:
 		console.Write(ListConfig())
@@ -46,14 +54,11 @@ func configCmd(cmd *cobra.Command, args []string) {
 	}
 }
 
-func ListConfig() map[string]interface{} {
-	cfg := viper.AllSettings()
-	delete(cfg, "config")
-	delete(cfg, "password")
-	return cfg
+func ListConfig() map[string]any {
+	return viper.AllSettings()
 }
 
-func GetConfig(key string) interface{} {
+func GetConfig(key string) any {
 	return viper.Get(key)
 }
 

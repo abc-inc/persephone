@@ -15,15 +15,20 @@
 package cmd
 
 import (
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
 
-var DisconnectCmd = &cobra.Command{
-	Use:   ":disconnect",
-	Short: "Disconnect from database",
-	Run:   func(cmd *cobra.Command, args []string) { Disconnect() },
+func NewCmdDisconnect(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":disconnect",
+		Short: "Disconnect from database",
+		Run:   func(cmd *cobra.Command, args []string) { Disconnect() },
+	}
+
+	return cmd
 }
 
 func Disconnect() {

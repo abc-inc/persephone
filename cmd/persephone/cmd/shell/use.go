@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/graph"
@@ -27,11 +28,15 @@ import (
 
 var dbsCache sync.Once
 
-var UseCmd = &cobra.Command{
-	Use:   ":use database",
-	Short: "Set the active database",
-	Long:  "Set the active database that transactions are executed on",
-	Run:   func(cmd *cobra.Command, args []string) { Use(args[0]) },
+func NewCmdUse(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":use database",
+		Short: "Set the active database",
+		Long:  "Set the active database that transactions are executed on",
+		Run:   func(cmd *cobra.Command, args []string) { Use(args[0]) },
+	}
+
+	return cmd
 }
 
 func Use(dbName string) {

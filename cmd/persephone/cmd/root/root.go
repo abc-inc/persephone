@@ -85,7 +85,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		rootHelpFunc(f, cmd, args)
 	})
-	//rootCmd.SetUsageFunc(rootUsageFunc)
+	// rootCmd.SetUsageFunc(rootUsageFunc)
 
 	// Child commands
 	cmdFormat := persephone.NewCmdFormat(f)

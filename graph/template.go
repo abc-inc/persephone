@@ -87,7 +87,7 @@ func (t TypedTemplate[T]) Query(r Request, m Mapper[T]) (
 // via a Mapper. If the query does not return exactly one record, an error is
 // returned.
 func (t TypedTemplate[T]) QuerySingle(
-	cyp string, params map[string]interface{}, m Mapper[T]) (val T, err error) {
+	cyp string, params map[string]any, m Mapper[T]) (val T, err error) {
 
 	tx, created, err := t.conn.GetTransaction()
 	if err != nil {

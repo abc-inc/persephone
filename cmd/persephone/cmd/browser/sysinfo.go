@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/event"
 	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -39,21 +39,23 @@ func (d DBInfo) String() string {
 	return d.Address + "/" + d.Name
 }
 
-var SysinfoCmd = &cobra.Command{
-	Use:   ":sysinfo",
-	Short: "Print system information",
-	Run:   func(cmd *cobra.Command, args []string) { SysInfo() },
-}
+func NewCmdSysInfo(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   ":sysinfo",
+		Short: "Print system information",
+		Run:   func(cmd *cobra.Command, args []string) { SysInfo() },
+	}
 
-func init() {
-	event.Subscribe(event.FormatEvent{}, func(e event.FormatEvent) {
-		sep := e.Sep
-		console.SetFormatter(DBInfo{}, func(i interface{}) (string, error) {
+	console.OnFormatChange(func(i console.FormatInfo) {
+		sep := i.Sep
+		console.SetFormatter(DBInfo{}, func(i any) (string, error) {
 			db := i.(DBInfo)
 			return strings.Join([]string{db.Name, db.Address, db.Role, db.Status,
 				strconv.FormatBool(db.Default), db.Error}, sep), nil
 		})
 	})
+
+	return cmd
 }
 
 func SysInfo() {

@@ -19,17 +19,22 @@ import (
 	"os"
 
 	"github.com/abc-inc/browser"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
 )
 
 const ghIssuesURL = "https://github.com/abc-inc/persephone/issues"
 
-var IssueCmd = &cobra.Command{
-	Use:         ":issue",
-	Short:       "Report an issue on GitHub",
-	Annotations: Annotate(Offline),
-	Run:         func(cmd *cobra.Command, args []string) { Issue() },
+func NewCmdIssue(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":issue",
+		Short:       "Report an issue on GitHub",
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run:         func(cmd *cobra.Command, args []string) { Issue() },
+	}
+
+	return cmd
 }
 
 func Issue() {

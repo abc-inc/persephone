@@ -8,7 +8,7 @@ require (
 	github.com/abc-inc/browser v1.0.0
 	github.com/abc-inc/go-fuzzaldrin-plus v1.0.0
 	github.com/abc-inc/gutenfmt v0.1.1
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220411172017-c7567ba9bb40
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed
 	github.com/briandowns/spinner v1.18.1
 	github.com/c-bata/go-prompt v0.2.5
 	github.com/charmbracelet/glamour v0.5.0
@@ -26,8 +26,8 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
 	github.com/xlab/treeprint v1.1.0
-	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5
-	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
+	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
 )
 
 require (

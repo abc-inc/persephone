@@ -21,16 +21,27 @@ import (
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
 	"github.com/abc-inc/gutenfmt/meta"
-	"github.com/abc-inc/persephone/event"
 	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog/log"
 )
 
-var fmtName string
+type FormatInfo struct {
+	Format string
+	Sep    string
+}
+
+type FmtChangeListener func(i FormatInfo)
+
+var listeners []FmtChangeListener
+var info FormatInfo
 var w gfmt.Writer
 
 func init() {
 	meta.Resolve = meta.TagResolver{TagName: "table"}.Lookup
+}
+
+func OnFormatChange(ls ...FmtChangeListener) {
+	listeners = append(listeners, ls...)
 }
 
 // ChangeFmt creates a new Writer.
@@ -44,8 +55,9 @@ func ChangeFmt(f string) {
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			ChangeFmt("table")
 		} else {
-			ChangeFmt("")
+			ChangeFmt("json")
 		}
+		return
 	case "csv":
 		w = gfmt.NewText(os.Stdout)
 		w.(*gfmt.Text).Sep = sepsByType[f]
@@ -74,15 +86,13 @@ func ChangeFmt(f string) {
 		return
 	}
 
-	fmtName = f
-	event.Publish(event.FormatEvent{Format: f, Sep: sepsByType[f]})
+	info = FormatInfo{Format: f, Sep: sepsByType[f]}
+	for _, l := range listeners {
+		l(info)
+	}
 }
 
-func FormatName() string {
-	return fmtName
-}
-
-func SetFormatter(i interface{}, f formatter.Func) {
+func SetFormatter(i any, f formatter.Func) {
 	if t, ok := w.(*gfmt.Text); ok {
 		t.Formatter.SetFormatterFunc(reflect.TypeOf(i).String(), f)
 	} else if t, ok := w.(*gfmt.Tab); ok {

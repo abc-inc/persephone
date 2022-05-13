@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/abc-inc/browser"
+	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
@@ -28,76 +29,99 @@ import (
 var errTmplOpen = errors.New("cannot open template")
 var errTmplNotFound = errors.New("template does not exist")
 
-var TemplateCmd = &cobra.Command{
-	Use:         ":template",
-	Short:       "Define a template",
-	Args:        cobra.MinimumNArgs(1),
-	Annotations: Annotate(Offline),
-}
+func NewCmdTemplate(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         ":template",
+		Short:       "Define a template",
+		Args:        cobra.MinimumNArgs(1),
+		Annotations: Annotate(cmdutil.SkipAuth),
+	}
 
-var TemplateEditCmd = &cobra.Command{
-	Use:         "edit",
-	Short:       "Open a template in the default editor",
-	Args:        cobra.ExactArgs(1),
-	Annotations: Annotate(Offline),
-	Run: func(cmd *cobra.Command, args []string) {
-		console.WriteErr(TemplateEdit(args[0]))
-	},
-}
-
-var TemplateGetCmd = &cobra.Command{
-	Use:         "get",
-	Short:       "Print the templates",
-	Args:        cobra.ExactArgs(1),
-	Annotations: Annotate(Offline),
-	Run: func(cmd *cobra.Command, args []string) {
-		console.WriteErr(TemplateGet(args[0]))
-	},
-}
-
-var TemplateListCmd = &cobra.Command{
-	Use:         "list",
-	Short:       "List all templates",
-	Args:        cobra.ExactArgs(0),
-	Annotations: Annotate(Offline),
-	Run: func(cmd *cobra.Command, args []string) {
-		TemplateList()
-	},
-}
-
-var TemplateSetCmd = &cobra.Command{
-	Use:         "set",
-	Short:       "Define a template for the current session",
-	Args:        cobra.MinimumNArgs(2),
-	Annotations: Annotate(Offline),
-	Run: func(cmd *cobra.Command, args []string) {
-		console.WriteErr(TemplateSet(args[0], strings.Join(args[1:], " ")))
-	},
-}
-
-var TemplateWriteCmd = &cobra.Command{
-	Use:         "write",
-	Short:       "Define a template and save it",
-	Args:        cobra.MinimumNArgs(2),
-	Annotations: Annotate(Offline),
-	Run: func(cmd *cobra.Command, args []string) {
-		console.WriteErr(TemplateWrite(args[0], strings.Join(args[1:], " ")))
-	},
-}
-
-func init() {
-	TemplateCmd.Flags().StringP("template", "t", "", "template")
-	TemplateCmd.AddCommand(
-		TemplateEditCmd,
-		TemplateGetCmd,
-		TemplateListCmd,
-		TemplateSetCmd,
-		TemplateWriteCmd,
+	cmd.Flags().StringP("template", "t", "", "template")
+	cmd.AddCommand(
+		NewCmdTemplateEdit(f),
+		NewCmdTemplateGet(f),
+		NewCmdTemplateList(f),
+		NewCmdTemplateSet(f),
+		NewCmdTemplateWrite(f),
 	)
+
+	return cmd
+}
+
+func NewCmdTemplateEdit(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "edit",
+		Short:       "Open a template in the default editor",
+		Args:        cobra.ExactArgs(1),
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			console.WriteErr(TemplateEdit(args[0]))
+		},
+		Hidden: true, // hidden for now, because the cache is not synced
+	}
+
+	return cmd
+}
+
+func NewCmdTemplateGet(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "get",
+		Short:       "Print the templates",
+		Args:        cobra.ExactArgs(1),
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			console.WriteErr(TemplateGet(args[0]))
+		},
+	}
+
+	return cmd
+}
+
+func NewCmdTemplateList(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "list",
+		Short:       "List all templates",
+		Args:        cobra.ExactArgs(0),
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			TemplateList()
+		},
+	}
+
+	return cmd
+}
+
+func NewCmdTemplateSet(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "set",
+		Short:       "Define a template for the current session",
+		Args:        cobra.MinimumNArgs(2),
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			console.WriteErr(TemplateSet(args[0], strings.Join(args[1:], " ")))
+		},
+	}
+
+	return cmd
+}
+
+func NewCmdTemplateWrite(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "write",
+		Short:       "Define a template and save it",
+		Args:        cobra.MinimumNArgs(2),
+		Annotations: Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			console.WriteErr(TemplateWrite(args[0], strings.Join(args[1:], " ")))
+		},
+	}
+
+	return cmd
 }
 
 func TemplateEdit(path string) error {
-	if !browser.Open(filepath.Join(console.TmplDir, filepath.Base(path))) {
+	if !browser.Open(filepath.Join(console.TmplDir, console.TmplFileName(path))) {
 		return errTmplOpen
 	}
 	return nil
@@ -105,7 +129,7 @@ func TemplateEdit(path string) error {
 
 func TemplateGet(path string) error {
 	if t := console.GetTmplMgr().Get(path); t != nil {
-		console.Write(t.Root.String())
+		console.Write(strings.TrimSuffix(t.Root.String(), "\n"))
 		return nil
 	}
 	return errTmplNotFound
@@ -114,19 +138,18 @@ func TemplateGet(path string) error {
 func TemplateList() {
 	ts := []console.NamedTemplate{}
 	for p, t := range console.GetTmplMgr().TmplsByPath {
-		b := filepath.Base(p)
-		n := strings.TrimSuffix(b, console.TmplExt)
-		t := console.NamedTemplate{Name: n, Tmpl: t.Root.String(), Persistent: b != p}
-		ts = append(ts, t)
+		n := strings.TrimSuffix(p, console.TmplExt)
+		txt := strings.TrimSuffix(t.Root.String(), "\n")
+		ts = append(ts, console.NamedTemplate{Name: n, Tmpl: txt, Persistent: n != p})
 	}
 	console.Write(ts)
 }
 
 func TemplateSet(name, text string) error {
-	return internal.Second(console.GetTmplMgr().Set(filepath.Base(name), text))
+	name = strings.TrimSuffix(filepath.Base(name), console.TmplExt)
+	return internal.Second(console.GetTmplMgr().Set(name, text))
 }
 
 func TemplateWrite(name, text string) error {
-	p := filepath.Join(console.TmplDir, filepath.Base(name))
-	return internal.Second(console.GetTmplMgr().Set(p, text))
+	return internal.Second(console.GetTmplMgr().Set(console.TmplFileName(name), text))
 }
