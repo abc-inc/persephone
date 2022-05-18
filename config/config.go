@@ -27,6 +27,7 @@ import (
 type Config interface {
 	Get(string, any) any
 	Set(string, any)
+	List() map[string]any
 	Load() error
 	Save() error
 }
@@ -77,6 +78,8 @@ func FromFile(path string) Config {
 	return cfg
 }
 
+// Get returns the value for the given key.
+// If the key is not set, def is returned instead.
 func (c *viperConfig) Get(key string, def any) any {
 	if !viper.IsSet(key) {
 		return def
@@ -84,8 +87,14 @@ func (c *viperConfig) Get(key string, def any) any {
 	return viper.Get(key)
 }
 
+// Set changes the value for the given key.
 func (c *viperConfig) Set(key string, val any) {
 	viper.Set(key, val)
+}
+
+// List returns a copy of all settings.
+func (c *viperConfig) List() map[string]any {
+	return viper.AllSettings()
 }
 
 // Load loads the config from the pre-configured file.
@@ -96,9 +105,13 @@ func (c *viperConfig) Load() error {
 
 // Save writes the config to the pre-configured file.
 func (c *viperConfig) Save() error {
-	if len(viper.AllKeys()) == 0 {
+	f := viper.GetViper().ConfigFileUsed()
+	if f == "" || len(viper.AllKeys()) == 0 {
 		return nil
 	}
 	log.Debug().Str("file", viper.ConfigFileUsed()).Msg("Saving config")
+	if err := os.MkdirAll(filepath.Dir(f), 0700); err != nil {
+		return err
+	}
 	return viper.WriteConfig()
 }

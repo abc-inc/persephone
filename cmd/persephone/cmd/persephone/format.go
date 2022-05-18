@@ -27,7 +27,7 @@ var formats = []string{"auto", "csv", "json", "jsonc", "raw", "rawc", "table", "
 
 func NewCmdFormat(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         ":format [<format>]",
+		Use:         ":format <format>",
 		Short:       "Change the output format (supported formats: " + strings.Join(formats, ", ") + ")",
 		ValidArgs:   formats,
 		Args:        cobra.ExactValidArgs(1),

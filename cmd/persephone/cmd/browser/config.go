@@ -15,53 +15,84 @@
 package cmd
 
 import (
-	"errors"
-
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
-
-var errInvalidArgs = errors.New("invalid arguments")
 
 func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         ":config [name [value]]",
+		Use:         ":config COMMAND",
 		Short:       "Get and set config options",
 		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+	}
+
+	cmd.AddCommand(
+		NewCmdConfigGet(f),
+		NewCmdConfigList(f),
+		NewCmdConfigSet(f),
+	)
+
+	return cmd
+}
+
+func NewCmdConfigGet(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "get <key>",
+		Short:       "Print the value of a given configuration key",
+		Args:        cobra.ExactArgs(1),
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
 		Run: func(cmd *cobra.Command, args []string) {
-			configCmd(f.Config(), cmd, args)
+			console.Write(GetConfig(f.Config(), args[0]))
 		},
 	}
 
 	return cmd
 }
 
-func configCmd(cfg config.Config, cmd *cobra.Command, args []string) {
-	switch len(args) {
-	case 0:
-		console.Write(ListConfig())
-	case 1:
-		console.Write(GetConfig(args[0]))
-	case 2:
-		SetConfig(args[0], args[1])
-	default:
-		console.WriteErr(errInvalidArgs)
+func NewCmdConfigList(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "list",
+		Short:       "Print a list of given configuration keys and values",
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			console.Write(ListConfig(f.Config()))
+		},
 	}
+
+	return cmd
 }
 
-func ListConfig() map[string]any {
-	return viper.AllSettings()
+func NewCmdConfigSet(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:         "set <key> <value>",
+		Short:       "Update configuration with a value for the given key",
+		Args:        cobra.ExactArgs(2),
+		Annotations: cmd.Annotate(cmdutil.SkipAuth),
+		Run: func(cmd *cobra.Command, args []string) {
+			SetConfig(f.Config(), args[0], args[1])
+		},
+	}
+
+	return cmd
 }
 
-func GetConfig(key string) any {
-	return viper.Get(key)
+func ListConfig(cfg config.Config) map[string]any {
+	return cfg.List()
 }
 
-func SetConfig(key, val string) {
-	viper.Set(key, internal.Parse(val))
+func GetConfig(cfg config.Config, key string) any {
+	return cfg.Get(key, nil)
+}
+
+func SetConfig(cfg config.Config, key, val string) {
+	switch key {
+	case "format":
+		console.ChangeFmt(val)
+	default:
+		cfg.Set(key, internal.Parse(val))
+	}
 }

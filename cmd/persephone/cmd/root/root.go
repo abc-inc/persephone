@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -246,7 +245,6 @@ func executor(cyp string, cmd *cobra.Command, hist *repl.History) error {
 func runConsCmd(cmd *cobra.Command, stmt string) error {
 	args := internal.Must(shellwords.Parse(stmt))
 	cmd.Root().SetArgs(args)
-	fmt.Println(args)
 	if len(args) == 4 && args[0] == ":param" && args[1] == "set" {
 		args = strings.SplitN(stmt, " ", 4)
 		cmd.Root().SetArgs(args)

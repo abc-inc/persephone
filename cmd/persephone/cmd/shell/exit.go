@@ -20,11 +20,11 @@ import (
 
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
+	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewCmdExit(f *cmdutil.Factory) *cobra.Command {
@@ -32,13 +32,13 @@ func NewCmdExit(f *cmdutil.Factory) *cobra.Command {
 		Use:         ":exit",
 		Short:       "Exit persephone",
 		Annotations: cmd.Annotate(cmdutil.SkipAuth),
-		Run:         func(cmd *cobra.Command, args []string) { Exit() },
+		Run:         func(cmd *cobra.Command, args []string) { Exit(f.Config()) },
 	}
 
 	return cmd
 }
 
-func Exit() {
+func Exit(cfg config.Config) {
 	// Make sure that exit succeeds even if disconnect would fail.
 	defer func() {
 		if ex := recover(); ex != nil {
@@ -52,13 +52,6 @@ func Exit() {
 		console.WriteErr(err)
 	}
 
-	if f = viper.GetViper().ConfigFileUsed(); f != "" {
-		if err := os.MkdirAll(filepath.Dir(f), 0700); err != nil {
-			console.WriteErr(err)
-		} else if err := viper.WriteConfig(); err != nil {
-			console.WriteErr(err)
-		}
-	}
-
+	console.WriteErr(cfg.Save())
 	Disconnect()
 }

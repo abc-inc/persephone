@@ -86,6 +86,7 @@ func ChangeFmt(f string) {
 		return
 	}
 
+	log.Debug().Str("format", f).Msg("Change output")
 	info = FormatInfo{Format: f, Sep: sepsByType[f]}
 	for _, l := range listeners {
 		l(info)
