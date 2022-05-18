@@ -21,8 +21,8 @@ import (
 )
 
 type Item struct {
-	View    string `json:"view"`
-	Content string `json:"content"`
+	View    string
+	Content string
 }
 
 func (i Item) String() string {

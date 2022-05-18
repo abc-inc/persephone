@@ -124,7 +124,7 @@ func (s SchemaBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
 	return
 }
 
-func strF(s interface{}) string {
+func strF(s any) string {
 	if str, ok := s.(string); ok {
 		return str
 	} else if str, ok := s.(fmt.Stringer); ok {
@@ -134,16 +134,16 @@ func strF(s interface{}) string {
 	}
 }
 
-func escF(i interface{}) string { return lang.EscapeCypher(i.(string)) }
+func escF(i any) string { return lang.EscapeCypher(i.(string)) }
 
-func nilF(_ interface{}) string {
+func nilF(_ any) string {
 	return ""
 }
 
 func mapItems(ns []string, typ types.Type,
-	viewFunc func(interface{}) string,
-	contFunc func(interface{}) string,
-	pfFunc func(interface{}) string) (its []Item) {
+	viewFunc func(any) string,
+	contFunc func(any) string,
+	pfFunc func(any) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{

@@ -37,7 +37,7 @@ var info FormatInfo
 var w gfmt.Writer
 
 func init() {
-	meta.Resolve = meta.TagResolver{TagName: "table"}.Lookup
+	meta.Resolve = meta.TagResolver{TagName: "view"}.Lookup
 }
 
 func OnFormatChange(ls ...FmtChangeListener) {

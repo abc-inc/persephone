@@ -24,8 +24,8 @@ import (
 )
 
 type entry struct {
-	Pos  int    `json:"Pos" table:"Pos" yaml:"Pos"`
-	Stmt string `json:"Statement" table:"Statement" yaml:"Statement"`
+	Pos  int    `json:"Pos" view:"Pos" yaml:"Pos"`
+	Stmt string `json:"Statement" view:"Statement" yaml:"Statement"`
 }
 
 func NewCmdHistory(f *cmdutil.Factory) *cobra.Command {

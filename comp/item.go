@@ -23,10 +23,10 @@ import (
 
 // Item is completion candidate of a certain type.
 type Item struct {
-	Type    types.Type `json:"type"`
-	View    string     `json:"view"`
-	Content string     `json:"content"`
-	Postfix string     `json:"postfix"`
+	Type    types.Type
+	View    string
+	Content string
+	Postfix string
 }
 
 // String returns a text representation of this completion item.

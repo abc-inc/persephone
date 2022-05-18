@@ -32,9 +32,9 @@ var TmplDir = filepath.Join(internal.Must(os.UserConfigDir()), "persephone", "te
 
 // NamedTemplate holds metadata of a template.
 type NamedTemplate struct {
-	Name       string `json:"Name" table:"Name" yaml:"Name"`
-	Tmpl       string `json:"Template" table:"Template" yaml:"Template"`
-	Persistent bool   `json:"Persistent" table:"Persistent" yaml:"Persistent"`
+	Name       string `json:"Name" view:"Name" yaml:"Name"`
+	Tmpl       string `json:"Template" view:"Template" yaml:"Template"`
+	Persistent bool   `json:"Persistent" view:"Persistent" yaml:"Persistent"`
 }
 
 // String returns the template name.

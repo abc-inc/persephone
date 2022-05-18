@@ -27,12 +27,12 @@ import (
 )
 
 type query struct {
-	DBURI   string        `json:"Database URI" table:"Database URI"`
-	User    string        `json:"User" table:"User"`
-	Query   string        `json:"Query" table:"Query"`
-	Params  any           `json:"Params" table:"Params"`
-	Meta    any           `json:"Meta" table:"Meta"`
-	Elapsed time.Duration `json:"Elapsed time" table:"Elapsed time"`
+	DBURI   string        `json:"Database URI" view:"Database URI" yaml:"Database URI"`
+	User    string        `json:"User" view:"User" yaml:"User"`
+	Query   string        `json:"Query" view:"Query" yaml:"Query"`
+	Params  any           `json:"Params" view:"Params" yaml:"Params"`
+	Meta    any           `json:"Meta" view:"Meta" yaml:"Meta"`
+	Elapsed time.Duration `json:"Elapsed time" view:"Elapsed time" yaml:"Elapsed time"`
 }
 
 func (q query) String() string {

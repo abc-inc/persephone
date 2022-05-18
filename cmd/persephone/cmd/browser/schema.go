@@ -24,13 +24,13 @@ import (
 )
 
 type index struct {
-	Name          string   `json:"Index Name" table:"Index Name" yaml:"Index Name"`
-	Type          string   `json:"Type" table:"Type" yaml:"Type"`
-	Uniqueness    string   `json:"Uniqueness" table:"Uniqueness" yaml:"Uniqueness"`
-	EntityType    string   `json:"EntityType" table:"EntityType" yaml:"EntityType"`
-	LabelsOrTypes []string `json:"LabelsOrTypes" table:"LabelsOrTypes" yaml:"LabelsOrTypes"`
-	Properties    []string `json:"Properties" table:"Properties" yaml:"Properties"`
-	State         string   `json:"State" table:"State" yaml:"State"`
+	Name          string   `json:"Index Name" view:"Index Name" yaml:"Index Name"`
+	Type          string   `json:"Type" view:"Type" yaml:"Type"`
+	Uniqueness    string   `json:"Uniqueness" view:"Uniqueness" yaml:"Uniqueness"`
+	EntityType    string   `json:"EntityType" view:"EntityType" yaml:"EntityType"`
+	LabelsOrTypes []string `json:"LabelsOrTypes" view:"LabelsOrTypes" yaml:"LabelsOrTypes"`
+	Properties    []string `json:"Properties" view:"Properties" yaml:"Properties"`
+	State         string   `json:"State" view:"State" yaml:"State"`
 }
 
 func (i index) String() string {
