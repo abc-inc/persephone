@@ -30,19 +30,22 @@ func TestTypesYieldsConsoleCommandTypeAtTheCommandName(t *testing.T) {
 }
 
 func TestTypesYieldsConsoleCommandAtSubCommand(t *testing.T) {
-	checkCompletionTypes(t, ":help▼ ", true, []types.Type{types.ConsoleCommandSubCommand})
+	checkCompletionTypesInfo(t, ":help▼ ", Info{Found: true, Types: []types.Data{{Type: types.ConsoleCommandSubCommand, Path: []string{":help"}}}})
 }
 
 func TestTypesYieldsConsoleCommandAtSubCommandPartly(t *testing.T) {
-	checkCompletionTypes(t, ":help m▼a", true, []types.Type{types.ConsoleCommandSubCommand})
+	checkCompletionTypesInfo(t, ":help m▼a",
+		Info{Found: true, Types: []types.Data{{Type: types.ConsoleCommandSubCommand, Path: []string{":help", "ma"}, FilterLastElement: true}}})
 }
 
 func TestTypesYieldsConsoleCommandAtSubCommandAtSubCommand(t *testing.T) {
-	checkCompletionTypes(t, ":server user▼ ", true, []types.Type{types.ConsoleCommandSubCommand})
+	checkCompletionTypesInfo(t, ":server user▼ ",
+		Info{Found: true, Types: []types.Data{{Type: types.ConsoleCommandSubCommand, Path: []string{":server", "user"}}}})
 }
 
 func TestTypesYieldsConsoleCommandAtSubCommandAtSubCommandPartly(t *testing.T) {
-	checkCompletionTypes(t, ":server user l▼i", true, []types.Type{types.ConsoleCommandSubCommand})
+	checkCompletionTypesInfo(t, ":server user l▼i",
+		Info{Found: true, Types: []types.Data{{Type: types.ConsoleCommandSubCommand, Path: []string{":server", "user", "li"}, FilterLastElement: true}}})
 }
 
 func TestWithoutFiltersYieldsCommandNamesIfColon(t *testing.T) {

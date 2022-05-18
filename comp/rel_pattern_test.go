@@ -33,6 +33,10 @@ func TestTypesYieldsRelationshipTypeIfSecondAndOnlyColonPresent(t *testing.T) {
 	checkCompletionTypes(t, "MATCH (a)-[▼:", true, []types.Type{types.RelationshipType})
 }
 
+func TestTypesYieldsRelationshipTypeIfSecondAndOnlyPipePresent(t *testing.T) {
+	checkCompletionTypes(t, "MATCH (a)-[:q▼|", true, []types.Type{types.RelationshipType})
+}
+
 func TestTypesYieldsRelationshipTypeIfSecondAndColonPresent(t *testing.T) {
 	checkCompletionTypes(t, "MATCH (a)-[:q|▼:", true, []types.Type{types.RelationshipType})
 }

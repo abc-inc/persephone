@@ -36,7 +36,7 @@ func init() {
 					its[i] = Item{
 						Type:    types.ProcedureOutput,
 						View:    ri.Name,
-						Content: ri.Sig,
+						Content: ri.Name,
 						Postfix: " :: " + ri.Sig,
 					}
 				}

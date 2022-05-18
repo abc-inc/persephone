@@ -15,7 +15,6 @@
 package comp_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -59,17 +58,26 @@ var schema = graph.Schema{
 	},
 }
 
-func checkCompletion(t *testing.T, queryWithCursor string, expectedItems Result, doFilter bool) {
+func checkCompletion(t *testing.T, queryWithCursor string, expRes Result, doFilter bool) {
 	pos := strings.IndexRune(queryWithCursor, '▼')
 	query := strings.Replace(queryWithCursor, "▼", "", 1)
 
 	e := editor.NewEditor(query)
 	e.SetSchema(schema)
 	completion := e.GetCompletion(1, pos, doFilter)
-	Equal(t, expectedItems, completion)
+	Equal(t, expRes, completion)
 }
 
-func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expectedTypes []types.Type) {
+func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expTypes []types.Type) {
+	exp := make([]types.Data, len(expTypes))
+	for i, t := range expTypes {
+		exp[i] = types.Data{Type: t, FilterLastElement: false}
+	}
+
+	checkCompletionTypesInfo(t, queryWithCursor, Info{Found: found, Types: exp})
+}
+
+func checkCompletionTypesInfo(t *testing.T, queryWithCursor string, expInfo Info) {
 	pos := strings.IndexRune(queryWithCursor, '▼')
 	query := strings.Replace(queryWithCursor, "▼", "", 1)
 
@@ -77,17 +85,5 @@ func checkCompletionTypes(t *testing.T, queryWithCursor string, found bool, expe
 	el := e.GetElementForCompletion(1, pos)
 	ts := GetTypes(el)
 
-	exp := make([]types.Data, len(expectedTypes))
-	for i, t := range expectedTypes {
-		exp[i] = types.Data{Type: t, FilterLastElement: found}
-	}
-
-	// TODO: fix workaround
-	for i := range ts.Types {
-		ts.Types[i].Path = nil
-		ts.Types[i].FilterLastElement = found
-		fmt.Println(ts.Types[i])
-	}
-
-	Equal(t, Info{Found: found, Types: exp}, ts)
+	Equal(t, expInfo, ts)
 }
