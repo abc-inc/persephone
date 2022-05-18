@@ -37,3 +37,16 @@ func TestKeyword(t *testing.T) {
 	checkCompletion(t, "MATCH (n) w▼H", expected, true)
 	checkCompletion(t, "MATCH (n) ▼wH", expected, true)
 }
+
+func TestFirstKeyword(t *testing.T) {
+	expected := Result{
+		Range: Range{
+			From: LineCol{Line: 1, Col: 0},
+			To:   LineCol{Line: 1, Col: 6},
+		},
+		Items: []Item{
+			{Type: types.Keyword, View: "CREATE", Content: "CREATE"},
+		},
+	}
+	checkCompletion(t, "CREATE▼", expected, true)
+}

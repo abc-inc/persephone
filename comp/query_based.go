@@ -24,12 +24,12 @@ import (
 
 // QueryBased completion provides Items based on the input text.
 type QueryBased struct {
-	refProvs map[string]ref.Provider
+	refProvByCtx map[string]ref.Provider
 }
 
 // NewQueryBased creates a new QueryBased completer using the given Providers.
-func NewQueryBased(refProvs map[string]ref.Provider) *QueryBased {
-	return &QueryBased{refProvs: refProvs}
+func NewQueryBased(refProvByCtx map[string]ref.Provider) *QueryBased {
+	return &QueryBased{refProvByCtx: refProvByCtx}
 }
 
 // Complete returns all variables from the entire CypherQueryContext.

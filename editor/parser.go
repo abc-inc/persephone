@@ -40,9 +40,9 @@ func Parse(input string) (antlr.ParseTree, *ref.Listener, *ErrorListener, map[st
 	p.AddParseListener(refListener)
 	parseTree := p.Cypher()
 	queries, indexes := refListener.Queries, refListener.Indexes
-	refProvs := make(map[string]ref.Provider, len(lang.SymbolicContexts))
+	refProvByCtx := make(map[string]ref.Provider, len(lang.SymbolicContexts))
 	for _, ctx := range lang.SymbolicContexts {
-		refProvs[ctx] = *ref.NewProvider(queries, indexes[ctx])
+		refProvByCtx[ctx] = *ref.NewProvider(queries, indexes[ctx])
 	}
-	return parseTree, refListener, errListener, refProvs
+	return parseTree, refListener, errListener, refProvByCtx
 }

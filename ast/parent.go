@@ -31,6 +31,11 @@ func GetParent(e antlr.Tree) antlr.Tree {
 			if _, ok := c.(antlr.ParserRuleContext); ok {
 				cStart := c.(antlr.ParserRuleContext).GetStart()
 				cStop := c.(antlr.ParserRuleContext).GetStop()
+				if cStop == nil {
+					// In rare cases e.g., if there's not even a single valid keyword,
+					// there is no stop token yet.
+					cStop = cStart
+				}
 				if cStart.GetStart() >= eStart.GetStart() && cStop.GetStop() <= eStop.GetStop() {
 					return c
 				}

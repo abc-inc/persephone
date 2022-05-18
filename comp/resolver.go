@@ -22,9 +22,9 @@ import (
 
 // evaluateRules applies the Rules to the given ParseTree and returns the first
 // non-empty result of Rule.
-func evaluateRules(element antlr.ParseTree) []rule.Info {
+func evaluateRules(e antlr.ParseTree) []rule.Info {
 	for _, r := range rule.OrderedRules {
-		if items := r(element); len(items) > 0 {
+		if items := r(e); len(items) > 0 {
 			return items
 		}
 	}
@@ -33,9 +33,9 @@ func evaluateRules(element antlr.ParseTree) []rule.Info {
 
 // GetTypes returns the completion types of the first Rule matching the given
 // ParseTree.
-func GetTypes(element antlr.Tree) Info {
+func GetTypes(e antlr.Tree) Info {
 	// If element is nil, then no types
-	if element == nil {
+	if e == nil {
 		return Info{
 			Found: false,
 			Types: types.AllCompData,
@@ -43,7 +43,7 @@ func GetTypes(element antlr.Tree) Info {
 	}
 
 	// Retrieve types from rules
-	if infos := evaluateRules(element.(antlr.ParseTree)); len(infos) > 0 {
+	if infos := evaluateRules(e.(antlr.ParseTree)); len(infos) > 0 {
 		ts := make([]types.Data, len(infos))
 		for i, it := range infos {
 			ts[i] = types.Data{Type: it.Type, Path: it.Path, FilterLastElement: it.Found}

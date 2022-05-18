@@ -77,18 +77,18 @@ func (a *AutoCompletion) UpdateSchema(schema graph.Schema) {
 	a.SchemaBased = NewSchemaBased(schema)
 }
 
-func (a *AutoCompletion) UpdateReferenceProviders(refProvs map[string]ref.Provider) {
-	a.QueryBased = NewQueryBased(refProvs)
+func (a *AutoCompletion) UpdateReferenceProviders(refProvByCtx map[string]ref.Provider) {
+	a.QueryBased = NewQueryBased(refProvByCtx)
 }
 
 // ShouldBeReplaced defines whether element should be replaced or not.
-func ShouldBeReplaced(element antlr.Tree) bool {
-	if element == nil {
+func ShouldBeReplaced(e antlr.Tree) bool {
+	if e == nil {
 		return false
 	}
 
-	text := element.(antlr.ParseTree).GetText()
-	parent := ast.GetParent(element)
+	text := e.(antlr.ParseTree).GetText()
+	parent := ast.GetParent(e)
 
 	// If element is whitespace
 	if ok, err := regexp.MatchString("^\\s+$", text); err == nil && ok {
@@ -123,14 +123,14 @@ func filterText(text string) string {
 	return strings.TrimPrefix(text, "$")
 }
 
-func CalculateSmartReplaceRange(element antlr.Tree, start, stop int) *Filter {
+func CalculateSmartReplaceRange(e antlr.Tree, start, stop int) *Filter {
 	// If we are in relationship type or label, and we have error nodes in there.
 	// This means that we typed in just ':' and Antlr consumed other tokens in element.
 	// In this case replace only ':'.
-	_, ok1 := element.(*parser.RelationshipTypeContext)
-	_, ok2 := element.(*parser.NodeLabelContext)
+	_, ok1 := e.(*parser.RelationshipTypeContext)
+	_, ok2 := e.(*parser.NodeLabelContext)
 	if ok1 || ok2 {
-		if ast.HasErrorNode(element) {
+		if ast.HasErrorNode(e) {
 			return &Filter{":", start, start}
 		}
 	}
