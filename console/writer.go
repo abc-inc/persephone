@@ -18,24 +18,26 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"math"
 	"reflect"
 	"strings"
 	"text/tabwriter"
 	"text/template"
 	"unicode"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
-	"github.com/abc-inc/persephone/graph"
-	"github.com/abc-inc/persephone/internal"
 	"github.com/dustin/go-humanize/english"
 	"github.com/fatih/color"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/xlab/treeprint"
 )
+
+type paramMsg struct {
+	format string
+	v      int
+}
 
 // Query executes a statement and returns the result.
 func Query(r graph.Request) error {
@@ -74,9 +76,11 @@ func queryResult(r graph.Request) error {
 	rs, sum, err := t.Query(r, graph.NewResultMapper())
 
 	sp.Stop()
-	if err == nil {
+	if err == nil && rs != nil {
 		err = WriteResult(rs)
 		fmt.Println()
+	}
+	if sum != nil {
 		writeSummary(len(rs), sum)
 	}
 	return err
@@ -142,44 +146,45 @@ func WriteResult(rs []graph.Result) error {
 func writeSummary(n int, sum neo4j.ResultSummary) {
 	writeNotifications(sum.Notifications())
 
-	if sum.Profile() != nil {
-		t := treeprint.New()
-		plan := formatPlan(t, sum.Plan(), sum.Profile())
-		planStats := graph.PlanStats{
-			Plan:      "PROFILE",
-			Statement: graph.StmtType(sum.StatementType()),
-			Version:   sum.Profile().Arguments()["version"].(string),
-			Planner:   sum.Profile().Arguments()["planner"].(string),
-			Runtime:   sum.Profile().Arguments()["runtime"].(string),
-			Time:      (sum.ResultAvailableAfter() + sum.ResultConsumedAfter()).Milliseconds(),
-			DBHits:    0,
-			Rows:      int64(n),
-			Memory:    sum.Profile().Arguments()["GlobalMemory"].(int64),
-		}
-		for _, p := range plan {
-			planStats.DBHits += p.DBHits
-		}
-
-		lines := strings.Split(t.String(), "\n")
-		if _, ok := w.(*gfmt.JSON); ok {
-			plan = []*graph.PlanOp{plan[0]}
-		} else if _, ok := w.(*gfmt.YAML); ok {
-			plan = []*graph.PlanOp{plan[0]}
-		} else {
-			for i := range plan {
-				plan[i].Op = lines[i+1]
-				plan[i].Children = nil
-			}
-		}
-		Write([]graph.PlanStats{planStats})
-		fmt.Println()
-		Write(plan)
-		fmt.Println()
+	if sum.Plan() != nil {
+		writePlan(n, sum, sum.Plan())
+	} else if sum.Profile() != nil {
+		writePlan(n, sum, sum.Profile())
 	}
-	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s\n"
+	const sumMsg = "%d %s, ready to start consuming query after %s, results consumed after another %s"
 	log.Info().Msgf(sumMsg,
 		n, english.PluralWord(n, "row", "rows"),
 		sum.ResultAvailableAfter(), sum.ResultConsumedAfter())
+
+	c := sum.Counters()
+	stats := collectStats(
+		paramMsg{"Added %d nodes", c.NodesCreated()},
+		paramMsg{"Deleted %d nodes", c.NodesDeleted()},
+		paramMsg{"Created %d relationships", c.RelationshipsCreated()},
+		paramMsg{"Deleted %d relationships", c.RelationshipsDeleted()},
+		paramMsg{"Set %d properties", c.PropertiesSet()},
+		paramMsg{"Added %d labels", c.LabelsAdded()},
+		paramMsg{"Removed %d labels", c.LabelsRemoved()},
+		paramMsg{"Added %d indexes", c.IndexesAdded()},
+		paramMsg{"Removed %d indexes", c.IndexesRemoved()},
+		paramMsg{"Added %d constraints", c.ConstraintsAdded()},
+		paramMsg{"Removed %d constraints", c.ConstraintsRemoved()},
+	)
+	if stats != "" {
+		log.Info().Msgf(stats)
+	}
+}
+
+func collectStats(ms ...paramMsg) string {
+	var tmpl []string
+	var args []any
+	for _, m := range ms {
+		if m.v != 0 {
+			tmpl = append(tmpl, m.format)
+			args = append(args, m.v)
+		}
+	}
+	return fmt.Sprintf(strings.Join(tmpl, ", "), args...)
 }
 
 func writeNotifications(ns []neo4j.Notification) {
@@ -200,44 +205,6 @@ func writeNotifications(ns []neo4j.Notification) {
 		e.Str("description", n.Description()).Msg(n.Title())
 	}
 	fmt.Println()
-}
-
-// formatPlan traverses the execution plan and initializes a data structure
-// that holds all operations and metadata.
-func formatPlan(t treeprint.Tree, p neo4j.Plan, pp neo4j.ProfiledPlan) []*graph.PlanOp {
-	if len(pp.Children()) == 0 {
-		n := toNode(p, pp)
-		t.AddNode(n.Op)
-		return []*graph.PlanOp{n}
-	}
-
-	var res []*graph.PlanOp
-	n := toNode(p, pp)
-	res = append(res, n)
-	br := t.AddBranch(n.Op)
-
-	for _, c := range pp.Children() {
-		xs := formatPlan(br, nil, c)
-		n.Children = append(n.Children, xs[0])
-		res = append(res, xs...)
-	}
-	return res
-}
-
-// toNode extracts the metadata from the plan entry.
-func toNode(p neo4j.Plan, pp neo4j.ProfiledPlan) *graph.PlanOp {
-	op, _, _ := strings.Cut(pp.Operator(), "@")
-	return &graph.PlanOp{
-		Op:          op,
-		Details:     internal.NilToZero[string](pp.Arguments()["Details"]),
-		RowsEst:     int64(math.Round(pp.Arguments()["EstimatedRows"].(float64))),
-		Rows:        pp.Records(),
-		DBHits:      pp.DbHits(),
-		Memory:      internal.NilToZero[int64](pp.Arguments()["Memory"]),
-		CacheHits:   pp.PageCacheHits(),
-		CacheMisses: pp.PageCacheMisses(),
-		Order:       internal.NilToZero[string](pp.Arguments()["Order"]),
-	}
 }
 
 // collectProps extracts all properties from every result.
@@ -287,12 +254,12 @@ func apply(t *template.Template, props map[string]any) (string, error) {
 	return strings.TrimSuffix(b.String(), "\n"), nil
 }
 
-func toJSON(props map[string]any) (txt string, err error) {
+func toJSON(props map[string]any) (string, error) {
 	bs, err := json.Marshal(props)
 	if err != nil {
-		return
+		return "", err
 	}
-	txt = string(bs)
+	txt := string(bs)
 	if info.Format == "csv" {
 		b := &strings.Builder{}
 		w := csv.NewWriter(b)
@@ -300,7 +267,7 @@ func toJSON(props map[string]any) (txt string, err error) {
 		w.Flush()
 		txt = strings.TrimSuffix(b.String(), "\n")
 	}
-	return
+	return txt, nil
 }
 
 func writeTable(rs []graph.Result) (string, error) {
