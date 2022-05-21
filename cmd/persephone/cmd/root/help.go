@@ -182,8 +182,7 @@ func rootHelpFunc(f *cmdutil.Factory, cmd *cobra.Command, args []string) {
 		helpEntries = append(helpEntries, helpEntry{"ENVIRONMENT VARIABLES", cmd.Annotations["help:environment"]})
 	}
 	helpEntries = append(helpEntries, helpEntry{"LEARN MORE", `
-Use 'persephone <command> <subcommand> --help' for more information about a command.
-Read the manual at https://cli.github.com/manual`})
+Use 'persephone <command> <subcommand> --help' for more information about a command.`})
 	if _, ok := cmd.Annotations["help:feedback"]; ok {
 		helpEntries = append(helpEntries, helpEntry{"FEEDBACK", cmd.Annotations["help:feedback"]})
 	}

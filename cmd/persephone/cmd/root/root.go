@@ -49,8 +49,8 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 			`By default the shell is interactive but you can use it for scripting ` +
 			`by passing Cypher directly on the command line or by piping a file with Cypher statements.`,
 		Example: heredoc.Doc(`
-			$ persephone
 			$ persephone "MATCH (n) RETURN count(n);"
+			$ persephone --address neo4j://localhost:7687 --database system --username neo4j
 			$ persephone :sysinfo
 			$ persephone :help environment`),
 		Args: cobra.MaximumNArgs(1),

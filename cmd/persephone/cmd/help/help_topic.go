@@ -45,10 +45,6 @@ func NewCmdHelpTopic(t Topic) *cobra.Command {
 		Use:    n,
 		Short:  t.Desc,
 		Hidden: true,
-		Annotations: map[string]string{
-			"markdown:generate": "true",
-			"markdown:basename": "persephone_help_" + n,
-		},
 	}
 
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {

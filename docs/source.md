@@ -18,6 +18,7 @@
 3. Build and install
 
    #### Unix-like systems
+
    ```sh
    # installs to '/usr/local' by default; sudo may be required
    $ make install
@@ -27,6 +28,7 @@
    ```
 
    #### Windows
+
    ```pwsh
    # determine the version
    > git describe --tags
@@ -40,6 +42,7 @@
 4. Run `persephone version` to check if it worked.
 
    #### Windows
+
    Run `bin\persephone.exe version` to check if it worked.
 
 ## Cross-compiling binaries for different platforms
