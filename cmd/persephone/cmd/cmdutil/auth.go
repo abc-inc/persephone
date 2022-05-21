@@ -17,11 +17,12 @@ package cmdutil
 import (
 	"os"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -68,12 +69,13 @@ func Connect(sessCfg *config.SessionConfig) {
 		Msg("Connecting to Neo4j database")
 
 	auth, u := graph.Auth(u + ":" + p)
-	conn, err := graph.NewConn(addr, u, auth, db)
+	_, err := graph.NewConn(addr, u, auth, db, func(config *neo4j.Config) {
+		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
+	})
 	if err != nil {
 		console.WriteErr(err)
 		os.Exit(1)
 	}
-	conn.DBName = db
 
 	if isatty.IsTerminal(os.Stdin.Fd()) {
 		consCmdCol := color.New(color.FgCyan).Sprint

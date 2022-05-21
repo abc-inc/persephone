@@ -18,9 +18,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -63,7 +63,7 @@ func SysInfo() {
 }
 
 func ListDBs() []DBInfo {
-	t := graph.NewTypedTemplate[DBInfo](graph.GetConn())
+	t := graph.NewTemplate[DBInfo](graph.GetConn())
 	r := graph.Request{Query: "SHOW DATABASES"}
 	dbs, _ := internal.MustTuple(t.Query(r, func(rec *neo4j.Record) DBInfo {
 		return DBInfo{

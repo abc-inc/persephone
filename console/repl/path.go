@@ -43,7 +43,7 @@ func PathComp(path string) []Item {
 
 // findFromPrefix returns files and directories matching the given path prefix.
 // If path is not a directory, then the last path segment is used as a filter.
-func findFromPrefix(path string, idx int) (is []Item) {
+func findFromPrefix(path string, idx int) (its []Item) {
 	var filter string
 	if idx != len(path)-1 || !isDir(path) {
 		// path does not end with /
@@ -69,7 +69,7 @@ func findFromPrefix(path string, idx int) (is []Item) {
 				det = fileDetails(fi)
 			}
 		}
-		is = append(is, Item{View: de.Name(), Content: det})
+		its = append(its, Item{View: de.Name(), Content: det})
 	}
 	return
 }

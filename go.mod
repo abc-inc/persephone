@@ -6,6 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/abc-inc/browser v1.0.0
+	github.com/abc-inc/go-data-neo4j v0.0.0-20220520231737-cd03273a3fe5
 	github.com/abc-inc/go-fuzzaldrin-plus v1.0.0
 	github.com/abc-inc/gutenfmt v0.1.1
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed
@@ -26,7 +27,7 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
 	github.com/xlab/treeprint v1.1.0
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
+	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
 )
 

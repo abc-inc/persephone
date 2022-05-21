@@ -27,30 +27,37 @@ type QueryBased struct {
 	refProvByCtx map[string]ref.Provider
 }
 
+var _ Comp = (*QueryBased)(nil)
+
 // NewQueryBased creates a new QueryBased completer using the given Providers.
 func NewQueryBased(refProvByCtx map[string]ref.Provider) *QueryBased {
 	return &QueryBased{refProvByCtx: refProvByCtx}
 }
 
 // Complete returns all variables from the entire CypherQueryContext.
-// If variables are not requested, an empty result is returned.
-func (q QueryBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
+func (q QueryBased) Complete(ts []types.Data, query antlr.Tree) (its []Item) {
 	if query == nil {
-		return is
+		return its
 	}
 
 	for _, t := range ts {
-		if t.Type != types.Variable {
-			continue
-		}
-		ns := q.refProvs[lang.VariableContext].GetNames(query.(*parser.CypherQueryContext))
-		for _, n := range ns {
-			is = append(is, Item{
-				Type:    types.Variable,
-				View:    n,
-				Content: n,
-			})
-		}
+		its = append(its, q.CalculateItems(t, query)...)
 	}
-	return is
+	return its
+}
+
+// CalculateItems returns all variables from the entire CypherQueryContext.
+func (q QueryBased) CalculateItems(t types.Data, query antlr.Tree) (its []Item) {
+	if t.Type != types.Variable {
+		return
+	}
+	ns := q.refProvByCtx[lang.VariableContext].GetNames(query.(*parser.CypherQueryContext))
+	for _, n := range ns {
+		its = append(its, Item{
+			Type:    types.Variable,
+			View:    n,
+			Content: n,
+		})
+	}
+	return
 }

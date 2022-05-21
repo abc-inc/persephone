@@ -27,7 +27,8 @@ import (
 // and then returns all completion types.
 func rulePossibleKeyword(e antlr.ParseTree) (is []Info) {
 	text := strings.ToUpper(e.GetText())
-	if pos := sort.SearchStrings(lang.Keywords, text); pos < len(lang.Keywords) && strings.Contains(lang.Keywords[pos], text) {
+	pos := sort.SearchStrings(lang.Keywords, text)
+	if pos < len(lang.Keywords) && strings.Contains(lang.Keywords[pos], text) {
 		for _, t := range types.AllComp {
 			is = append(is, Info{Type: t})
 		}

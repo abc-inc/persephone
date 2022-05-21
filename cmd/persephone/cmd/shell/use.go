@@ -18,11 +18,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
 

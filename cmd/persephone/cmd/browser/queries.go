@@ -18,9 +18,9 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -50,7 +50,7 @@ func NewCmdQueries(f *cmdutil.Factory) *cobra.Command {
 }
 
 func Queries() {
-	t := graph.NewTypedTemplate[query](graph.GetConn())
+	t := graph.NewTemplate[query](graph.GetConn())
 	r := graph.Request{Query: "CALL dbms.listQueries()"}
 	qs, _, err := t.Query(r, func(rec *neo4j.Record) query {
 		return query{

@@ -20,11 +20,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
+	"github.com/abc-inc/go-data-neo4j/meta"
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/types"
 	"github.com/c-bata/go-prompt"
@@ -140,44 +141,37 @@ func listItems(stmt string) []repl.Item {
 	return nil
 }
 
-func loadSchema(cmd *cobra.Command) graph.Schema {
-	md, err := graph.GetConn().Metadata()
+func loadSchema(cmd *cobra.Command) comp.Metadata {
+	md, err := meta.FetchMetadata(graph.GetConn())
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
 
 	ls := make([]string, len(md.Nodes))
-	var pkeys []string
-	for i, e := range md.Nodes {
-		ls[i] = e.String()
-		for _, p := range e.Properties {
-			pkeys = append(pkeys, p)
-		}
-	}
-	if len(pkeys) == 0 {
-		pkeys = append(pkeys, md.Props...)
+	for i, n := range md.Nodes {
+		ls[i] = n.String()
 	}
 
 	ts := make([]string, len(md.Rels))
 	for i, r := range md.Rels {
-		ts[i] = r.Type
-		for p := range r.Properties {
-			pkeys = append(pkeys, p)
-		}
+		ts[i] = r.String()
 	}
 
-	ccs := make([]graph.Cmd, len(cmd.Root().Commands()))
+	ccs := make([]comp.Cmd, len(cmd.Root().Commands()))
 	for i, c := range cmd.Root().Commands() {
-		ccs[i] = graph.Cmd{Name: c.Name(), Desc: strings.TrimPrefix(c.Name(), ":")}
+		ccs[i] = comp.Cmd{Name: c.Name(), Desc: strings.TrimPrefix(c.Name(), ":")}
 	}
 
-	schema := graph.Schema{
-		Labels:   ls,
-		RelTypes: ts,
-		PropKeys: pkeys,
-		Funcs:    md.Funcs,
-		Procs:    md.Procs,
-		ConCmds:  ccs,
+	schema := comp.Metadata{
+		Schema: meta.Schema{
+			Labels:   ls,
+			RelTypes: ts,
+			PropKeys: md.Props,
+			Funcs:    md.Funcs,
+			Procs:    md.Procs,
+		},
+		Params:  nil,
+		ConCmds: ccs,
 	}
 	return schema
 }

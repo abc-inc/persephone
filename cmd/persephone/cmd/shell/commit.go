@@ -17,9 +17,9 @@ package cmd
 import (
 	"errors"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/spf13/cobra"
 )
 

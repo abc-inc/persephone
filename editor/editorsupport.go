@@ -19,7 +19,6 @@ import (
 
 	"github.com/abc-inc/persephone/ast"
 	"github.com/abc-inc/persephone/comp"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -27,7 +26,7 @@ import (
 )
 
 type Editor struct {
-	schema  graph.Schema
+	schema  comp.Metadata
 	Input   string
 	posConv PosConv
 
@@ -41,7 +40,7 @@ type Editor struct {
 // NewEditor initializes a new Editor with various autocompletion capabilities.
 func NewEditor(input string) *Editor {
 	e := &Editor{}
-	e.completion = *comp.NewAutoCompletion(graph.Schema{})
+	e.completion = *comp.NewAutoCompletion(comp.Metadata{})
 	e.Update(input)
 	return e
 }
@@ -64,7 +63,7 @@ func (e *Editor) Update(input string) {
 }
 
 // SetSchema updates the metadata used for providing schema-specific completion.
-func (e *Editor) SetSchema(schema graph.Schema) {
+func (e *Editor) SetSchema(schema comp.Metadata) {
 	e.schema = schema
 	e.completion.UpdateSchema(e.schema)
 }

@@ -10,7 +10,6 @@ At a high level, these areas make up the `github.com/abc-inc/persephone` project
 - [`comp/`](../comp) - most other packages, including the implementation for individual gh commands
 - [`docs/`](../docs) - documentation for maintainers and contributors
 - [`editor/`](../editor) - invokes the parser and provides autocompletion information
-- [`graph/`](../graph) - Neo4j-related code
 - [`go.mod`](../go.mod) - external Go dependencies for this project, automatically fetched by Go at build time
 - [`ref`](../ref) - provides references to AST elements visited by the parser
 

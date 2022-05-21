@@ -20,7 +20,6 @@ import (
 
 	"github.com/abc-inc/go-fuzzaldrin-plus"
 	"github.com/abc-inc/persephone/ast"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/ref"
 	"github.com/abc-inc/persephone/types"
@@ -38,8 +37,8 @@ func KeywordItems() []Item {
 }
 
 type Comp interface {
-	CalculateItems(ts types.Type, query string) []Item
-	Complete(ts []types.Type, query antlr.Tree)
+	CalculateItems(ts types.Data, query antlr.Tree) []Item
+	Complete(ts []types.Data, query antlr.Tree) (its []Item)
 }
 
 type AutoCompletion struct {
@@ -47,33 +46,33 @@ type AutoCompletion struct {
 	SchemaBased *SchemaBased
 }
 
-func NewAutoCompletion(schema graph.Schema) *AutoCompletion {
+func NewAutoCompletion(schema Metadata) *AutoCompletion {
 	a := &AutoCompletion{}
 	a.UpdateSchema(schema)
 	return a
 }
 
-func (a AutoCompletion) GetItems(types []types.Data, query antlr.Tree, filter string) (items []Item) {
+func (a AutoCompletion) GetItems(types []types.Data, query antlr.Tree, filter string) (its []Item) {
 	text := strings.ToLower(filter)
 	filteredText := filterText(text)
 
 	if a.QueryBased != nil {
-		items = append(items, a.QueryBased.Complete(types, query)...)
+		its = append(its, a.QueryBased.Complete(types, query)...)
 	}
 	if a.SchemaBased != nil {
-		items = append(items, a.SchemaBased.Complete(types, query)...)
+		its = append(its, a.SchemaBased.Complete(types, query)...)
 	}
 
 	if len(filteredText) > 0 {
-		return fuzzaldrin.Filter(items, filteredText, func(i Item) string { return i.View })
+		return fuzzaldrin.Filter(its, filteredText, func(i Item) string { return i.View })
 	}
 	if len(text) > 0 {
-		return fuzzaldrin.Filter(items, text, func(i Item) string { return i.View })
+		return fuzzaldrin.Filter(its, text, func(i Item) string { return i.View })
 	}
-	return items
+	return its
 }
 
-func (a *AutoCompletion) UpdateSchema(schema graph.Schema) {
+func (a *AutoCompletion) UpdateSchema(schema Metadata) {
 	a.SchemaBased = NewSchemaBased(schema)
 }
 

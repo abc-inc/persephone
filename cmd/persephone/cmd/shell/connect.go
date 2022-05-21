@@ -17,10 +17,10 @@ package cmd
 import (
 	"os"
 
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	cmd "github.com/abc-inc/persephone/cmd/persephone/cmd/persephone"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
@@ -69,5 +69,10 @@ func Connect(addr string, user, pass, db string) error {
 
 	log.Info().Str("db", db).Str("addr", addr).Str("user", user).
 		Msg("Connecting to Neo4j database")
-	return internal.Second(graph.NewConn(addr, user, neo4j.BasicAuth(user, pass, ""), db))
+
+	auth, u := graph.Auth("basic:" + user + ":" + pass)
+	_, err := graph.NewConn(addr, u, auth, db, func(config *neo4j.Config) {
+		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
+	})
+	return err
 }

@@ -18,39 +18,41 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abc-inc/go-data-neo4j/meta"
 	. "github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/editor"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/types"
 	. "github.com/stretchr/testify/require"
 )
 
-var schema = graph.Schema{
-	Labels:   []string{":y", ":x"},
-	RelTypes: []string{":rel1", ":rel 2"},
-	PropKeys: []string{"prop1", "prop2"},
-	Params:   []string{"param1", "param2"},
-	Funcs: []graph.Func{
-		{Name: "toFloat", Sig: "expression"},
-		{Name: "head", Sig: "expression"},
-	},
-	Procs: []graph.Func{{
-		Name: "db.indexes",
-		Sig:  "()",
-		RetItems: []graph.Func{
-			{Name: "description", Sig: "STRING?"},
-			{Name: "state", Sig: "STRING?"},
-			{Name: "type", Sig: "STRING?"},
+var schema = Metadata{
+	Schema: meta.Schema{
+		Labels:   []string{":y", ":x"},
+		RelTypes: []string{":rel1", ":rel 2"},
+		PropKeys: []string{"prop1", "prop2"},
+		Funcs: []meta.Func{
+			{Name: "toFloat", Sig: "expression"},
+			{Name: "head", Sig: "expression"},
+		},
+		Procs: []meta.Func{{
+			Name: "db.indexes",
+			Sig:  "()",
+			RetItems: []meta.Func{
+				{Name: "description", Sig: "STRING?"},
+				{Name: "state", Sig: "STRING?"},
+				{Name: "type", Sig: "STRING?"},
+			},
+		},
+			{Name: "org.neo4j.graph.traverse", Sig: "expression"},
 		},
 	},
-		{Name: "org.neo4j.graph.traverse", Sig: "expression"},
-	},
-	ConCmds: []graph.Cmd{
+	Params: []string{"param1", "param2"},
+	ConCmds: []Cmd{
 		{Name: ":clear"},
 		{Name: ":play"},
-		{Name: ":help", Desc: "helpdesc", SubCmds: []graph.Cmd{{Name: "match"}, {Name: "create"}}},
-		{Name: ":server", SubCmds: []graph.Cmd{
-			{Name: "user", SubCmds: []graph.Cmd{
+		{Name: ":help", Desc: "helpdesc", SubCmds: []Cmd{{Name: "match"}, {Name: "create"}}},
+		{Name: ":server", SubCmds: []Cmd{
+			{Name: "user", SubCmds: []Cmd{
 				{Name: "list", Desc: "listdesc"},
 				{Name: "add"},
 			}},

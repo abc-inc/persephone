@@ -17,18 +17,37 @@ package comp
 import (
 	"fmt"
 
-	"github.com/abc-inc/persephone/graph"
+	"github.com/abc-inc/go-data-neo4j/meta"
 	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/types"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
-type ItemProvider func(schema graph.Schema, typeData types.Data) []Item
+// Cmd represents a console command.
+type Cmd struct {
+	Name    string
+	Desc    string
+	SubCmds []Cmd
+}
+
+// String returns command name.
+func (c Cmd) String() string {
+	return c.Name
+}
+
+// Metadata represents holds schema information and other completion metadata.
+type Metadata struct {
+	meta.Schema
+	Params  []string
+	ConCmds []Cmd
+}
+
+type ItemProvider func(schema Metadata, typeData types.Data) []Item
 
 var providers = make(map[types.Type]ItemProvider)
 
 func init() {
-	providers[types.ProcedureOutput] = func(schema graph.Schema, typeData types.Data) []Item {
+	providers[types.ProcedureOutput] = func(schema Metadata, typeData types.Data) []Item {
 		for _, p := range schema.Procs {
 			if p.Name == typeData.Path[0] && len(p.RetItems) > 0 {
 				its := make([]Item, len(p.RetItems))
@@ -45,7 +64,7 @@ func init() {
 		}
 		return nil
 	}
-	providers[types.ConsoleCommandSubCommand] = func(schema graph.Schema, typeData types.Data) []Item {
+	providers[types.ConsoleCommandSubCommand] = func(schema Metadata, typeData types.Data) []Item {
 		filterLastElement, path := typeData.FilterLastElement, typeData.Path
 		length := len(path)
 		if filterLastElement {
@@ -80,11 +99,13 @@ func init() {
 }
 
 type SchemaBased struct {
-	Schema graph.Schema
+	Schema Metadata
 	cache  map[types.Type][]Item
 }
 
-func NewSchemaBased(schema graph.Schema) *SchemaBased {
+var _ Comp = (*SchemaBased)(nil)
+
+func NewSchemaBased(schema Metadata) *SchemaBased {
 	s := &SchemaBased{Schema: schema}
 	s.cache = make(map[types.Type][]Item)
 	s.cache[types.Keyword] = KeywordItems()
@@ -92,32 +113,32 @@ func NewSchemaBased(schema graph.Schema) *SchemaBased {
 	s.cache[types.RelationshipType] = mapItems(schema.RelTypes, types.RelationshipType, strF, escF, nilF)
 	s.cache[types.PropertyKey] = mapItems(schema.PropKeys, types.PropertyKey, strF, escF, nilF)
 	s.cache[types.FunctionName] = mapItemsStruct(schema.Funcs, types.FunctionName,
-		func(n graph.Func) string { return n.Name }, func(n graph.Func) string { return lang.EscapeCypher(n.Name) }, func(n graph.Func) string { return n.Sig })
+		func(n meta.Func) string { return n.Name }, func(n meta.Func) string { return lang.EscapeCypher(n.Name) }, func(n meta.Func) string { return n.Sig })
 	s.cache[types.ProcedureName] = mapItemsStruct(schema.Procs, types.ProcedureName,
-		func(n graph.Func) string { return n.Name }, func(n graph.Func) string { return n.Name }, func(n graph.Func) string { return n.Sig })
+		func(n meta.Func) string { return n.Name }, func(n meta.Func) string { return n.Name }, func(n meta.Func) string { return n.Sig })
 	s.cache[types.ConsoleCommandName] = mapItemsCmd(schema.ConCmds, types.ConsoleCommandName,
-		func(n graph.Cmd) string { return n.Name }, func(n graph.Cmd) string { return n.Name }, func(n graph.Cmd) string { return n.Desc })
+		func(n Cmd) string { return n.Name }, func(n Cmd) string { return n.Name }, func(n Cmd) string { return n.Desc })
 	s.cache[types.Parameter] = mapItems(schema.Params, types.Parameter, strF, strF, nilF)
 	return s
 }
 
-func (s SchemaBased) CalculateItems(t types.Data, query antlr.Tree) (is []Item) {
+func (s SchemaBased) CalculateItems(t types.Data, _ antlr.Tree) (its []Item) {
 	if p, ok := providers[t.Type]; ok {
-		is = append(is, p(s.Schema, t)...)
+		its = append(its, p(s.Schema, t)...)
 	}
-	return is
+	return its
 }
 
-func (s SchemaBased) Complete(ts []types.Data, query antlr.Tree) (is []Item) {
+func (s SchemaBased) Complete(ts []types.Data, query antlr.Tree) (its []Item) {
 	if len(ts) == 0 {
 		return nil
 	}
 
 	for _, t := range ts {
 		if items := s.cache[t.Type]; items != nil {
-			is = append(is, items...)
+			its = append(its, items...)
 		} else {
-			is = append(is, s.CalculateItems(t, query)...)
+			its = append(its, s.CalculateItems(t, query)...)
 		}
 	}
 
@@ -156,10 +177,10 @@ func mapItems(ns []string, typ types.Type,
 	return
 }
 
-func mapItemsStruct(ns []graph.Func, typ types.Type,
-	viewFunc func(graph.Func) string,
-	contFunc func(graph.Func) string,
-	pfFunc func(graph.Func) string) (its []Item) {
+func mapItemsStruct(ns []meta.Func, typ types.Type,
+	viewFunc func(meta.Func) string,
+	contFunc func(meta.Func) string,
+	pfFunc func(meta.Func) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{
@@ -172,10 +193,10 @@ func mapItemsStruct(ns []graph.Func, typ types.Type,
 	return
 }
 
-func mapItemsCmd(ns []graph.Cmd, typ types.Type,
-	viewFunc func(graph.Cmd) string,
-	contFunc func(graph.Cmd) string,
-	pfFunc func(graph.Cmd) string) (its []Item) {
+func mapItemsCmd(ns []Cmd, typ types.Type,
+	viewFunc func(Cmd) string,
+	contFunc func(Cmd) string,
+	pfFunc func(Cmd) string) (its []Item) {
 
 	for _, n := range ns {
 		its = append(its, Item{

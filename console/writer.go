@@ -52,7 +52,7 @@ func queryRaw(r graph.Request) error {
 	sp := NewSpinner()
 	sp.Start()
 
-	t := graph.NewTypedTemplate[map[string]any](graph.GetConn())
+	t := graph.NewTemplate[map[string]any](graph.GetConn())
 	ms, sum, err := t.Query(r, graph.NewRawResultMapper())
 
 	sp.Stop()
@@ -70,7 +70,7 @@ func queryResult(r graph.Request) error {
 	sp := NewSpinner()
 	sp.Start()
 
-	t := graph.NewTypedTemplate[graph.Result](graph.GetConn())
+	t := graph.NewTemplate[graph.Result](graph.GetConn())
 	rs, sum, err := t.Query(r, graph.NewResultMapper())
 
 	sp.Stop()

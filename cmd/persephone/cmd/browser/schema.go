@@ -15,9 +15,9 @@
 package cmd
 
 import (
+	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/console"
-	"github.com/abc-inc/persephone/graph"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/spf13/cobra"
@@ -53,7 +53,7 @@ func Schema() {
 		"RETURN `Index Name`, Type, Uniqueness, EntityType, LabelsOrTypes, Properties, State " +
 		"ORDER BY `Index Name`;"
 
-	t := graph.NewTypedTemplate[index](graph.GetConn())
+	t := graph.NewTemplate[index](graph.GetConn())
 	r := graph.Request{Query: cyp}
 	idxs, _ := internal.MustTuple(t.Query(r, func(rec *neo4j.Record) index {
 		ls := internal.MustOk(rec.Get("LabelsOrTypes")).([]any)
