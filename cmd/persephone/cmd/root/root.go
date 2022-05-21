@@ -64,7 +64,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.Connect(f.SessionConfig())
 			}
 		},
-		Run:               run,
+		Run:               func(cmd *cobra.Command, args []string) { run(f, cmd, args) },
 		PersistentPostRun: cmdutil.ResetFlags,
 	}
 
@@ -87,6 +87,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	// rootCmd.SetUsageFunc(rootUsageFunc)
 
 	// Child commands
+	cmdColors := persephone.NewCmdColors(f)
 	cmdFormat := persephone.NewCmdFormat(f)
 	cmdHistory := shell.NewCmdHistory(f)
 	cmdSource := shell.NewCmdSource(f)
@@ -102,6 +103,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 		browser.NewCmdSchema(f),
 		browser.NewCmdStatus(f),
 		browser.NewCmdSysInfo(f),
+		cmdColors,
 		cmdFormat,
 		persephone.NewCmdIssue(f),
 		cmdTemplate,
@@ -134,6 +136,8 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 		return
 	}
 
+	compByConsCmd[persephone.FQCmdName(cmdColors)] = persephone.ColorsComp
+
 	compByConsCmd[persephone.FQCmdName(cmdFormat)] = persephone.FormatComp
 
 	compByConsCmd[persephone.FQCmdName(cmdHistory)] = repl.SubCmdComp(cmdHistory)
@@ -156,11 +160,11 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	return rootCmd
 }
 
-func run(cmd *cobra.Command, args []string) {
+func run(f *cmdutil.Factory, cmd *cobra.Command, args []string) {
 	if cmd == cmd.Root() && runRootCmd(cmd, args) {
 		return
 	}
-	runRepl(cmd)
+	runRepl(f.Config(), cmd)
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) bool {

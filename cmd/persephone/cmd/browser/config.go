@@ -23,6 +23,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type Prop struct {
+	Key   string
+	Value any
+}
+
 func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         ":config COMMAND",
@@ -80,8 +85,11 @@ func NewCmdConfigSet(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func ListConfig(cfg config.Config) map[string]any {
-	return cfg.List()
+func ListConfig(cfg config.Config) (ps []Prop) {
+	for _, k := range cfg.List() {
+		ps = append(ps, Prop{k, cfg.Get(k, nil)})
+	}
+	return
 }
 
 func GetConfig(cfg config.Config, key string) any {

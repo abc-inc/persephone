@@ -17,6 +17,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/abc-inc/persephone/internal"
 	"github.com/rs/zerolog/log"
@@ -27,7 +28,7 @@ import (
 type Config interface {
 	Get(string, any) any
 	Set(string, any)
-	List() map[string]any
+	List() []string
 	Load() error
 	Save() error
 }
@@ -92,9 +93,11 @@ func (c *viperConfig) Set(key string, val any) {
 	viper.Set(key, val)
 }
 
-// List returns a copy of all settings.
-func (c *viperConfig) List() map[string]any {
-	return viper.AllSettings()
+// List returns all keys holding a value.
+func (c *viperConfig) List() []string {
+	ks := viper.AllKeys()
+	sort.Strings(ks)
+	return ks
 }
 
 // Load loads the config from the pre-configured file.

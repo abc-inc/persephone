@@ -23,19 +23,23 @@ import (
 	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/go-data-neo4j/meta"
 	"github.com/abc-inc/persephone/comp"
+	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/types"
+	"github.com/alecthomas/chroma/quick"
 	"github.com/c-bata/go-prompt"
+	"github.com/mattn/go-isatty"
+	"github.com/muesli/termenv"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var p *prompt.Prompt
 
-func runRepl(cmd *cobra.Command) {
+func runRepl(cfg config.Config, cmd *cobra.Command) {
 	e := editor.NewEditor("")
 	e.SetSchema(loadSchema(cmd))
 
@@ -47,20 +51,28 @@ func runRepl(cmd *cobra.Command) {
 		}
 	}()
 
-	p = prompt.New(func(cyp string) { console.WriteErr(executor(cyp, cmd, hist)) },
-		func(d prompt.Document) []prompt.Suggest { return completer(e, d) },
-		prompt.OptionSetExitCheckerOnInput(func(in string, breakLine bool) bool {
-			return breakLine && in == "exit"
-		}), prompt.OptionPrefix(""),
-		prompt.OptionPrefixTextColor(prompt.Cyan),
+	var opts []prompt.Option
+	opts = append(opts,
+		prompt.OptionPrefix(""),
 		prompt.OptionCompletionWordSeparator(" "),
-		prompt.OptionHistory(hist.Entries()),
 		prompt.OptionLivePrefix(func() (prefix string, useLivePrefix bool) {
 			if graph.GetConn().DBName == "" {
 				return "Disconnected>", true
 			}
 			return fmt.Sprintf("%s@%s> ", graph.GetConn().Username(), graph.GetConn().DBName), len(lines) == 0
 		}),
+		prompt.OptionInput(inputCallback(cfg)),
+		prompt.OptionPrefixTextColor(prompt.Cyan),
+		prompt.OptionHistory(hist.Entries()),
+		prompt.OptionSetExitCheckerOnInput(func(in string, breakLine bool) bool {
+			return breakLine && in == "exit"
+		}),
+	)
+	opts = append(opts, colorOpts(cfg)...)
+
+	p = prompt.New(func(cyp string) { console.WriteErr(executor(cyp, cmd, hist)) },
+		func(d prompt.Document) []prompt.Suggest { return completer(e, d) },
+		opts...,
 	)
 	p.Run()
 }
@@ -174,4 +186,82 @@ func loadSchema(cmd *cobra.Command) comp.Metadata {
 		ConCmds: ccs,
 	}
 	return schema
+}
+
+func colorOpts(cfg config.Config) (os []prompt.Option) {
+	optByCol := map[string]func(prompt.Color) prompt.Option{
+		"prefixTextColor":              prompt.OptionPrefixTextColor,
+		"prefixBGColor":                prompt.OptionPrefixBackgroundColor,
+		"inputTextColor":               prompt.OptionInputTextColor,
+		"inputBGColor":                 prompt.OptionInputBGColor,
+		"previewSuggestionTextColor":   prompt.OptionPreviewSuggestionTextColor,
+		"previewSuggestionBGColor":     prompt.OptionPreviewSuggestionBGColor,
+		"suggestionTextColor":          prompt.OptionSuggestionTextColor,
+		"suggestionBGColor":            prompt.OptionSuggestionBGColor,
+		"selectedSuggestionTextColor":  prompt.OptionSelectedSuggestionTextColor,
+		"selectedSuggestionBGColor":    prompt.OptionSelectedSuggestionBGColor,
+		"descriptionTextColor":         prompt.OptionDescriptionTextColor,
+		"descriptionBGColor":           prompt.OptionDescriptionBGColor,
+		"selectedDescriptionTextColor": prompt.OptionSelectedDescriptionTextColor,
+		"selectedDescriptionBGColor":   prompt.OptionSelectedDescriptionBGColor,
+		"scrollbarThumbColor":          prompt.OptionScrollbarThumbColor,
+		"scrollbarBGColor":             prompt.OptionScrollbarBGColor,
+	}
+
+	colByName := map[string]prompt.Color{
+		"Default":   prompt.DefaultColor,
+		"Black":     prompt.Black,
+		"DarkRed":   prompt.DarkRed,
+		"DarkGreen": prompt.DarkGreen,
+		"Brown":     prompt.Brown,
+		"DarkBlue":  prompt.DarkBlue,
+		"Purple":    prompt.Purple,
+		"Cyan":      prompt.Cyan,
+		"LightGray": prompt.LightGray,
+		"DarkGray":  prompt.DarkGray,
+		"Red":       prompt.Red,
+		"Green":     prompt.Green,
+		"Yellow":    prompt.Yellow,
+		"Blue":      prompt.Blue,
+		"Fuchsia":   prompt.Fuchsia,
+		"Turquoise": prompt.Turquoise,
+		"White":     prompt.White,
+	}
+
+	for key, opt := range optByCol {
+		if val := cfg.Get(key, "").(string); val != "" {
+			if col, ok := colByName[val]; ok {
+				log.Debug().Str("property", key).Str("color", val).Msg("Configuring color schema")
+				os = append(os, opt(col))
+			}
+		}
+	}
+	return
+}
+
+func inputCallback(cfg config.Config) func(string) string {
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		return func(s string) string { return s }
+	}
+
+	fmtByProfile := map[termenv.Profile]string{
+		termenv.TrueColor: "terminal16m",
+		termenv.ANSI256:   "terminal256",
+		termenv.ANSI:      "terminal16",
+		termenv.Ascii:     "noop",
+	}
+	f := fmtByProfile[termenv.ColorProfile()]
+
+	return func(s string) string {
+		style := cfg.Get("colors", "").(string)
+		if style == "" {
+			return s
+		}
+
+		buf := strings.Builder{}
+		if err := quick.Highlight(&buf, s, "Cypher", f, style); err != nil {
+			return s
+		}
+		return buf.String()
+	}
 }
