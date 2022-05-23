@@ -20,7 +20,7 @@ require (
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-shellwords v1.0.12
-	github.com/muesli/termenv v0.9.0
+	github.com/muesli/termenv v0.11.0
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
