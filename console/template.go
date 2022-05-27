@@ -83,7 +83,7 @@ func (tm *TmplMgr) Get(path string) (t *template.Template) {
 	path = TmplFileName(path)
 	var ok bool
 	if t, ok = tm.TmplsByPath[path]; !ok {
-		t, _ = tm.TmplsByPath[filepath.Join(TmplDir, path)]
+		t = tm.TmplsByPath[filepath.Join(TmplDir, path)]
 	}
 	return
 }

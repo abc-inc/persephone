@@ -34,7 +34,7 @@ func NewCmdColors(f *cmdutil.Factory) *cobra.Command {
 		Short:       "Set the color scheme for the prompt input",
 		Args:        cobra.ExactArgs(1),
 		Annotations: Annotate(cmdutil.SkipAuth),
-		RunE:         func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return Colors(f.Config(), args[0])
 		},
 	}

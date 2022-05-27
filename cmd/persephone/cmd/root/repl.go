@@ -82,7 +82,7 @@ func completer(e *editor.Editor, document prompt.Document) (ss []prompt.Suggest)
 	if stmt == "exit" || stmt == ":exit" {
 		return nil
 	}
-	if stmt == "" || strings.IndexRune(");'\"", rune(stmt[len(stmt)-1])) >= 0 {
+	if stmt == "" || strings.ContainsRune(");'\"", rune(stmt[len(stmt)-1])) {
 		return nil
 	}
 

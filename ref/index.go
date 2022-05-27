@@ -62,7 +62,7 @@ func (i *Index) Add(ctx antlr.ParserRuleContext, addName bool) {
 func (i *Index) AddVariable(ctx *parser.VariableContext) {
 	addName := true
 	p := ctx.GetParent()
-	if _, ok := p.(*parser.AtomContext); p != nil && ok {
+	if _, ok := p.(*parser.AtomContext); ok {
 		addName = false
 	}
 	i.Add(ctx, addName)
