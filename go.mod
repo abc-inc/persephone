@@ -21,7 +21,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/muesli/termenv v0.9.0
-	github.com/neo4j/neo4j-go-driver/v4 v4.4.2
+	github.com/neo4j/neo4j-go-driver/v4 v4.4.3
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.4.0
