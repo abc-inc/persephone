@@ -3,7 +3,7 @@ module github.com/abc-inc/persephone
 go 1.18
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.4
+	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/abc-inc/browser v1.0.0
 	github.com/abc-inc/go-data-neo4j v0.0.0-20220520231737-cd03273a3fe5
