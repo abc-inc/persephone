@@ -1,4 +1,4 @@
-// Copyright 2022 The persephone authors
+// Copyright 2022 The Persephone authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ func Connect(sessCfg *config.SessionConfig) {
 
 	auth, u := graph.Auth(u + ":" + p)
 	_, err := graph.NewConn(addr, u, auth, db, func(config *neo4j.Config) {
-		config.UserAgent = "persephone (" + neo4j.UserAgent + ")"
+		config.UserAgent = "Persephone (" + neo4j.UserAgent + ")"
 	})
 	if err != nil {
 		console.WriteErr(err)

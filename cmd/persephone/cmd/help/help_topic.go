@@ -1,4 +1,4 @@
-// Copyright 2022 The persephone authors
+// Copyright 2022 The Persephone authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ type Topic struct {
 }
 
 var Topics = []Topic{
-	{File: "help/environment.md", Desc: "Environment variables that can be used with persephone"},
-	{File: "help/formatting.md", Desc: "Formatting options for CSV/JSON/YAML data exported from persephone"},
+	{File: "help/environment.md", Desc: "Environment variables that can be used with Persephone"},
+	{File: "help/formatting.md", Desc: "Formatting options for CSV/JSON/YAML data exported from Persephone"},
 	{File: "contributing.md", Desc: "Information to get started"},
 	{File: "faq.md", Desc: "Frequently Asked Questions"},
-	{File: "source.md", Desc: "Instructions for building persephone from source"},
-	{File: "why.md", Desc: fmt.Sprintf("Why %s?", color.New(color.Italic).Sprint("persephone"))},
+	{File: "source.md", Desc: "Instructions for building Persephone from source"},
+	{File: "why.md", Desc: fmt.Sprintf("Why %s?", color.New(color.Italic).Sprint("Persephone"))},
 }
 
 func NewCmdHelpTopic(t Topic) *cobra.Command {

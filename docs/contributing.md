@@ -1,6 +1,6 @@
 # Contributing
 
-## persephone project layout
+## Persephone project layout
 
 At a high level, these areas make up the `github.com/abc-inc/persephone` project:
 
@@ -32,7 +32,7 @@ In this case, the topic is a specific command, and help text for is embedded in 
 ## How to write tests
 
 This task might be tricky.
-Typically, persephone commands do things like look up information from the database.
+Typically, Persephone commands do things like look up information from the database.
 Moreover, one does not want to test the CLI framework, rather than the command itself.
 To avoid that, you may want to define function (and export them, if necessary),
 which do not contain any CLI-related code.

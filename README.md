@@ -1,11 +1,11 @@
-# persephone
+# Persephone
 
-persephone is a Neo4j client on the command line
+Persephone is a Neo4j client on the command line
 (and a powerful and visually appealing [fictional character][why] in _The Matrix_).
 
 It brings rapid database exploration, development and automation to the terminal.
 
-![persephone demo](docs/images/persephone_demo.gif)
+![Persephone demo](docs/images/persephone_demo.gif)
 
 ## Installation
 
@@ -13,7 +13,7 @@ Download binaries for various platforms and operating systems from the [releases
 
 ### Build from source
 
-See here on how to [build persephone from source][build from source].
+See here on how to [build Persephone from source][build from source].
 
 ## Comparison with Cypher Shell and neo4j-client
 
@@ -35,9 +35,9 @@ directly on the command line or by piping a file with cypher statements.
 Cypher Shell requires Java 8 or newer, lacks some commands from [Neo4j Browser][],
 and does not provide a rich command line experience like autocompletion for Cypher statements.
 
-### persephone
+### Persephone
 
-persephone is a new project that helps us explore what an official Neo4j CLI could look like
+Persephone is a new project that helps us explore what an official Neo4j CLI could look like
 with a fundamentally different __human-first__ design.
 It implements well-established [Command Line Interface Guidelines],
 which are implemented in modern CLIs, including, but not limited to
@@ -47,7 +47,7 @@ which are implemented in modern CLIs, including, but not limited to
 - [GitHub CLI][]
 - and alike.
 
-persephone comes with the official Neo4j Driver, which implements Bolt protocol version 3,
+Persephone comes with the official Neo4j Driver, which implements Bolt protocol version 3,
 and works with Neo4j 3.5 and newer.
 It has no runtime dependencies and runs on a variety of platforms and operating systems.
 

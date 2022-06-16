@@ -2,7 +2,7 @@
 
 ## CSV/JSON/YAML
 
-Some persephone commands support exporting the data as CSV/JSON/YAML as an alternative to their
+Some Persephone commands support exporting the data as CSV/JSON/YAML as an alternative to their
 usual line-based plain text output. This is suitable for passing structured data to scripts.
 The output format can be changed with the `:format` command, followed by the desired format.
 The following formats are supported:

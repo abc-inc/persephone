@@ -65,7 +65,7 @@ See the list of [supported linker flags](https://golang.org/cmd/link/).
 
 ## Linking without Markdown viewer
 
-persephone comes with a built-in Markdown renderer, which has multiple themes and is highly customizable.
-If the binary size really matters, you can build persephone without renderer, which reduces the size by approx. 7 MB.
+Persephone comes with a built-in Markdown renderer, which has multiple themes and is highly customizable.
+If the binary size really matters, you can build Persephone without renderer, which reduces the size by approx. 7 MB.
 This can be achieved by setting `GOFLAGS="-tags=no_markdown"`.
 Then it will simply write the Markdown text to stdout without formatting.
