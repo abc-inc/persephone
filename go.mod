@@ -12,7 +12,7 @@ require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed
 	github.com/briandowns/spinner v1.18.1
-	github.com/c-bata/go-prompt v0.2.5
+	github.com/c-bata/go-prompt v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/glamour v0.5.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.13.0
@@ -20,14 +20,14 @@ require (
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-shellwords v1.0.12
-	github.com/muesli/termenv v0.9.0
-	github.com/neo4j/neo4j-go-driver/v4 v4.4.2
+	github.com/muesli/termenv v0.12.0
+	github.com/neo4j/neo4j-go-driver/v4 v4.4.3
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.26.1
+	github.com/rs/zerolog v1.27.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/xlab/treeprint v1.1.0
 	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
@@ -67,11 +67,13 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/c-bata/go-prompt => github.com/gschauer/go-prompt v0.3.0
+
+replace github.com/AlecAivazis/survey/v2 => github.com/AlecAivazis/survey/v2 v2.3.4
