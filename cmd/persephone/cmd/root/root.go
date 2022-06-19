@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/abc-inc/go-data-neo4j/graph"
 	browser "github.com/abc-inc/persephone/cmd/persephone/cmd/browser"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/cmdutil"
 	"github.com/abc-inc/persephone/cmd/persephone/cmd/help"
@@ -30,6 +29,7 @@ import (
 	"github.com/abc-inc/persephone/console"
 	"github.com/abc-inc/persephone/console/repl"
 	"github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/roland/graph"
 	"github.com/mattn/go-isatty"
 	"github.com/mattn/go-shellwords"
 	"github.com/rs/zerolog/log"

@@ -17,9 +17,9 @@ package comp
 import (
 	"fmt"
 
-	"github.com/abc-inc/go-data-neo4j/meta"
 	"github.com/abc-inc/persephone/lang"
 	"github.com/abc-inc/persephone/types"
+	"github.com/abc-inc/roland/meta"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 

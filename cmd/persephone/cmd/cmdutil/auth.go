@@ -17,9 +17,9 @@ package cmdutil
 import (
 	"os"
 
-	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
+	"github.com/abc-inc/roland/graph"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"

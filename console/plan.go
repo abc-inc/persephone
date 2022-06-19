@@ -19,9 +19,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/abc-inc/go-data-neo4j/plan"
 	"github.com/abc-inc/gutenfmt/gfmt"
 	"github.com/abc-inc/persephone/internal"
+	"github.com/abc-inc/roland/plan"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/xlab/treeprint"
 )

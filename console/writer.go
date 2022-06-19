@@ -24,9 +24,9 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/abc-inc/go-data-neo4j/graph"
 	"github.com/abc-inc/gutenfmt/formatter"
 	"github.com/abc-inc/gutenfmt/gfmt"
+	"github.com/abc-inc/roland/graph"
 	"github.com/dustin/go-humanize/english"
 	"github.com/fatih/color"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"

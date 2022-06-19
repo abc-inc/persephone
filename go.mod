@@ -6,9 +6,9 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/abc-inc/browser v1.0.0
-	github.com/abc-inc/go-data-neo4j v0.0.0-20220520231737-cd03273a3fe5
 	github.com/abc-inc/go-fuzzaldrin-plus v1.0.0
 	github.com/abc-inc/gutenfmt v0.1.1
+	github.com/abc-inc/roland v0.1.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed
 	github.com/briandowns/spinner v1.18.1

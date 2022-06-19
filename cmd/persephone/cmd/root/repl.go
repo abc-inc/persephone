@@ -20,8 +20,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abc-inc/go-data-neo4j/graph"
-	"github.com/abc-inc/go-data-neo4j/meta"
 	"github.com/abc-inc/persephone/comp"
 	"github.com/abc-inc/persephone/config"
 	"github.com/abc-inc/persephone/console"
@@ -29,6 +27,8 @@ import (
 	"github.com/abc-inc/persephone/editor"
 	"github.com/abc-inc/persephone/internal"
 	"github.com/abc-inc/persephone/types"
+	"github.com/abc-inc/roland/graph"
+	"github.com/abc-inc/roland/meta"
 	"github.com/alecthomas/chroma/quick"
 	"github.com/c-bata/go-prompt"
 	"github.com/mattn/go-isatty"
